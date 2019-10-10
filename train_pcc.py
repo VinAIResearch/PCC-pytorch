@@ -1,5 +1,6 @@
 from tensorboardX import SummaryWriter
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import argparse
@@ -194,15 +195,17 @@ def main(args):
 
     x_dim, z_dim, u_dim = settings[env_name]
     model = PCC(armotized = armotized, x_dim=x_dim, z_dim=z_dim, u_dim=u_dim, env=env_name).to(device)
+    # model.load_state_dict(torch.load('result/planar/log_no_armo_1/model_5000'))
 
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.999), eps=1e-8, lr=lr, weight_decay=weight_decay)
+    scheduler = StepLR(optimizer, step_size=int(epoches / 3), gamma=0.5)
 
-    log_path = 'logs/' + env_name + '/' + log_dir
+    log_path = 'scheduling_logs/' + env_name + '/' + log_dir
     if not path.exists(log_path):
         os.makedirs(log_path)
     writer = SummaryWriter(log_path)
 
-    result_path = 'result/' + env_name + '/' + log_dir
+    result_path = 'scheduling_result/' + env_name + '/' + log_dir
     if not path.exists(result_path):
         os.makedirs(result_path)
     with open(result_path + '/settings', 'w') as f:
@@ -210,6 +213,7 @@ def main(args):
 
     for i in range(epoches):
         avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized)
+        scheduler.step()
         print('Epoch %d' % i)
         print("Prediction loss: %f" % (avg_pred_loss))
         print("Consistency loss: %f" % (avg_consis_loss))
