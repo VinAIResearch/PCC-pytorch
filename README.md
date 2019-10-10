@@ -1,4 +1,4 @@
-## Embed to Control
+## Prediction, Consistency and Curvature
 
 This is a pytorch implementation of the paper "[Prediction, Consistency, Curvature: Representation Learning for Locally-Linear Control](https://arxiv.org/abs/1909.01506)".
 
