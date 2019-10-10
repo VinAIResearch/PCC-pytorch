@@ -96,7 +96,7 @@ def sample(sample_size):
     obs_samples = [(render(s), u, render(s_next)) for s, u, s_next in state_samples]
     return state_samples, obs_samples
 
-def write_to_file(sample_size, output_dir = './raw'):
+def write_to_file(sample_size, output_dir = 'data/planar/raw'):
     """
     write [(x, u, x_next)] to output dir
     """
