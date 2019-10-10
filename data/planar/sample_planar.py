@@ -18,6 +18,8 @@ rw = 3 # robot half-width
 rw_rendered = 2 # robot half-width when rendered
 max_step_len = 3
 
+env_path = os.path.dirname(os.path.abspath(__file__))
+
 def generate_env():
     """
     return the environment with 6 obstacles
@@ -96,7 +98,7 @@ def sample(sample_size):
     obs_samples = [(render(s), u, render(s_next)) for s, u, s_next in state_samples]
     return state_samples, obs_samples
 
-def write_to_file(sample_size, output_dir = 'data/planar/raw'):
+def write_to_file(sample_size, output_dir = env_path + '/raw'):
     """
     write [(x, u, x_next)] to output dir
     """
