@@ -47,8 +47,8 @@ def compute_loss(model, armotized, x, x_next,
                 + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
 
     # curvature loss
-    cur_loss = curvature(model, z, u, delta, armotized)
-    # cur_loss = torch.Tensor([0]).cuda()
+    # cur_loss = curvature(model, z, u, delta, armotized)
+    cur_loss = curvature_variant(model, z, u, delta, armotized)
 
     # additional vae loss
     vae_loss = vae_bound(x, x_recon, mu_p_z, logvar_p_z)
