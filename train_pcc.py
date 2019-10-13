@@ -47,8 +47,8 @@ def compute_loss(model, armotized, x, x_next,
                 + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
 
     # curvature loss
-    # cur_loss = curvature(model, z, u, delta, armotized)
-    cur_loss = curvature_variant(model, z, u, delta, armotized)
+    cur_loss = curvature(model, z, u, delta, armotized)
+    # cur_loss = curvature_variant(model, z, u, delta, armotized)
 
     # additional vae loss
     vae_loss = vae_bound(x, x_recon, mu_p_z, logvar_p_z)
@@ -200,12 +200,12 @@ def main(args):
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.999), eps=1e-8, lr=lr, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=int(epoches / 3), gamma=0.5)
 
-    log_path = 'scheduling_logs/' + env_name + '/' + log_dir
+    log_path = 'logs/' + env_name + '/' + log_dir
     if not path.exists(log_path):
         os.makedirs(log_path)
     writer = SummaryWriter(log_path)
 
-    result_path = 'scheduling_result/' + env_name + '/' + log_dir
+    result_path = 'result/' + env_name + '/' + log_dir
     if not path.exists(result_path):
         os.makedirs(result_path)
     with open(result_path + '/settings', 'w') as f:

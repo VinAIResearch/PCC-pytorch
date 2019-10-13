@@ -51,7 +51,7 @@ class Dynamics(nn.Module):
             B = self.net_B(h)
         else:
             A, B = None, None
-        return mu + z_t, logvar, A, B # skip connection
+        return mu, logvar, A, B # skip connection
 
 class BackwardDynamics(nn.Module):
     # Q(z_t | z^_t+1, x_t, u_t)
