@@ -59,6 +59,7 @@ def is_valid(s, u, s_next, epsilon = 0.1):
     top_next, bottom_next, left_next, right_next = get_pixel_location(s_next)
     x_diff = np.array([top_next - top, left_next - left], dtype=np.float)
     return (not np.sqrt(np.sum((x_diff - u)**2)) > epsilon)
+    # return True
 
 def is_colliding(s):
     """
