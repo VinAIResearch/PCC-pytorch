@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from PIL import Image
+import imageio
 import os
 import json
 import time
@@ -13,15 +14,9 @@ torch.manual_seed(0)
 
 z_dim, u_dim = 2, 2
 # define cost matrices
-R_z = 0.2 * torch.eye(z_dim).cuda()
-R_u = torch.eye(u_dim).cuda()
+R_z = 10 * torch.eye(z_dim).cuda()
+R_u = 1 * torch.eye(u_dim).cuda()
 horizon = 40
-
-# s_start_1 = np.array([planar_sampler.rw, planar_sampler.rw])
-# s_start_2 = np.array([planar_sampler.rw, planar_sampler.width - planar_sampler.rw])
-# s_start_3 = np.array([planar_sampler.height - planar_sampler.rw, planar_sampler.rw])
-# corners = [s_start_1, s_start_2, s_start_3]
-# s_goal = np.array([planar_sampler.height - planar_sampler.rw, planar_sampler.width - planar_sampler.rw])
 
 def draw_start_goal():
     """
@@ -74,10 +69,8 @@ def jacobian(dynamics, z, u):
     u = u.detach().requires_grad_(True)
     z_next, _, _, _ = dynamics(z, u)
     grad_inp = torch.eye(z_dim).cuda()
-    A = torch.autograd.grad(z_next, z, grad_inp, retain_graph=True)[0]
-    B = torch.autograd.grad(z_next, u, grad_inp)[0]
+    A, B = torch.autograd.grad(z_next, [z, u], [grad_inp, grad_inp])
     return A, B
-    # return torch.randn(2,2).cuda(), torch.randn(2,2).cuda()
 
 def seq_jacobian(dynamics, z_seq, u_seq):
     """
@@ -185,11 +178,14 @@ def iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters=10):
     #     k, K = backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, V_T_z, V_T_zz)
     #     z_seq, u_seq = forward(z_seq, u_seq, k, K, dynamics)
     #     new_loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
+    #     if torch.isnan(new_loss):
+    #         return None, None, None, None
     #     print ('iLQR loss iter {:02d}: {:05f}'.format(i+1, new_loss.item()))
     #     old_loss = new_loss
     #     V_T_z = 2 * R_z.mm((z_seq[-1] - z_goal).view(-1,1))
     #     V_T_zz = 2 * R_z
     #     A_seq, B_seq = seq_jacobian(dynamics, z_seq, u_seq)
+    # return z_seq, u_seq, k, K
     k, K = backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, V_T_z, V_T_zz)
     return k, K
 
@@ -202,20 +198,29 @@ def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iter
     s = s_start
     for i in range(horizon):
         # print ('Horizon {:02d}'.format(i+1))
+        # z_seq, u_seq, k, K = iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics)
+        # if z_seq is None:
+        #     return None
+        # u_first_opt = u_seq[0] # only apply the first action
         k, K = iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics)
         u_first_opt = u_seq[0] + k[0].view(1,-1)
-        # u_first_opt = u_seq[0] # only apply the first action
+        if torch.any(torch.isnan(u_first_opt)):
+            return None
         u_opt.append(u_first_opt)
+
         # get z_k+1 from the true dynamics
-        s = s + np.array(u_first_opt.squeeze().cpu().detach())
+        s = np.round(s + np.array(u_first_opt.squeeze().cpu().detach()))
         next_obs = planar_sampler.render(s)
         next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, 1600)
         z_start, _ = encoder(next_x)
+
         # update the nominal trajectory
         z_seq, u_seq = z_seq[1:], u_seq[1:]
         k, K = k[1:], K[1:]
         z_seq, u_seq = update_seq_act(z_seq, z_start, u_seq, k, K, dynamics)
         loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
+        if torch.isnan(loss):
+            return None
         print ('Horizon {:02d}: {:05f}'.format(i+1, loss.item()))
         # print ('==============================')
     return u_opt
@@ -225,13 +230,17 @@ def main():
     folder = 'result/planar'
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
     log_folders.sort()
+    avg_model_percent = 0.0
+    best_model_percent = 0.0
     for log in log_folders:
         with open(log + '/settings', 'r') as f:
             settings = json.load(f)
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_noforward_result/' + log_base
+        model_path = 'iLQR_gif/' + log_base
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
         print ('Performing iLQR for ' + log_base)
 
         model = PCC(armotized, 1600, 2, 2, 'planar').to(device)
@@ -244,9 +253,9 @@ def main():
         for task in range(10):
             print ('Performing task ' + str(task+1))
             # task_path = model_path + '/task_{:01d}'.format(task+1)
-            traj_path = model_path + '/trajectory' + '/task_{:01d}'.format(task+1)
-            if not os.path.exists(traj_path):
-                os.makedirs(traj_path)
+            # traj_path = model_path + '/trajectory' + '/task_{:01d}'.format(task+1)
+            # if not os.path.exists(traj_path):
+            #     os.makedirs(traj_path)
             # draw random initial state and goal state
             corner_idx, s_start, s_goal = draw_start_goal()
             image_start = planar_sampler.render(s_start)
@@ -257,25 +266,42 @@ def main():
             z_start, _ = model.encode(x_start)
             z_goal, _ = model.encode(x_goal)
             u_opt = reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, 10, 40)
+            if u_opt is None:
+                avg_percent += 0
+                with open(model_path + '/result.txt', 'a+') as f:
+                    f.write('Task {:01d} start at corner {:01d}: '.format(task+1, corner_idx) + ' crashed' + '\n')
+                continue
             s = s_start
 
-            Image.fromarray(image_start * 255.).convert('L').save(traj_path + '/0.png')
+            images = [Image.fromarray(image_start * 255.).convert('L')]
+            # Image.fromarray(image_start * 255.).convert('L').save(traj_path + '/0.png')
             close_steps = 0.0
             for i, u in enumerate(u_opt):
                 u = np.array(u.squeeze().cpu().detach())
-                s = s + u
+                s = np.round(s + u)
                 if np.sqrt(np.sum(s - s_goal)**2) <= 2:
                     close_steps += 1
                 image = planar_sampler.render(s)
-                Image.fromarray(image * 255.).convert('L').save(traj_path + '/' + str(i+1) + '.png')
+                images.append(Image.fromarray(image * 255.).convert('L'))
             percent = close_steps / 40
             avg_percent += percent
             with open(model_path + '/result.txt', 'a+') as f:
                 f.write('Task {:01d} start at corner {:01d}: '.format(task+1, corner_idx) + str(close_steps / 40) + '\n')
-            Image.fromarray(image_goal * 255.).convert('L').save(traj_path + '/goal.png')
+            images.append(Image.fromarray(image_goal * 255.).convert('L'))
+            imageio.mimsave(model_path + '/task_{:01d}.gif'.format(task+1), images)
         
+        avg_percent = avg_percent / 10
+        avg_model_percent += avg_percent
+        if avg_percent > best_model_percent:
+            best_model = log_base
+            best_model_percent = avg_percent
         with open(model_path + '/result.txt', 'a+') as f:
-            f.write('Average percentage: ' + str(avg_percent / 10))
+            f.write('Average percentage: ' + str(avg_percent))
 
+    avg_model_percent = avg_model_percent / len(log_folders)
+    with open('iLQR_round_s/result.txt', 'w') as f:
+        f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
+        f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
+ 
 if __name__ == '__main__':
     main()
