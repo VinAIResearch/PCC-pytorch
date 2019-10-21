@@ -9,15 +9,17 @@ import sys
 from pcc_model import PCC
 from datasets import *
 from losses import *
-import data.planar.sample_planar as planar_sampler
+from data.planar.sample_planar import sample as planar_sampler
+from data.planar.sample_planar import PlanarEnv
 
 torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
 
 device = torch.device("cuda")
+envs = {'planar': PlanarEnv}
+samplers = {'planar': planar_sampler}
 datasets = {'planar': PlanarDataset}
 settings = {'planar': (1600, 2, 2)}
-samplers = {'planar': planar_sampler}
 num_eval = 10 # number of images evaluated on tensorboard
 
 # dataset = datasets['planar2']('./data/data/' + 'planar2')
@@ -128,11 +130,13 @@ def evaluate(model, test_loader):
     return state_loss.item() / num_batches, next_state_loss.item() / num_batches
 
 # code for visualizing the training process
-def predict_x_next(model, env, num_eval):
+def predict_x_next(model, env_name, num_eval):
     model.eval()
     # frist sample a true trajectory from the environment
-    sampler = samplers[env]
-    state_samples, sampled_data = sampler.sample(num_eval)
+    sampler = samplers[env_name]
+    env = envs[env_name]()
+
+    state_samples, sampled_data = sampler(env, num_eval)
 
     # use the trained model to predict the next observation
     predicted = []
@@ -142,7 +146,7 @@ def predict_x_next(model, env, num_eval):
         u = torch.from_numpy(u).double().to(device).unsqueeze(dim=0)
         with torch.no_grad():
             _, x_next_pred = model.predict(x_reshaped, u)
-        predicted.append(x_next_pred.squeeze().cpu().numpy().reshape(sampler.width, sampler.height))
+        predicted.append(x_next_pred.squeeze().cpu().numpy().reshape(env.width, env.height))
     true_x_next = [data[-1] for data in sampled_data]
     return true_x_next, predicted
 
@@ -200,12 +204,12 @@ def main(args):
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.999), eps=1e-8, lr=lr, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=int(epoches / 3), gamma=0.5)
 
-    log_path = 'fix_cur_logs/' + env_name + '/' + log_dir
+    log_path = 'test_logs/' + env_name + '/' + log_dir
     if not path.exists(log_path):
         os.makedirs(log_path)
     writer = SummaryWriter(log_path)
 
-    result_path = 'fix_cur_result/' + env_name + '/' + log_dir
+    result_path = 'test_result/' + env_name + '/' + log_dir
     if not path.exists(result_path):
         os.makedirs(result_path)
     with open(result_path + '/settings', 'w') as f:

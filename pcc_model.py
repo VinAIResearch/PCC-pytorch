@@ -76,50 +76,44 @@ class PCC(nn.Module):
         x_next_pred = self.decode(z_next)
         return x_recon, x_next_pred
 
-# model = PCC(1600, 2, 2)
-# x = torch.randn(size=(10, 1600))
-# u = torch.randn(size=(10, 2))
-# x_next = torch.randn(size=(10,1600))
-# x_next_recon, mu_q_z, logvar_q_z, mu_p_z, logvar_p_z, mu_q_z_next, logvar_q_z_next, z_next, mu_p_z_next, logvar_p_z_next = model(x, u, x_next)
+# def reparam(mean, logvar):
+#     sigma = (logvar / 2).exp()
+#     epsilon = torch.randn_like(sigma)
+#     return mean + torch.mul(epsilon, sigma)
 
-def reparam(mean, logvar):
-    sigma = (logvar / 2).exp()
-    epsilon = torch.randn_like(sigma)
-    return mean + torch.mul(epsilon, sigma)
+# def jacobian_1(dynamics, z, u):
+#     """
+#     compute the jacobian of F(z,u) w.r.t z, u
+#     """
+#     z_dim, u_dim = z.size(1), u.size(1)
+#     z, u = z.squeeze().repeat(z_dim, 1), u.squeeze().repeat(z_dim, 1)
+#     z = z.detach().requires_grad_(True)
+#     u = u.detach().requires_grad_(True)
+#     z_next, _, _, _ = dynamics(z, u)
+#     grad_inp = torch.eye(z_dim)
+#     A = torch.autograd.grad(z_next, z, grad_inp, retain_graph=True)[0]
+#     B = torch.autograd.grad(z_next, u, grad_inp, retain_graph=True)[0]
+#     return A, B
 
-def jacobian_1(dynamics, z, u):
-    """
-    compute the jacobian of F(z,u) w.r.t z, u
-    """
-    z_dim, u_dim = z.size(1), u.size(1)
-    z, u = z.squeeze().repeat(z_dim, 1), u.squeeze().repeat(z_dim, 1)
-    z = z.detach().requires_grad_(True)
-    u = u.detach().requires_grad_(True)
-    z_next, _, _, _ = dynamics(z, u)
-    grad_inp = torch.eye(z_dim)
-    A = torch.autograd.grad(z_next, z, grad_inp, retain_graph=True)[0]
-    B = torch.autograd.grad(z_next, u, grad_inp, retain_graph=True)[0]
-    return A, B
-
-def jacobian_2(dynamics, z, u):
-    """
-    compute the jacobian of F(z,u) w.r.t z, u
-    """
-    z_dim, u_dim = z.size(1), u.size(1)
-    z = z.detach().requires_grad_(True)
-    u = u.detach().requires_grad_(True)
-    z_next, _, _, _ = dynamics(z, u)
-    A = torch.empty(size=(z_dim, z_dim))
-    B = torch.empty(size=(z_dim, u_dim))
-    for i in range(A.size(0)): # for each row
-        grad_inp = torch.zeros(size=(1, A.size(0)))
-        grad_inp[0][i] = 1
-        A[i] = torch.autograd.grad(z_next, z, grad_inp, retain_graph=True)[0]
-    for i in range(B.size(0)): # for each row
-        grad_inp = torch.zeros(size=(1, B.size(0)))
-        grad_inp[0][i] = 1
-        B[i] = torch.autograd.grad(z_next, u, grad_inp, retain_graph=True)[0]
-    return A, B
+# def jacobian_2(dynamics, z, u):
+#     """
+#     compute the jacobian of F(z,u) w.r.t z, u
+#     """
+#     z_dim, u_dim = z.size(1), u.size(1)
+#     z = z.detach().requires_grad_(True)
+#     u = u.detach().requires_grad_(True)
+#     z_next, _, _, _ = dynamics(z, u)
+#     A = torch.empty(size=(z_dim, z_dim))
+#     B = torch.empty(size=(z_dim, u_dim))
+#     for i in range(A.size(0)): # for each row
+#         grad_inp = torch.zeros(size=(1, A.size(0)))
+#         grad_inp[0][i] = 1
+#         A[i] = torch.autograd.grad(z_next, z, grad_inp, retain_graph=True)[0]
+#     for i in range(B.size(0)): # for each row
+#         grad_inp = torch.zeros(size=(1, B.size(0)))
+#         grad_inp[0][i] = 1
+#         B[i] = torch.autograd.grad(z_next, u, grad_inp, retain_graph=True)[0]
+#     return A, B
 
 # enc, dec, dyn, back_dyn = load_config('planar')
 # dynamics = dyn(armotized=False, z_dim=2, u_dim=2)

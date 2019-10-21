@@ -3,10 +3,6 @@ from torch import nn
 
 torch.set_default_dtype(torch.float64)
 
-def weights_init(m):
-    if type(m) in [nn.Conv2d, nn.Linear, nn.ConvTranspose2d]:
-        torch.nn.init.orthogonal_(m.weight)
-
 class Encoder(nn.Module):
     # P(z_t | x_t) and Q(z^_t+1 | x_t+1)
     def __init__(self, net, x_dim, z_dim):

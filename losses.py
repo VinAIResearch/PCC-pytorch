@@ -48,7 +48,6 @@ def curvature(model, z, u, delta, armotized):
     f_z, _, A, B = f_Z(z_alias, u_alias)
     if not armotized:
         grad_z, grad_u = torch.autograd.grad(f_z, [z_alias, u_alias], grad_outputs=[eps_z, eps_u], retain_graph=True, create_graph=True)
-        # grad_u, = torch.autograd.grad(f_z, u_alias, grad_outputs=eps_u, retain_graph=True, create_graph=True)
         taylor_error = f_z_bar - (grad_z + grad_u) - f_z
         cur_loss = torch.mean(torch.sum(taylor_error.pow(2), dim = 1))
     else:

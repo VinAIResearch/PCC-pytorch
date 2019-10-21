@@ -2,12 +2,16 @@ import torch
 import numpy as np
 from PIL import Image
 import imageio
+from matplotlib.animation import FuncAnimation, writers
+import matplotlib.pyplot as plt
 import os
 import json
 import time
 
 from pcc_model import PCC
-import data.planar.sample_planar as planar_sampler
+from data.planar.sample_planar import PlanarEnv
+
+planar_env = PlanarEnv()
 
 np.random.seed(0)
 torch.manual_seed(0)
@@ -22,20 +26,20 @@ def draw_start_goal():
     """
     return a random start state (one of three corners), and the goal state (bottom-right corner)
     """
-    s_goal = np.random.uniform(planar_sampler.height - planar_sampler.rw - 3,
-                                planar_sampler.width - planar_sampler.rw, size=2)
+    s_goal = np.random.uniform(planar_env.height - planar_env.rw - 3,
+                                planar_env.width - planar_env.rw, size=2)
     corner_idx = np.random.randint(0, 3)
     if corner_idx == 0:
-        s_start = np.random.uniform(planar_sampler.rw, planar_sampler.rw + 3, size=2)
+        s_start = np.random.uniform(planar_env.rw, planar_env.rw + 3, size=2)
     if corner_idx == 1:
-        x = np.random.uniform(planar_sampler.rw, planar_sampler.rw+3)
-        y = np.random.uniform(planar_sampler.width - planar_sampler.rw - 3,
-                            planar_sampler.width - planar_sampler.rw)
+        x = np.random.uniform(planar_env.rw, planar_env.rw+3)
+        y = np.random.uniform(planar_env.width - planar_env.rw - 3,
+                            planar_env.width - planar_env.rw)
         s_start = np.array([x, y])
     if corner_idx == 2:
-        x = np.random.uniform(planar_sampler.width - planar_sampler.rw - 3,
-                            planar_sampler.width - planar_sampler.rw)
-        y = np.random.uniform(planar_sampler.rw, planar_sampler.rw+3)
+        x = np.random.uniform(planar_env.width - planar_env.rw - 3,
+                            planar_env.width - planar_env.rw)
+        y = np.random.uniform(planar_env.rw, planar_env.rw+3)
         s_start = np.array([x, y])
     return corner_idx, s_start, s_goal
 
@@ -48,7 +52,7 @@ def random_traj(z_start, horizon, dynamics):
     u_seq = []
     for i in range(horizon):
         z_seq.append(z)
-        u = torch.empty(1, u_dim).uniform_(-planar_sampler.max_step_len, planar_sampler.max_step_len).cuda()
+        u = torch.empty(1, u_dim).uniform_(-planar_env.max_step_len, planar_env.max_step_len).cuda()
         u_seq.append(u)
         with torch.no_grad():
             z_next, _, _, _ = dynamics(z, u)
@@ -84,15 +88,6 @@ def seq_jacobian(dynamics, z_seq, u_seq):
         B_seq.append(B)
     return A_seq, B_seq
 
-def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
-    loss = 0.0
-    for t in range(len(z_seq) - 1):
-        z_t_diff, u_t = z_seq[t] - z_goal, u_seq[t]
-        loss += z_t_diff.view(1,-1).mm(R_z).mm(z_t_diff.view(-1,1)) + u_t.view(1,-1).mm(R_u).mm(u_t.view(-1,1))
-    z_T_diff = z_seq[-1] - z_goal
-    loss += z_T_diff.view(1,-1).mm(R_z).mm(z_T_diff.view(-1,1))
-    return loss
-
 def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_next_z, V_next_zz):
     """
     V_next_z: first order derivative of the value function at time step t+1
@@ -115,38 +110,6 @@ def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_next_z, V_next_zz):
     V_zz = Q_zz - K.transpose(1,0).mm(Q_uu).mm(K)
     return k, K, V_z, V_zz
 
-def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, V_T_z, V_T_zz):
-    """
-    do the backward pass
-    return a sequence of k and K matrices
-    """
-    V_next_z, V_next_zz = V_T_z, V_T_zz
-    k, K = [], []
-    act_seq_len = len(z_seq)
-    for i in range(2, act_seq_len + 1):
-        t = act_seq_len - i
-        k_t, K_t, V_t_z, V_t_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t], V_next_z, V_next_zz)
-        k.insert(0, k_t)
-        K.insert(0, K_t)
-        V_next_z, V_next_zz = V_t_z, V_t_zz
-    return k, K
-
-def forward(z_seq, u_seq, k, K, dynamics):
-    """
-    update the trajectory, given k and K
-    """
-    z_seq_new = []
-    z_seq_new.append(z_seq[0])
-    u_seq_new = []
-    for i in range(0, len(z_seq) - 1):
-        u_new = u_seq[i] + k[i].view(1,-1) + K[i].mm((z_seq_new[i] - z_seq[i]).view(-1,1)).view(1,-1)
-        u_seq_new.append(u_new)
-        with torch.no_grad():
-            z_new, _, _, _ = dynamics(z_seq_new[i], u_new)
-        z_seq_new.append(z_new)
-    u_seq_new.append(None)
-    return z_seq_new, u_seq_new
-
 def update_seq_act(z_seq, z_start, u_seq, k, K, dynamics):
     """
     update the trajectory, given k and K
@@ -163,6 +126,15 @@ def update_seq_act(z_seq, z_start, u_seq, k, K, dynamics):
     u_seq_new.append(None)
     return z_seq_new, u_seq_new
 
+def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
+    loss = 0.0
+    for t in range(len(z_seq) - 1):
+        z_t_diff, u_t = z_seq[t] - z_goal, u_seq[t]
+        loss += z_t_diff.view(1,-1).mm(R_z).mm(z_t_diff.view(-1,1)) + u_t.view(1,-1).mm(R_u).mm(u_t.view(-1,1))
+    z_T_diff = z_seq[-1] - z_goal
+    loss += z_T_diff.view(1,-1).mm(R_z).mm(z_T_diff.view(-1,1))
+    return loss
+
 def iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters=10):
     """
     - run backward: linearize around the current trajectory and perform optimal control
@@ -173,20 +145,15 @@ def iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters=10):
     V_T_z = 2 * R_z.mm((z_seq[-1] - z_goal).view(-1,1))
     V_T_zz = 2 * R_z
     A_seq, B_seq = seq_jacobian(dynamics, z_seq, u_seq)
-    # print ('iLQR loss iter {:02d}: {:05f}'.format(0, old_loss.item()))
-    # for i in range(iters):
-    #     k, K = backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, V_T_z, V_T_zz)
-    #     z_seq, u_seq = forward(z_seq, u_seq, k, K, dynamics)
-    #     new_loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
-    #     if torch.isnan(new_loss):
-    #         return None, None, None, None
-    #     print ('iLQR loss iter {:02d}: {:05f}'.format(i+1, new_loss.item()))
-    #     old_loss = new_loss
-    #     V_T_z = 2 * R_z.mm((z_seq[-1] - z_goal).view(-1,1))
-    #     V_T_zz = 2 * R_z
-    #     A_seq, B_seq = seq_jacobian(dynamics, z_seq, u_seq)
-    # return z_seq, u_seq, k, K
-    k, K = backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, V_T_z, V_T_zz)
+    V_next_z, V_next_zz = V_T_z, V_T_zz
+    k, K = [], []
+    act_seq_len = len(z_seq)
+    for i in range(2, act_seq_len + 1):
+        t = act_seq_len - i
+        k_t, K_t, V_t_z, V_t_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t], V_next_z, V_next_zz)
+        k.insert(0, k_t)
+        K.insert(0, K_t)
+        V_next_z, V_next_zz = V_t_z, V_t_zz
     return k, K
 
 def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iters_ilqr, horizon):
@@ -197,11 +164,7 @@ def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iter
     u_opt = []
     s = s_start
     for i in range(horizon):
-        # print ('Horizon {:02d}'.format(i+1))
-        # z_seq, u_seq, k, K = iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics)
-        # if z_seq is None:
-        #     return None
-        # u_first_opt = u_seq[0] # only apply the first action
+        # optimal perturbed policy at time step k
         k, K = iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics)
         u_first_opt = u_seq[0] + k[0].view(1,-1)
         if torch.any(torch.isnan(u_first_opt)):
@@ -210,7 +173,7 @@ def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iter
 
         # get z_k+1 from the true dynamics
         s = np.round(s + np.array(u_first_opt.squeeze().cpu().detach()))
-        next_obs = planar_sampler.render(s)
+        next_obs = planar_env.render(s)
         next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, 1600)
         z_start, _ = encoder(next_x)
 
@@ -222,12 +185,11 @@ def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iter
         if torch.isnan(loss):
             return None
         print ('Horizon {:02d}: {:05f}'.format(i+1, loss.item()))
-        # print ('==============================')
     return u_opt
 
 def main():
     device = torch.device("cuda")
-    folder = 'result/planar'
+    folder = 'new_cur_result/planar'
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
     log_folders.sort()
     avg_model_percent = 0.0
@@ -238,7 +200,7 @@ def main():
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_gif/' + log_base
+        model_path = 'iLQR_new_cur_result/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print ('Performing iLQR for ' + log_base)
@@ -252,43 +214,67 @@ def main():
         avg_percent = 0
         for task in range(10):
             print ('Performing task ' + str(task+1))
-            # task_path = model_path + '/task_{:01d}'.format(task+1)
-            # traj_path = model_path + '/trajectory' + '/task_{:01d}'.format(task+1)
-            # if not os.path.exists(traj_path):
-            #     os.makedirs(traj_path)
             # draw random initial state and goal state
             corner_idx, s_start, s_goal = draw_start_goal()
-            image_start = planar_sampler.render(s_start)
-            image_goal = planar_sampler.render(s_goal)
+            image_start = planar_env.render(s_start)
+            image_goal = planar_env.render(s_goal)
             x_start = torch.from_numpy(image_start).cuda().squeeze(0).view(-1, 1600)
             x_goal = torch.from_numpy(image_goal).cuda().squeeze(0).view(-1, 1600)
-
             z_start, _ = model.encode(x_start)
             z_goal, _ = model.encode(x_goal)
+
+            # perform optimal control for this task
             u_opt = reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, 10, 40)
             if u_opt is None:
                 avg_percent += 0
                 with open(model_path + '/result.txt', 'a+') as f:
                     f.write('Task {:01d} start at corner {:01d}: '.format(task+1, corner_idx) + ' crashed' + '\n')
                 continue
-            s = s_start
 
-            images = [Image.fromarray(image_start * 255.).convert('L')]
-            # Image.fromarray(image_start * 255.).convert('L').save(traj_path + '/0.png')
+            # compute the trajectory
+            s = s_start
+            images = [image_start]
             close_steps = 0.0
             for i, u in enumerate(u_opt):
                 u = np.array(u.squeeze().cpu().detach())
                 s = np.round(s + u)
                 if np.sqrt(np.sum(s - s_goal)**2) <= 2:
                     close_steps += 1
-                image = planar_sampler.render(s)
-                images.append(Image.fromarray(image * 255.).convert('L'))
+                image = planar_env.render(s)
+                images.append(image)
+
+            # save trajectory as gif file
+            fig, aa = plt.subplots(1, 2)
+            m1 = aa[0].matshow(
+                images[0], cmap=plt.cm.gray, vmin=0., vmax=1.)
+            aa[0].set_title('Time step 0')
+            aa[0].set_yticklabels([])
+            aa[0].set_xticklabels([])
+            m2 = aa[1].matshow(
+                image_goal, cmap=plt.cm.gray, vmin=0., vmax=1.)
+            aa[1].set_title('goal')
+            aa[1].set_yticklabels([])
+            aa[1].set_xticklabels([])
+            fig.tight_layout()
+
+            def updatemat2(t):
+                m1.set_data(images[t])
+                aa[0].set_title('Time step ' + str(t))
+                m2.set_data(image_goal)
+                return m1, m2
+
+            anim = FuncAnimation(
+                fig, updatemat2, frames=40, interval=200, blit=True, repeat=True)
+
+            Writer = writers['imagemagick']  # animation.writers.avail
+            writer = Writer(fps=1, metadata=dict(artist='Me'), bitrate=1800)
+            anim.save(model_path + '/task_{:01d}.gif'.format(task+1), writer=writer)
+
+            # compute the percentage close to goal
             percent = close_steps / 40
             avg_percent += percent
             with open(model_path + '/result.txt', 'a+') as f:
                 f.write('Task {:01d} start at corner {:01d}: '.format(task+1, corner_idx) + str(close_steps / 40) + '\n')
-            images.append(Image.fromarray(image_goal * 255.).convert('L'))
-            imageio.mimsave(model_path + '/task_{:01d}.gif'.format(task+1), images)
         
         avg_percent = avg_percent / 10
         avg_model_percent += avg_percent
@@ -299,7 +285,7 @@ def main():
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_round_s/result.txt', 'w') as f:
+    with open('iLQR_new_cur_result/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
  
