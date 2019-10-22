@@ -10,7 +10,7 @@ dependencies:
   - absl-py=0.7.1=py36_0
   - asn1crypto=0.24.0=py36_0
   - astor=0.8.0=py36_0
-  - attrs=19.2.0=py_0
+  - attrs=19.3.0=py_0
   - backcall=0.1.0=py_0
   - blas=1.0=mkl
   - bleach=3.1.0=py_0
@@ -44,14 +44,15 @@ dependencies:
   - icu=58.2=hf484d3e_1000
   - idna=2.8=py36_0
   - imageio=2.6.1=py36_0
+  - importlib_metadata=0.23=py36_0
   - intel-openmp=2019.4=243
-  - ipykernel=5.1.2=py36h5ca1d4c_0
+  - ipykernel=5.1.3=py36h5ca1d4c_0
   - ipython=7.8.0=py36h5ca1d4c_0
   - ipython_genutils=0.2.0=py_1
   - jedi=0.15.1=py36_0
-  - jinja2=2.10.1=py_0
+  - jinja2=2.10.3=py_0
   - jpeg=9b=h024ee3a_2
-  - jsonschema=3.0.2=py36_0
+  - jsonschema=3.1.1=py36_0
   - jupyter_client=5.3.3=py36_1
   - jupyter_core=4.4.0=py_0
   - keras-applications=1.0.8=py_0
@@ -78,6 +79,7 @@ dependencies:
   - mkl-service=2.3.0=py36he904b0f_0
   - mkl_fft=1.0.14=py36ha843d7b_0
   - mkl_random=1.0.2=py36hd81dba3_0
+  - more-itertools=7.2.0=py_0
   - nbconvert=5.6.0=py36_1
   - nbformat=4.4.0=py_1
   - ncurses=6.1=he6710b0_1
@@ -95,13 +97,16 @@ dependencies:
   - pickleshare=0.7.5=py36_1000
   - pillow=6.1.0=py36h34e0f95_0
   - pip=19.2.2=py36_0
+  - pixman-cos6-x86_64=0.32.8=h7062e45_0
   - prometheus_client=0.7.1=py_0
   - prompt_toolkit=2.0.10=py_0
   - protobuf=3.8.0=py36he6710b0_0
   - pthread-stubs=0.4=h14c3975_1001
   - ptyprocess=0.6.0=py_1001
   - pycparser=2.19=py36_0
+  - pyglet=1.3.2=py36_1000
   - pygments=2.4.2=py_0
+  - pyopengl=3.1.1a1=py36_0
   - pyopenssl=19.0.0=py36_0
   - pyparsing=2.4.2=py_0
   - pyqt=5.9.2=py36hcca6a23_4
@@ -134,7 +139,7 @@ dependencies:
   - torchvision=0.4.0=py36_cu100
   - tornado=6.0.3=py36h516909a_0
   - tqdm=4.36.1=py_0
-  - traitlets=4.3.2=py36_1000
+  - traitlets=4.3.3=py36_0
   - urllib3=1.24.2=py36_0
   - wcwidth=0.1.7=py_1
   - webencodings=0.5.1=py_1
@@ -143,13 +148,15 @@ dependencies:
   - wrapt=1.11.2=py36h7b6447c_0
   - xorg-libxau=1.0.9=h14c3975_0
   - xorg-libxdmcp=1.1.3=h516909a_0
+  - xorg-x11-server-common-cos6-x86_64=1.17.4=he6f580c_0
+  - xorg-x11-server-xvfb-cos6-x86_64=1.17.4=h5c27f9d_0
   - xz=5.2.4=h14c3975_4
   - zeromq=4.3.2=he1b5a44_2
+  - zipp=0.6.0=py_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.3.7=h0b5b093_0
   - pip:
     - future==0.17.1
     - gym==0.9.1
-    - pyglet==1.4.4
 prefix: /home/tungnd13/miniconda3/envs/pcc
 
