@@ -133,52 +133,72 @@ class PlanarBackwardDynamics(BackwardDynamics):
         )
         super(PlanarBackwardDynamics, self).__init__(net_z, net_u, net_x, net_joint, z_dim, u_dim, x_dim)
 
-# class PendulumEncoder(Encoder):
-#     def __init__(self, obs_dim = 4608, z_dim = 3):
-#         net = nn.Sequential(
-#             nn.Linear(obs_dim, 800),
-#             nn.BatchNorm1d(800),
-#             nn.ReLU(),
+class PendulumEncoder(Encoder):
+    def __init__(self, x_dim = 4608, z_dim = 3):
+        net = nn.Sequential(
+            nn.Linear(x_dim, 500),
+            nn.BatchNorm1d(500),
+            nn.ReLU(),
 
-#             nn.Linear(800, 800),
-#             nn.BatchNorm1d(800),
-#             nn.ReLU(),
+            nn.Linear(500, 500),
+            nn.BatchNorm1d(500),
+            nn.ReLU(),
 
-#             nn.Linear(800, z_dim * 2)
-#         )
-#         super(PendulumEncoder, self).__init__(net, obs_dim, z_dim)
+            nn.Linear(500, z_dim * 2)
+        )
+        super(PendulumEncoder, self).__init__(net, x_dim, z_dim)
 
-# class PendulumDecoder(Decoder):
-#     def __init__(self, z_dim = 3, obs_dim = 4608):
-#         net = nn.Sequential(
-#             nn.Linear(z_dim, 800),
-#             nn.BatchNorm1d(800),
-#             nn.ReLU(),
+class PendulumDecoder(Decoder):
+    def __init__(self, z_dim = 3, x_dim = 4608):
+        net = nn.Sequential(
+            nn.Linear(z_dim, 500),
+            nn.BatchNorm1d(500),
+            nn.ReLU(),
 
-#             nn.Linear(800, 800),
-#             nn.BatchNorm1d(800),
-#             nn.ReLU(),
+            nn.Linear(500, 500),
+            nn.BatchNorm1d(500),
+            nn.ReLU(),
 
-#             nn.Linear(800, obs_dim)
-#         )
-#         super(PendulumDecoder, self).__init__(net, z_dim, obs_dim)
+            nn.Linear(500, x_dim),
+            nn.Sigmoid()
+        )
+        super(PendulumDecoder, self).__init__(net, z_dim, x_dim)
 
-# class PendulumTransition(Transition):
-#     def __init__(self, z_dim = 3, u_dim = 1):
-#         net = nn.Sequential(
-#             nn.Linear(z_dim, 100),
-#             nn.BatchNorm1d(100),
-#             nn.ReLU(),
+class PendulumDynamics(Dynamics):
+    def __init__(self, armotized, z_dim = 3, u_dim = 1):
+        net = nn.Sequential(
+            nn.Linear(z_dim + u_dim, 30),
+            nn.BatchNorm1d(30),
+            nn.ReLU(),
 
-#             nn.Linear(100, 100),
-#             nn.BatchNorm1d(100),
-#             nn.ReLU()
-#         )
-#         super(PendulumTransition, self).__init__(net, z_dim, u_dim)
+            nn.Linear(30, 30),
+            nn.BatchNorm1d(30),
+            nn.ReLU()
+        )
+        net_z_next = nn.Linear(30, z_dim * 2)
+        if armotized:
+            net_A = nn.Linear(30, z_dim**2)
+            net_B = nn.Linear(30, u_dim**2)
+        else:
+            net_A, net_B = None, None
+        super(PendulumDynamics, self).__init__(net, net_z_next, net_A, net_B, z_dim, u_dim, armotized)
+
+class PendulumBackwardDynamics(BackwardDynamics):
+    def __init__(self, z_dim, u_dim, x_dim):
+        net_z = nn.Linear(z_dim, 10)
+        net_u = nn.Linear(u_dim, 10)
+        net_x = nn.Linear(x_dim, 200)
+        net_joint = nn.Sequential(
+            nn.Linear(10 + 10 + 200, 200),
+            nn.ReLU(),
+
+            nn.Linear(200, z_dim * 2)
+        )
+        super(PendulumBackwardDynamics, self).__init__(net_z, net_u, net_x, net_joint, z_dim, u_dim, x_dim)
 
 CONFIG = {
     'planar': (PlanarEncoder, PlanarDecoder, PlanarDynamics, PlanarBackwardDynamics),
-    # 'pendulum': (PendulumEncoder, PendulumDecoder, PendulumTransition)
+    'pendulum': (PendulumEncoder, PendulumDecoder, PendulumDynamics, PendulumBackwardDynamics)
 }
 
 def load_config(name):

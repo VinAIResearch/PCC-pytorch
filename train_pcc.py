@@ -11,24 +11,18 @@ from datasets import *
 from losses import *
 from data.planar.sample_planar import sample as planar_sampler
 from data.planar.sample_planar import PlanarEnv
+from gym.envs.classic_control import PendulumEnv
+from data.pendulum.sample_pendulum import sample as pendulum_sampler
 
 torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
 
 device = torch.device("cuda")
-envs = {'planar': PlanarEnv}
-samplers = {'planar': planar_sampler}
-datasets = {'planar': PlanarDataset}
-settings = {'planar': (1600, 2, 2)}
+envs = {'planar': PlanarEnv, 'pendulum': PendulumEnv}
+samplers = {'planar': planar_sampler, 'pendulum': pendulum_sampler}
+datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset}
+settings = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
 num_eval = 10 # number of images evaluated on tensorboard
-
-# dataset = datasets['planar2']('./data/data/' + 'planar2')
-# x, u, x_next = dataset[0]
-# imgplot = plt.imshow(x.squeeze(), cmap='gray')
-# plt.show()
-# print (np.array(u, dtype=float))
-# imgplot = plt.imshow(x_next.squeeze(), cmap='gray')
-# plt.show()
 
 def compute_loss(model, armotized, x, x_next,
                 x_next_recon,
@@ -119,8 +113,6 @@ def evaluate(model, test_loader):
             x = x.to(device).double().view(-1, model.x_dim)
             u = u.to(device).double()
             x_next = x_next.to(device).double().view(-1, model.x_dim)
-            # x = x.view(-1, model.x_dim)
-            # x_next = x_next.view(-1, model.x_dim)
 
             x_recon, x_next_pred = model.predict(x, u)
             loss_1, loss_2 = compute_log_likelihood(x, x_recon, x_next, x_next_pred)
@@ -135,7 +127,6 @@ def predict_x_next(model, env_name, num_eval):
     # frist sample a true trajectory from the environment
     sampler = samplers[env_name]
     env = envs[env_name]()
-
     state_samples, sampled_data = sampler(env, num_eval)
 
     # use the trained model to predict the next observation
@@ -146,7 +137,7 @@ def predict_x_next(model, env_name, num_eval):
         u = torch.from_numpy(u).double().to(device).unsqueeze(dim=0)
         with torch.no_grad():
             _, x_next_pred = model.predict(x_reshaped, u)
-        predicted.append(x_next_pred.squeeze().cpu().numpy().reshape(env.width, env.height))
+        predicted.append(x_next_pred.squeeze().cpu().numpy().reshape(sampler.width, sampler.height))
     true_x_next = [data[-1] for data in sampled_data]
     return true_x_next, predicted
 
@@ -199,17 +190,16 @@ def main(args):
 
     x_dim, z_dim, u_dim = settings[env_name]
     model = PCC(armotized = armotized, x_dim=x_dim, z_dim=z_dim, u_dim=u_dim, env=env_name).to(device)
-    # model.load_state_dict(torch.load('result/planar/log_no_armo_1/model_5000'))
 
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.999), eps=1e-8, lr=lr, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=int(epoches / 3), gamma=0.5)
 
-    log_path = 'test_logs/' + env_name + '/' + log_dir
+    log_path = 'logs/' + env_name + '/' + log_dir
     if not path.exists(log_path):
         os.makedirs(log_path)
     writer = SummaryWriter(log_path)
 
-    result_path = 'test_result/' + env_name + '/' + log_dir
+    result_path = 'result/' + env_name + '/' + log_dir
     if not path.exists(result_path):
         os.makedirs(result_path)
     with open(result_path + '/settings', 'w') as f:
@@ -225,18 +215,11 @@ def main(args):
         print("Training loss: %f" % (avg_loss))
         print ('--------------------------------------')
 
-        # # evaluate on test set
-        # state_loss, next_state_loss = evaluate(model, test_loader)
-        # print('State loss: ' + str(state_loss))
-        # print('Next state loss: ' + str(next_state_loss))
-
         # ...log the running loss
         writer.add_scalar('prediction loss', avg_pred_loss, i)
         writer.add_scalar('consistency loss', avg_consis_loss, i)
         writer.add_scalar('curvature loss', avg_cur_loss, i)
         writer.add_scalar('training loss', avg_loss, i)
-        # writer.add_scalar('state loss', state_loss, i)
-        # writer.add_scalar('next state loss', next_state_loss, i)
 
         # save model
         if (i + 1) % iter_save == 0:
@@ -247,7 +230,6 @@ def main(args):
 
             torch.save(model.state_dict(), result_path + '/model_' + str(i + 1))
             with open(result_path + '/loss_' + str(i + 1), 'w') as f:
-                # f.write('\n'.join([str(avg_loss), str(state_loss), str(next_state_loss)]))
                 f.write('\n'.join(['Prediction loss: ' + str(avg_pred_loss), 
                                 'Consistency loss: ' + str(avg_consis_loss), 
                                 'Curvature loss: ' + str(avg_cur_loss),

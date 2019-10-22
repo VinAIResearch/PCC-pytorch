@@ -10,6 +10,9 @@ from PIL import Image, ImageDraw
 np.random.seed(1)
 env_path = os.path.dirname(os.path.abspath(__file__))
 
+width = 40
+height = 40
+
 class PlanarEnv(object):
     width = 40
     height = 40
