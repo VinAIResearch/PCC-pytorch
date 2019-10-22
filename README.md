@@ -25,6 +25,8 @@ Then install the patch version of gym in order to sample the pendulum data
 ```
 cd gym
 
+git checkout 5f74dc330d5ed45412ef276f41a84e900681e17d
+
 python setup.py install
 ```
 
