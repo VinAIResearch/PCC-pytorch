@@ -137,7 +137,7 @@ def predict_x_next(model, env_name, num_eval):
         u = torch.from_numpy(u).double().to(device).unsqueeze(dim=0)
         with torch.no_grad():
             _, x_next_pred = model.predict(x_reshaped, u)
-        predicted.append(x_next_pred.squeeze().cpu().numpy().reshape(sampler.width, sampler.height))
+        predicted.append(x_next_pred.squeeze().cpu().numpy().reshape(env.width, env.height))
     true_x_next = [data[-1] for data in sampled_data]
     return true_x_next, predicted
 
@@ -223,9 +223,9 @@ def main(args):
 
         # save model
         if (i + 1) % iter_save == 0:
-            writer.add_figure('actual vs. predicted observations',
-                              plot_preds(model, env_name, num_eval),
-                              global_step=i)
+            # writer.add_figure('actual vs. predicted observations',
+            #                   plot_preds(model, env_name, num_eval),
+            #                   global_step=i)
             print('Saving the model.............')
 
             torch.save(model.state_dict(), result_path + '/model_' + str(i + 1))

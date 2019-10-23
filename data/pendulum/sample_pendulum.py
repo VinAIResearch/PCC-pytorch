@@ -11,11 +11,8 @@ import argparse
 np.random.seed(1)
 env_path = os.path.dirname(os.path.abspath(__file__))
 
-width = 48 * 2
-height = 48
-
 def render(env, state):
-    # need two observations to restore the Markov property
+    # stack two observations to restore the Markov property
     before1 = state
     before2 = env.step_from_state(state, np.array([0]))
     return map(env.render_state, (before1[0], before2[0]))

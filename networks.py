@@ -177,8 +177,8 @@ class PendulumDynamics(Dynamics):
         )
         net_z_next = nn.Linear(30, z_dim * 2)
         if armotized:
-            net_A = nn.Linear(30, z_dim**2)
-            net_B = nn.Linear(30, u_dim**2)
+            net_A = nn.Linear(30, z_dim*z_dim)
+            net_B = nn.Linear(30, u_dim*z_dim)
         else:
             net_A, net_B = None, None
         super(PendulumDynamics, self).__init__(net, net_z_next, net_A, net_B, z_dim, u_dim, armotized)

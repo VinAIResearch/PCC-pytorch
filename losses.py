@@ -52,9 +52,8 @@ def curvature(model, z, u, delta, armotized):
         cur_loss = torch.mean(torch.sum(taylor_error.pow(2), dim = 1))
     else:
         z_dim, u_dim = z.size(1), u.size(1)
-        
         A_bar = A_bar.view(-1, z_dim, z_dim)
-        B_bar = B_bar.view(-1, u_dim, u_dim)
+        B_bar = B_bar.view(-1, z_dim, u_dim)
         eps_z = eps_z.view(-1, z_dim, 1)
         eps_u = eps_u.view(-1, u_dim, 1)
         taylor_error = f_z_bar - (torch.bmm(A_bar, eps_z).squeeze() + torch.bmm(B_bar, eps_u).squeeze()) - f_z
