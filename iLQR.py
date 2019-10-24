@@ -189,7 +189,7 @@ def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iter
 
 def main():
     device = torch.device("cuda")
-    folder = 'new_cur_result/planar'
+    folder = 'result_skip/planar'
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
     log_folders.sort()
     avg_model_percent = 0.0
@@ -200,7 +200,7 @@ def main():
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_new_cur_result/' + log_base
+        model_path = 'iLQR_skip_result/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print ('Performing iLQR for ' + log_base)
@@ -285,7 +285,7 @@ def main():
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_new_cur_result/result.txt', 'w') as f:
+    with open('iLQR_skip_result/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
  
