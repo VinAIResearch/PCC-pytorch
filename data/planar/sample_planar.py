@@ -6,11 +6,13 @@ import json
 from datetime import datetime
 import argparse
 from PIL import Image, ImageDraw
-from data.planar.planar_env import PlanarEnv
 
 np.random.seed(1)
 env_path = os.path.dirname(os.path.abspath(__file__))
+os.sys.path.append(env_path)
+from planar_env import PlanarEnv
 
+np.random.seed(1)
 
 def sample(planar_env, sample_size):
     """

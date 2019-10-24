@@ -10,7 +10,7 @@ from pcc_model import PCC
 from datasets import *
 from losses import *
 from data.planar.sample_planar import sample as planar_sampler
-from data.planar.sample_planar import PlanarEnv
+from data.planar.planar_env import PlanarEnv
 from gym.envs.classic_control import PendulumEnv
 from data.pendulum.sample_pendulum import sample as pendulum_sampler
 
