@@ -49,7 +49,7 @@ class PlanarEnv(object):
                 return True
         return False
 
-    def render(self, s):
+    def render_state(self, s):
         top, bottom, left, right = self.get_pixel_location(s)
         x = self.generate_env()
         x[top:bottom, left:right] = 1.  # robot is white on black background

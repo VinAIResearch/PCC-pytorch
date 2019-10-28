@@ -23,7 +23,7 @@ def sample(pendulum_env, sample_size, step_size=1):
 
     for i in trange(sample_size):
         # random initial state
-        th = np.random.uniform(0, np.pi * 2)
+        th = np.random.uniform(0, np.pi * 2) # normalized when rendering or taking a step
         thdot = np.random.uniform(-8, 8)
 
         state = np.array([th, thdot])

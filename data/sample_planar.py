@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from os import path
+from pathlib import Path
 from tqdm import trange
 import json
 from datetime import datetime
@@ -8,35 +9,34 @@ import argparse
 from PIL import Image, ImageDraw
 
 np.random.seed(1)
-env_path = os.path.dirname(os.path.abspath(__file__))
-os.sys.path.append(env_path)
-from planar_env import PlanarEnv
+root_path = str(Path(os.path.dirname(os.path.abspath(__file__))).parent)
+os.sys.path.append(root_path)
+from data.planar.planar_env import PlanarEnv
+from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 
 np.random.seed(1)
 
-def sample(planar_env, sample_size):
+def sample(mdp, sample_size):
     """
     return [(s, u, s_next)]
     """
     state_samples = []
     for i in trange(sample_size, desc = 'Sampling data'):
-        while True:
-            s = planar_env.random_state()
-            if not planar_env.is_colliding(s):
-                break
-        u, s_next = planar_env.random_step(s)
+        s = mdp.sample_valid_random_state()
+        u = mdp.sample_valid_random_action(s)
+        s_next = mdp.transition_function(s, u)
         state_samples.append((s, u, s_next))
-    obs_samples = [(planar_env.render(s), u, planar_env.render(s_next)) for s, u, s_next in state_samples]
+    obs_samples = [(mdp.render(s), u, mdp.render(s_next)) for s, u, s_next in state_samples]
     return state_samples, obs_samples
 
-def write_to_file(planar_env, sample_size, output_dir = env_path + '/raw'):
+def write_to_file(mdp, sample_size, output_dir):
     """
     write [(x, u, x_next)] to output dir
     """
     if not path.exists(output_dir):
         os.makedirs(output_dir)
 
-    state_samples, obs_samples = sample(planar_env, sample_size)
+    state_samples, obs_samples = sample(mdp, sample_size)
 
     samples = []
 
@@ -63,7 +63,7 @@ def write_to_file(planar_env, sample_size, output_dir = env_path + '/raw'):
             {
                 'metadata': {
                     'num_samples': sample_size,
-                    'max_distance': planar_env.max_step_len,
+                    'max_distance': mdp.max_step,
                     'time_created': str(datetime.now()),
                     'version': 1
                 },
@@ -72,13 +72,15 @@ def write_to_file(planar_env, sample_size, output_dir = env_path + '/raw'):
 
 def main(args):
     sample_size = args.sample_size
-    planar_env = PlanarEnv()
-    write_to_file(planar_env, sample_size=sample_size)
+    noise = args.noise
+    mdp = PlanarObstaclesMDP(noise = noise)
+    write_to_file(mdp, sample_size, root_path + '/data/planar/raw')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='sample planar data')
 
     parser.add_argument('--sample_size', required=True, type=int, help='the number of samples')
+    parser.add_argument('--noise', default=0, type=int, help='level of noise')
 
     args = parser.parse_args()
 

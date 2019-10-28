@@ -2,91 +2,30 @@ import torch
 import numpy as np
 from PIL import Image
 import imageio
-from matplotlib.animation import FuncAnimation, writers
-import matplotlib.pyplot as plt
 import os
 import json
-import time
+import argparse
+from torchvision.transforms import ToTensor
 
 from pcc_model import PCC
-from data.planar.sample_planar import PlanarEnv
-
-planar_env = PlanarEnv()
+import data.planar.sample_planar as planar_sampler
+from data.planar.planar_env import PlanarEnv
+from gym.envs.classic_control import PendulumEnv
+import data.pendulum.sample_pendulum as pendulum_sampler
+from ilqr_utils import *
+from datasets import *
 
 np.random.seed(0)
 torch.manual_seed(0)
+torch.set_default_dtype(torch.float64)
 
-z_dim, u_dim = 2, 2
-# define cost matrices
-R_z = 10 * torch.eye(z_dim).cuda()
-R_u = 1 * torch.eye(u_dim).cuda()
-horizon = 40
-
-def draw_start_goal():
-    """
-    return a random start state (one of three corners), and the goal state (bottom-right corner)
-    """
-    s_goal = np.random.uniform(planar_env.height - planar_env.rw - 3,
-                                planar_env.width - planar_env.rw, size=2)
-    corner_idx = np.random.randint(0, 3)
-    if corner_idx == 0:
-        s_start = np.random.uniform(planar_env.rw, planar_env.rw + 3, size=2)
-    if corner_idx == 1:
-        x = np.random.uniform(planar_env.rw, planar_env.rw+3)
-        y = np.random.uniform(planar_env.width - planar_env.rw - 3,
-                            planar_env.width - planar_env.rw)
-        s_start = np.array([x, y])
-    if corner_idx == 2:
-        x = np.random.uniform(planar_env.width - planar_env.rw - 3,
-                            planar_env.width - planar_env.rw)
-        y = np.random.uniform(planar_env.rw, planar_env.rw+3)
-        s_start = np.array([x, y])
-    return corner_idx, s_start, s_goal
-
-def random_traj(z_start, horizon, dynamics):
-    """
-    initialize a random trajectory
-    """
-    z = z_start
-    z_seq = []
-    u_seq = []
-    for i in range(horizon):
-        z_seq.append(z)
-        u = torch.empty(1, u_dim).uniform_(-planar_env.max_step_len, planar_env.max_step_len).cuda()
-        u_seq.append(u)
-        with torch.no_grad():
-            z_next, _, _, _ = dynamics(z, u)
-        z = z_next
-    z_seq.append(z)
-    u_seq.append(None)
-    return z_seq, u_seq
-
-def jacobian(dynamics, z, u):
-    """
-    compute the jacobian of F(z,u) w.r.t z, u
-    """
-    if dynamics.armotized:
-        z_next, _, A, B = dynamics(z, u)
-        return A.view(z_dim, z_dim), B.view(u_dim, u_dim)
-    z, u = z.squeeze().repeat(z_dim, 1), u.squeeze().repeat(z_dim, 1)
-    z = z.detach().requires_grad_(True)
-    u = u.detach().requires_grad_(True)
-    z_next, _, _, _ = dynamics(z, u)
-    grad_inp = torch.eye(z_dim).cuda()
-    A, B = torch.autograd.grad(z_next, [z, u], [grad_inp, grad_inp])
-    return A, B
-
-def seq_jacobian(dynamics, z_seq, u_seq):
-    """
-    compute the jacobian w.r.t each pair in the trajectory
-    """
-    A_seq, B_seq = [], []
-    for i in range(len(z_seq) - 1):
-        z, u = z_seq[i], u_seq[i]
-        A, B = jacobian(dynamics, z, u)
-        A_seq.append(A)
-        B_seq.append(B)
-    return A_seq, B_seq
+samplers = {'planar': planar_sampler, 'pendulum': pendulum_sampler}
+envs = {'planar': PlanarEnv, 'pendulum': PendulumEnv}
+network_dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
+img_dims = {'planar': (40, 40), 'pendulum': (48, 96)}
+horizons = {'planar': 40, 'pendulum': 400}
+K_z = 10
+K_u = 1
 
 def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_next_z, V_next_zz):
     """
@@ -109,6 +48,27 @@ def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_next_z, V_next_zz):
     V_z = Q_z.transpose(1,0) - k.transpose(1,0).mm(Q_uu).mm(K)
     V_zz = Q_zz - K.transpose(1,0).mm(Q_uu).mm(K)
     return k, K, V_z, V_zz
+
+def iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics):
+    """
+    - run backward: linearize around the current trajectory and perform optimal control
+    - run forward: update the current trajectory
+    - repeat
+    """
+    old_loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
+    V_T_z = 2 * R_z.mm((z_seq[-1] - z_goal).view(-1,1))
+    V_T_zz = 2 * R_z
+    A_seq, B_seq = seq_jacobian(dynamics, z_seq, u_seq)
+    V_next_z, V_next_zz = V_T_z, V_T_zz
+    k, K = [], []
+    act_seq_len = len(z_seq)
+    for i in range(2, act_seq_len + 1):
+        t = act_seq_len - i
+        k_t, K_t, V_t_z, V_t_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t], V_next_z, V_next_zz)
+        k.insert(0, k_t)
+        K.insert(0, K_t)
+        V_next_z, V_next_zz = V_t_z, V_t_zz
+    return k, K
 
 def update_seq_act(z_seq, z_start, u_seq, k, K, dynamics):
     """
@@ -135,30 +95,10 @@ def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
     loss += z_T_diff.view(1,-1).mm(R_z).mm(z_T_diff.view(-1,1))
     return loss
 
-def iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters=10):
-    """
-    - run backward: linearize around the current trajectory and perform optimal control
-    - run forward: update the current trajectory
-    - repeat
-    """
-    old_loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
-    V_T_z = 2 * R_z.mm((z_seq[-1] - z_goal).view(-1,1))
-    V_T_zz = 2 * R_z
-    A_seq, B_seq = seq_jacobian(dynamics, z_seq, u_seq)
-    V_next_z, V_next_zz = V_T_z, V_T_zz
-    k, K = [], []
-    act_seq_len = len(z_seq)
-    for i in range(2, act_seq_len + 1):
-        t = act_seq_len - i
-        k_t, K_t, V_t_z, V_t_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t], V_next_z, V_next_zz)
-        k.insert(0, k_t)
-        K.insert(0, K_t)
-        V_next_z, V_next_zz = V_t_z, V_t_zz
-    return k, K
-
-def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iters_ilqr, horizon):
+def reciding_horizon(env_name, env, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon):
     # for the first step
-    z_seq, u_seq = random_traj(z_start, horizon, dynamics)
+    z_dim, u_dim = R_z.size(0), R_u.size(0)
+    z_seq, u_seq = random_traj(z_start, z_dim, u_dim, horizon, dynamics, env_name, env)
     loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
     print ('Horizon {:02d}: {:05f}'.format(0, loss.item()))
     u_opt = []
@@ -172,9 +112,19 @@ def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iter
         u_opt.append(u_first_opt)
 
         # get z_k+1 from the true dynamics
-        s = np.round(s + np.array(u_first_opt.squeeze().cpu().detach()))
-        next_obs = planar_env.render(s)
-        next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, 1600)
+        if env_name == 'planar':
+            s = s + np.array(u_first_opt.squeeze().cpu().detach())
+            next_obs = env.render_state(s)
+            next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, x_dim)
+        elif env_name == 'pendulum':
+            s = env.step_from_state(s, u_first_opt.squeeze().cpu().detach().numpy())
+            next_obs_1, next_obs_2 = sampler.render(env, s)
+            next_obs = Image.fromarray(np.hstack((next_obs_1, next_obs_2)))
+            next_x = ToTensor()((Image.fromarray(next_obs).convert('L').
+                        resize((img_dim[0], img_dim[1])))).cuda().transpose(-1,-2).double()
+            print (next_x.size())
+        # next_obs = env.render_state(s)
+        # next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, 1600)
         z_start, _ = encoder(next_x)
 
         # update the nominal trajectory
@@ -187,11 +137,24 @@ def reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, iter
         print ('Horizon {:02d}: {:05f}'.format(i+1, loss.item()))
     return u_opt
 
-def main():
-    device = torch.device("cuda")
-    folder = 'result_skip/planar'
+def main(args):
+    env_name = args.env
+
+    sampler = samplers[env_name]
+    env = envs[env_name]()
+    x_dim, z_dim, u_dim = network_dims[env_name]
+    img_dim = img_dims[env_name]
+    horizon = horizons[env_name]
+    R_z = K_z * torch.eye(z_dim).cuda()
+    R_u = K_u * torch.eye(u_dim).cuda()
+
+    folder = 'result/' + env_name
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
     log_folders.sort()
+    # print (log_folders)
+
+    device = torch.device("cuda")
+    
     avg_model_percent = 0.0
     best_model_percent = 0.0
     for log in log_folders:
@@ -200,12 +163,12 @@ def main():
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_skip_result/' + log_base
+        model_path = 'iLQL_clip_result/' +  env_name + '/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print ('Performing iLQR for ' + log_base)
 
-        model = PCC(armotized, 1600, 2, 2, 'planar').to(device)
+        model = PCC(armotized, x_dim, z_dim, u_dim, env_name).to(device)
         model.load_state_dict(torch.load(log + '/model_5000'))
         model.eval()
         dynamics = model.dynamics
@@ -215,16 +178,30 @@ def main():
         for task in range(10):
             print ('Performing task ' + str(task+1))
             # draw random initial state and goal state
-            corner_idx, s_start, s_goal = draw_start_goal()
-            image_start = planar_env.render(s_start)
-            image_goal = planar_env.render(s_goal)
-            x_start = torch.from_numpy(image_start).cuda().squeeze(0).view(-1, 1600)
-            x_goal = torch.from_numpy(image_goal).cuda().squeeze(0).view(-1, 1600)
+            corner_idx, s_start, s_goal = random_start_goal(env_name, env)
+            if env_name == 'planar':
+                image_start = env.render_state(s_start)
+                image_goal = env.render_state(s_goal)
+                x_start = torch.from_numpy(image_start).cuda().squeeze(0).view(-1, x_dim)
+                x_goal = torch.from_numpy(image_goal).cuda().squeeze(0).view(-1, x_dim)
+            elif env_name == 'pendulum':
+                image_start_1, image_start_2 = sampler.render(env, s_start)
+                image_start = Image.fromarray(np.hstack((image_start_1, image_start_2)))
+                image_goal_1, image_goal_2 = sampler.render(env, s_goal)
+                image_goal = Image.fromarray(np.hstack((image_goal_1, image_goal_2)))
+
+                # print ('x dim ' + str(x_dim))
+                x_start = ToTensor()(image_start.convert('L').
+                            resize((img_dim[0], img_dim[1]))).cuda().transpose(-1,-2).reshape(-1, x_dim).double()
+                # print ('x start ' + str(x_start.size()))
+                x_goal = ToTensor()(image_goal.convert('L').
+                            resize((img_dim[0], img_dim[1]))).cuda().transpose(-1,-2).reshape(-1, x_dim).double()
+                # print ('x goal ' + str(x_goal.size()))
             z_start, _ = model.encode(x_start)
             z_goal, _ = model.encode(x_goal)
 
             # perform optimal control for this task
-            u_opt = reciding_horizon(R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, 10, 40)
+            u_opt = reciding_horizon(env_name, env, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, 40)
             if u_opt is None:
                 avg_percent += 0
                 with open(model_path + '/result.txt', 'a+') as f:
@@ -237,44 +214,26 @@ def main():
             close_steps = 0.0
             for i, u in enumerate(u_opt):
                 u = np.array(u.squeeze().cpu().detach())
-                s = np.round(s + u)
-                if np.sqrt(np.sum(s - s_goal)**2) <= 2:
+                if env_name == 'planar':
+                    s = s + u
+                    image = env.render_state(s)
+                    images.append(image)
+                elif env_name == 'pendulum':
+                    s = env.step_from_state(s, u)
+                    image = env.render_state(s[0])
+                    images.append(image)
+                if is_close_goal(env_name, s, s_goal):
                     close_steps += 1
-                image = planar_env.render(s)
-                images.append(image)
-
-            # save trajectory as gif file
-            fig, aa = plt.subplots(1, 2)
-            m1 = aa[0].matshow(
-                images[0], cmap=plt.cm.gray, vmin=0., vmax=1.)
-            aa[0].set_title('Time step 0')
-            aa[0].set_yticklabels([])
-            aa[0].set_xticklabels([])
-            m2 = aa[1].matshow(
-                image_goal, cmap=plt.cm.gray, vmin=0., vmax=1.)
-            aa[1].set_title('goal')
-            aa[1].set_yticklabels([])
-            aa[1].set_xticklabels([])
-            fig.tight_layout()
-
-            def updatemat2(t):
-                m1.set_data(images[t])
-                aa[0].set_title('Time step ' + str(t))
-                m2.set_data(image_goal)
-                return m1, m2
-
-            anim = FuncAnimation(
-                fig, updatemat2, frames=40, interval=200, blit=True, repeat=True)
-
-            Writer = writers['imagemagick']  # animation.writers.avail
-            writer = Writer(fps=1, metadata=dict(artist='Me'), bitrate=1800)
-            anim.save(model_path + '/task_{:01d}.gif'.format(task+1), writer=writer)
 
             # compute the percentage close to goal
             percent = close_steps / 40
             avg_percent += percent
             with open(model_path + '/result.txt', 'a+') as f:
                 f.write('Task {:01d} start at corner {:01d}: '.format(task+1, corner_idx) + str(close_steps / 40) + '\n')
+
+            # save trajectory as gif file
+            gif_path = model_path + '/task_{:01d}.gif'.format(task+1)
+            save_traj(images, image_goal, gif_path)
         
         avg_percent = avg_percent / 10
         avg_model_percent += avg_percent
@@ -285,9 +244,14 @@ def main():
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_skip_result/result.txt', 'w') as f:
+    with open('iLQR_clip_result/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
  
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='train pcc model')
+    parser.add_argument('--env', required=True, type=str, help='environment used for training')
+
+    args = parser.parse_args()
+
+    main(args)

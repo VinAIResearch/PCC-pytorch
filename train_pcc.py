@@ -9,19 +9,18 @@ import sys
 from pcc_model import PCC
 from datasets import *
 from losses import *
-from data.planar.sample_planar import sample as planar_sampler
-from data.planar.planar_env import PlanarEnv
+
+from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from gym.envs.classic_control import PendulumEnv
-from data.pendulum.sample_pendulum import sample as pendulum_sampler
+from latent_map_evolve import *
 
 torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
 
 device = torch.device("cuda")
-envs = {'planar': PlanarEnv, 'pendulum': PendulumEnv}
-samplers = {'planar': planar_sampler, 'pendulum': pendulum_sampler}
+mdps = {'planar': PlanarObstaclesMDP, 'pendulum': PendulumEnv}
 datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset}
-settings = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
+dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
 num_eval = 10 # number of images evaluated on tensorboard
 
 def compute_loss(model, armotized, x, x_next,
@@ -68,8 +67,7 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
         x = x.to(device).double().view(-1, model.x_dim)
         u = u.to(device).double()
         x_next = x_next.to(device).double().view(-1, model.x_dim)
-        # x = x.view(-1, model.x_dim)
-        # x_next = x_next.view(-1, model.x_dim)
+
         optimizer.zero_grad()
 
         x_next_recon, \
@@ -97,74 +95,11 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
 
     return avg_pred_loss / num_batches, avg_consis_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
 
-def compute_log_likelihood(x, x_recon, x_next, x_next_pred):
-    loss_1 = -torch.mean(torch.sum(x * torch.log(1e-8 + x_recon)
-                                   + (1 - x) * torch.log(1e-8 + 1 - x_recon), dim=1))
-    loss_2 = -torch.mean(torch.sum(x_next * torch.log(1e-8 + x_next_pred)
-                                   + (1 - x_next) * torch.log(1e-8 + 1 - x_next_pred), dim=1))
-    return loss_1, loss_2
-
-def evaluate(model, test_loader):
-    model.eval()
-    num_batches = len(test_loader)
-    state_loss, next_state_loss = 0., 0.
-    with torch.no_grad():
-        for x, u, x_next in test_loader:
-            x = x.to(device).double().view(-1, model.x_dim)
-            u = u.to(device).double()
-            x_next = x_next.to(device).double().view(-1, model.x_dim)
-
-            x_recon, x_next_pred = model.predict(x, u)
-            loss_1, loss_2 = compute_log_likelihood(x, x_recon, x_next, x_next_pred)
-            state_loss += loss_1
-            next_state_loss += loss_2
-
-    return state_loss.item() / num_batches, next_state_loss.item() / num_batches
-
-# code for visualizing the training process
-def predict_x_next(model, env_name, num_eval):
-    model.eval()
-    # frist sample a true trajectory from the environment
-    sampler = samplers[env_name]
-    env = envs[env_name]()
-    state_samples, sampled_data = sampler(env, num_eval)
-
-    # use the trained model to predict the next observation
-    predicted = []
-    for x, u, x_next in sampled_data:
-        x_reshaped = x.reshape(-1)
-        x_reshaped = torch.from_numpy(x_reshaped).to(device).double().unsqueeze(dim=0)
-        u = torch.from_numpy(u).double().to(device).unsqueeze(dim=0)
-        with torch.no_grad():
-            _, x_next_pred = model.predict(x_reshaped, u)
-        predicted.append(x_next_pred.squeeze().cpu().numpy().reshape(env.width, env.height))
-    true_x_next = [data[-1] for data in sampled_data]
-    return true_x_next, predicted
-
-def plot_preds(model, env, num_eval):
-    true_x_next, pred_x_next = predict_x_next(model, env, num_eval)
-
-    # plot the predicted and true observations
-    fig, axes =plt.subplots(nrows=2, ncols=num_eval)
-    plt.setp(axes, xticks=[], yticks=[])
-    pad = 5
-    axes[0, 0].annotate('True observations', xy=(0, 0.5), xytext=(-axes[0,0].yaxis.labelpad - pad, 0),
-                   xycoords=axes[0,0].yaxis.label, textcoords='offset points',
-                   size='large', ha='right', va='center')
-    axes[1, 0].annotate('Predicted observations', xy=(0, 0.5), xytext=(-axes[1, 0].yaxis.labelpad - pad, 0),
-                        xycoords=axes[1, 0].yaxis.label, textcoords='offset points',
-                        size='large', ha='right', va='center')
-
-    for idx in np.arange(num_eval):
-        axes[0, idx].imshow(true_x_next[idx], cmap='Greys')
-        axes[1, idx].imshow(pred_x_next[idx], cmap='Greys')
-    fig.tight_layout()
-    return fig
-
 def main(args):
     env_name = args.env
-    armotized = args.armotized
     assert env_name in ['planar', 'pendulum']
+    mdp = mdps[env_name]()
+    armotized = args.armotized
     log_dir = args.log_dir
     seed = args.seed
     batch_size = args.batch_size
@@ -183,30 +118,29 @@ def main(args):
     torch.manual_seed(seed)
 
     dataset = datasets[env_name]
-    train_set = dataset('data/' + env_name, train=True)
-    test_set = dataset('data/' + env_name, train=False)
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=4)
-    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, drop_last=False, num_workers=4)
+    data = dataset('data/' + env_name)
+    data_loader = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=4)
 
-    x_dim, z_dim, u_dim = settings[env_name]
+    x_dim, z_dim, u_dim = dims[env_name]
     model = PCC(armotized = armotized, x_dim=x_dim, z_dim=z_dim, u_dim=u_dim, env=env_name).to(device)
 
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.999), eps=1e-8, lr=lr, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=int(epoches / 3), gamma=0.5)
 
-    log_path = 'logs/' + env_name + '/' + log_dir
+    log_path = 'new_mdp_logs/' + env_name + '/' + log_dir
     if not path.exists(log_path):
         os.makedirs(log_path)
     writer = SummaryWriter(log_path)
 
-    result_path = 'result/' + env_name + '/' + log_dir
+    result_path = 'new_mdp_result/' + env_name + '/' + log_dir
     if not path.exists(result_path):
         os.makedirs(result_path)
     with open(result_path + '/settings', 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
+    latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
-        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized)
+        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam, vae_coeff, determ_coeff, optimizer, armotized)
         scheduler.step()
         print('Epoch %d' % i)
         print("Prediction loss: %f" % (avg_pred_loss))
@@ -220,12 +154,11 @@ def main(args):
         writer.add_scalar('consistency loss', avg_consis_loss, i)
         writer.add_scalar('curvature loss', avg_cur_loss, i)
         writer.add_scalar('training loss', avg_loss, i)
-
+        if (i+1) % 10 == 0:
+            map_i = draw_latent_map(model, mdp)
+            latent_maps.append(map_i)
         # save model
         if (i + 1) % iter_save == 0:
-            # writer.add_figure('actual vs. predicted observations',
-            #                   plot_preds(model, env_name, num_eval),
-            #                   global_step=i)
             print('Saving the model.............')
 
             torch.save(model.state_dict(), result_path + '/model_' + str(i + 1))
@@ -235,7 +168,7 @@ def main(args):
                                 'Curvature loss: ' + str(avg_cur_loss),
                                 'Training loss: ' + str(avg_loss)
                                 ]))
-
+    latent_maps[0].save(result_path + '/latent_map.gif', format='GIF', append_images=latent_maps[1:], save_all=True, duration=100, loop=0)
     writer.close()
 
 def str2bool(v):
