@@ -31,12 +31,13 @@ class PlanarObstaclesMDP(object):
         # return True
 
     def is_low_error(self, s, u, epsilon = 0.1):
-        s_next = s + u
-        # if the difference between the action and the actual distance between x and x_next are in range(0,epsilon)
-        top, bottom, left, right = self.get_pixel_location(s)
-        top_next, bottom_next, left_next, right_next = self.get_pixel_location(s_next)
-        x_diff = np.array([top_next - top, left_next - left], dtype=np.float)
-        return (not np.sqrt(np.sum((x_diff - u)**2)) > epsilon)
+        # s_next = s + u
+        # # if the difference between the action and the actual distance between x and x_next are in range(0,epsilon)
+        # top, bottom, left, right = self.get_pixel_location(s)
+        # top_next, bottom_next, left_next, right_next = self.get_pixel_location(s_next)
+        # x_diff = np.array([top_next - top, left_next - left], dtype=np.float)
+        # return (not np.sqrt(np.sum((x_diff - u)**2)) > epsilon)
+        return True
 
     # def is_valid_action(self, s, u):
     #     # check if the action has low error
@@ -72,7 +73,7 @@ class PlanarObstaclesMDP(object):
 
     def sample_valid_random_action(self, s):
         while True:
-            u = np.random.uniform(-self.max_step, self.max_step, size=2)
+            u = np.random.uniform(-self.max_step, self.max_step, size=self.action_dim)
             if self.is_valid_action(s, u):
                 return u
 

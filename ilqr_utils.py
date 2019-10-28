@@ -2,24 +2,26 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
 import numpy as np
 import torch
+from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 
-def random_traj(z_start, z_dim, u_dim, horizon, dynamics, env_name, env):
+np.random.seed(0)
+
+def random_traj(mdp, s_start, z_start, horizon, dynamics):
     """
-    initialize a random trajectory
+    initialize a valid random trajectory
     """
     z = z_start
     z_seq = []
     u_seq = []
+    s = s_start
     for i in range(horizon):
         z_seq.append(z)
-        if env_name == 'planar':
-            u = torch.empty(1, u_dim).uniform_(-env.max_step_len, env.max_step_len).cuda()
-        elif env_name == 'pendulum':
-            u = torch.empty(1, u_dim).uniform_(-env.max_torque, env.max_torque).cuda()
+        u = mdp.sample_valid_random_action(s)
         u_seq.append(u)
         with torch.no_grad():
             z_next, _, _, _ = dynamics(z, u)
         z = z_next
+        s = mdp.transition_function(s, u)
     z_seq.append(z)
     u_seq.append(None)
     return z_seq, u_seq
@@ -53,34 +55,34 @@ def seq_jacobian(dynamics, z_seq, u_seq):
         B_seq.append(B)
     return A_seq, B_seq
 
-def random_start_goal(env_name, env):
+def random_start_goal(env_name, mdp):
     """
     return a random start state and the goal state
     """
     if env_name == 'planar':
-        s_goal = np.random.uniform(env.height - env.rw - 3,
-                                    env.width - env.rw, size=2)
+        s_goal = np.random.uniform(mdp.height - mdp.rw - 3,
+                                    mdp.width - mdp.rw, size=2)
         idx = np.random.randint(0, 3)
         if idx == 0:
-            s_start = np.random.uniform(env.rw, env.rw + 3, size=2)
+            s_start = np.random.uniform(mdp.half_agent_size, mdp.half_agent_size + 3, size=2)
         if idx == 1:
-            x = np.random.uniform(env.rw, env.rw+3)
-            y = np.random.uniform(env.width - env.rw - 3,
-                                env.width - env.rw)
+            x = np.random.uniform(mdp.rw, mdp.rw+3)
+            y = np.random.uniform(mdp.width - mdp.rw - 3,
+                                mdp.width - mdp.rw)
             s_start = np.array([x, y])
         if idx == 2:
-            x = np.random.uniform(env.width - env.rw - 3,
-                                env.width - env.rw)
-            y = np.random.uniform(env.rw, env.rw+3)
+            x = np.random.uniform(mdp.width - mdp.rw - 3,
+                                mdp.width - mdp.rw)
+            y = np.random.uniform(mdp.rw, mdp.rw+3)
             s_start = np.array([x, y])
     elif env_name == 'pendulum':
-        s_goal = np.array([0, np.random.uniform(-env.max_speed, env.max_speed)])
+        s_goal = np.array([0, np.random.uniform(-mdp.max_speed, mdp.max_speed)])
         idx = np.random.randint(0,2)
         if idx == 0: # swing up
-            s_start = np.array([np.pi, np.random.uniform(-env.max_speed, env.max_speed)])
+            s_start = np.array([np.pi, np.random.uniform(-mdp.max_speed, mdp.max_speed)])
         if idx == 1: # balance
             theta_0 = np.random.uniform(-np.pi/6, np.pi/6)
-            s_start = np.array([theta_0, np.random.uniform(-env.max_speed, env.max_speed)])
+            s_start = np.array([theta_0, np.random.uniform(-mdp.max_speed, mdp.max_speed)])
     return idx, s_start, s_goal
 
 def angle_normalize(x):
@@ -93,7 +95,7 @@ def is_close_goal(env_name, s, s_goal):
         return np.sqrt(np.sum(s - s_goal)**2) <= 2
     elif env_name == 'pendulum':
         theta = angle_normalize(s[0])
-        return np.abs(theta) < (np.pi / 6)
+        return np.abs(theta) <= (np.pi / 6)
 
 def save_traj(images, image_goal, gif_path, env_name):
     # save trajectory as gif file

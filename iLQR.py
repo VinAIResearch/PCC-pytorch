@@ -8,10 +8,10 @@ import argparse
 from torchvision.transforms import ToTensor
 
 from pcc_model import PCC
-import data.planar.sample_planar as planar_sampler
-from data.planar.planar_env import PlanarEnv
+import data.sample_planar as planar_sampler
+from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from gym.envs.classic_control import PendulumEnv
-import data.pendulum.sample_pendulum as pendulum_sampler
+import data.sample_pendulum as pendulum_sampler
 from ilqr_utils import *
 from datasets import *
 
@@ -20,7 +20,7 @@ torch.manual_seed(0)
 torch.set_default_dtype(torch.float64)
 
 samplers = {'planar': planar_sampler, 'pendulum': pendulum_sampler}
-envs = {'planar': PlanarEnv, 'pendulum': PendulumEnv}
+mdps = {'planar': PlanarObstaclesMDP, 'pendulum': PendulumEnv}
 network_dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
 img_dims = {'planar': (40, 40), 'pendulum': (48, 96)}
 horizons = {'planar': 40, 'pendulum': 400}
@@ -95,10 +95,10 @@ def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
     loss += z_T_diff.view(1,-1).mm(R_z).mm(z_T_diff.view(-1,1))
     return loss
 
-def reciding_horizon(env_name, env, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon):
+def reciding_horizon(env_name, mdp, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon):
     # for the first step
     z_dim, u_dim = R_z.size(0), R_u.size(0)
-    z_seq, u_seq = random_traj(z_start, z_dim, u_dim, horizon, dynamics, env_name, env)
+    z_seq, u_seq = random_traj(mdp, s_start, z_start, horizon, dynamics)
     loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
     print ('Horizon {:02d}: {:05f}'.format(0, loss.item()))
     u_opt = []
@@ -113,12 +113,13 @@ def reciding_horizon(env_name, env, sampler, img_dim, x_dim, R_z, R_u, s_start, 
 
         # get z_k+1 from the true dynamics
         if env_name == 'planar':
-            s = s + np.array(u_first_opt.squeeze().cpu().detach())
-            next_obs = env.render_state(s)
+            s = mdp.transition_function(s, u_first_opt.squeeze().cpu().detach())
+            # s = s + np.array(u_first_opt.squeeze().cpu().detach())
+            next_obs = mdp.render(s)
             next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, x_dim)
         elif env_name == 'pendulum':
-            s = env.step_from_state(s, u_first_opt.squeeze().cpu().detach().numpy())
-            next_obs_1, next_obs_2 = sampler.render(env, s)
+            s = mdp.step_from_state(s, u_first_opt.squeeze().cpu().detach().numpy())
+            next_obs_1, next_obs_2 = sampler.render(mdp, s)
             next_obs = Image.fromarray(np.hstack((next_obs_1, next_obs_2)))
             next_x = ToTensor()((Image.fromarray(next_obs).convert('L').
                         resize((img_dim[0], img_dim[1])))).cuda().transpose(-1,-2).double()
@@ -141,14 +142,14 @@ def main(args):
     env_name = args.env
 
     sampler = samplers[env_name]
-    env = envs[env_name]()
+    mdp = mdps[env_name]()
     x_dim, z_dim, u_dim = network_dims[env_name]
     img_dim = img_dims[env_name]
     horizon = horizons[env_name]
     R_z = K_z * torch.eye(z_dim).cuda()
     R_u = K_u * torch.eye(u_dim).cuda()
 
-    folder = 'result/' + env_name
+    folder = 'new_mdp_result/' + env_name
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
     log_folders.sort()
     # print (log_folders)
@@ -163,7 +164,7 @@ def main(args):
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQL_clip_result/' +  env_name + '/' + log_base
+        model_path = 'iLQR_new_mdp_result/' +  env_name + '/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print ('Performing iLQR for ' + log_base)
@@ -178,16 +179,16 @@ def main(args):
         for task in range(10):
             print ('Performing task ' + str(task+1))
             # draw random initial state and goal state
-            corner_idx, s_start, s_goal = random_start_goal(env_name, env)
+            corner_idx, s_start, s_goal = random_start_goal(env_name, mdp)
             if env_name == 'planar':
-                image_start = env.render_state(s_start)
-                image_goal = env.render_state(s_goal)
+                image_start = mdp.render(s_start)
+                image_goal = mdp.render(s_goal)
                 x_start = torch.from_numpy(image_start).cuda().squeeze(0).view(-1, x_dim)
                 x_goal = torch.from_numpy(image_goal).cuda().squeeze(0).view(-1, x_dim)
             elif env_name == 'pendulum':
-                image_start_1, image_start_2 = sampler.render(env, s_start)
+                image_start_1, image_start_2 = sampler.render(mdp, s_start)
                 image_start = Image.fromarray(np.hstack((image_start_1, image_start_2)))
-                image_goal_1, image_goal_2 = sampler.render(env, s_goal)
+                image_goal_1, image_goal_2 = sampler.render(mdp, s_goal)
                 image_goal = Image.fromarray(np.hstack((image_goal_1, image_goal_2)))
 
                 # print ('x dim ' + str(x_dim))
@@ -201,7 +202,7 @@ def main(args):
             z_goal, _ = model.encode(x_goal)
 
             # perform optimal control for this task
-            u_opt = reciding_horizon(env_name, env, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, 40)
+            u_opt = reciding_horizon(env_name, mdp, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon)
             if u_opt is None:
                 avg_percent += 0
                 with open(model_path + '/result.txt', 'a+') as f:
@@ -215,12 +216,12 @@ def main(args):
             for i, u in enumerate(u_opt):
                 u = np.array(u.squeeze().cpu().detach())
                 if env_name == 'planar':
-                    s = s + u
-                    image = env.render_state(s)
+                    s = mdp.transition_function(s, u)
+                    image = mdp.render(s)
                     images.append(image)
                 elif env_name == 'pendulum':
-                    s = env.step_from_state(s, u)
-                    image = env.render_state(s[0])
+                    s = mdp.step_from_state(s, u)
+                    image = mdp.render_state(s[0])
                     images.append(image)
                 if is_close_goal(env_name, s, s_goal):
                     close_steps += 1
@@ -244,7 +245,7 @@ def main(args):
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_clip_result/result.txt', 'w') as f:
+    with open('iLQR_new_mdp_result/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
  
