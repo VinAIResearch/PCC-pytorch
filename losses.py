@@ -39,8 +39,10 @@ def gaussian(z, mu, logvar):
 def curvature(model, z, u, delta, armotized):
     z_alias = z.detach().requires_grad_(True)
     u_alias = u.detach().requires_grad_(True)
-    eps_z = torch.normal(0.0, delta, size=z.size()).cuda()
-    eps_u = torch.normal(0.0, delta, size=u.size()).cuda()
+    eps_z = torch.normal(mean=torch.zeros_like(z), std=torch.empty_like(z).fill_(delta))
+    eps_u = torch.normal(mean=torch.zeros_like(u), std=torch.empty_like(u).fill_(delta))
+    # eps_z = torch.normal(0.0, delta, size=z.size()).cuda()
+    # eps_u = torch.normal(0.0, delta, size=u.size()).cuda()
     z_bar = z_alias + eps_z
     u_bar = u_alias + eps_u
     f_Z = model.dynamics

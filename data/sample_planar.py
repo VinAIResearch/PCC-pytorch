@@ -11,7 +11,6 @@ from PIL import Image, ImageDraw
 np.random.seed(1)
 root_path = str(Path(os.path.dirname(os.path.abspath(__file__))).parent)
 os.sys.path.append(root_path)
-from data.planar.planar_env import PlanarEnv
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 
 np.random.seed(1)

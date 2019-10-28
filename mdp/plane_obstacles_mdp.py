@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw
 class PlanarObstaclesMDP(object):
     width = 40
     height = 40
-    obstacles = np.array([[20.5, 5.5], [20.5, 12.5], [20.5, 27.5], [20.5, 35.5], [10.5, 20.5], [30.5, 20.5]])
+    obstacles = np.array([[20.5, 5.5], [20.5, 13.5], [20.5, 27.5], [20.5, 35.5], [10.5, 20.5], [30.5, 20.5]])
     obstacles_r = 2.5 # radius of the obstacles when rendered
     half_agent_size = 1.5 # robot half-width
     rw_rendered = 1 # robot half-width when rendered
@@ -16,11 +16,19 @@ class PlanarObstaclesMDP(object):
         super(PlanarObstaclesMDP, self).__init__()
 
     def is_valid_state(self, s):
-        # check if the agent center is inside any obstacle
-        dis_to_obs = np.sqrt(np.sum((self.obstacles - s)**2, axis=1))
-        if np.any(dis_to_obs < self.obstacles_r):
+        if np.any(s < self.half_agent_size) or np.any(s > self.width - self.half_agent_size):
             return False
+        # check if the agent crosses any obstacle
+        for obs in self.obstacles:
+            dis = np.abs(obs - s)
+            if np.all(dis <= 1):
+                return False
         return True
+        # check if the agent center is inside any obstacle
+        # dis_to_obs = np.sqrt(np.sum((self.obstacles - s)**2, axis=1))
+        # if np.any(dis_to_obs < self.obstacles_r):
+        #     return False
+        # return True
 
     def is_low_error(self, s, u, epsilon = 0.1):
         s_next = s + u
@@ -30,22 +38,30 @@ class PlanarObstaclesMDP(object):
         x_diff = np.array([top_next - top, left_next - left], dtype=np.float)
         return (not np.sqrt(np.sum((x_diff - u)**2)) > epsilon)
 
+    # def is_valid_action(self, s, u):
+    #     # check if the action has low error
+    #     if not self.is_low_error(s, u):
+    #         return False
+    #     # check if the agent is crossing any obstacle
+    #     a = np.sum(u * u)
+    #     for obs in self.obstacles:
+    #         b = 2 * np.sum(u * (s - obs))
+    #         c = np.sum(s * s) + np.sum(obs * obs) - 2 * np.sum(s * obs) - self.obstacles_r**2
+    #         disc = b**2 - 4 * a * c
+    #         if disc >= 0:
+    #             sqrt_disc = np.sqrt(disc)
+    #             t1 = (-b + sqrt_disc) / (2 * a)
+    #             t2 = (-b - sqrt_disc) / (2 * a)
+    #             if 0 <= t1 <= 1 or 0 <= t2 <= 1: # the line segment collides with the obstacle
+    #                 return False
+    #     return True
+
     def is_valid_action(self, s, u):
-        # check if the action has low error
         if not self.is_low_error(s, u):
             return False
-        # check if the agent is crossing any obstacle
-        a = np.sum(u * u)
-        for obs in self.obstacles:
-            b = 2 * np.sum(u * (s - obs))
-            c = np.sum(s * s) + np.sum(obs * obs) - 2 * np.sum(s * obs) - self.obstacles_r**2
-            disc = b**2 - 4 * a * c
-            if disc >= 0:
-                sqrt_disc = np.sqrt(disc)
-                t1 = (-b + sqrt_disc) / (2 * a)
-                t2 = (-b - sqrt_disc) / (2 * a)
-                if 0 <= t1 <= 1 or 0 <= t2 <= 1: # the line segment collides with the obstacle
-                    return False
+        s_next = s + u + self.noise * np.random.randn()
+        if not self.is_valid_state(s_next):
+            return False
         return True
 
     def sample_valid_random_state(self):

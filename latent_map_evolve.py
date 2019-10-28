@@ -1,26 +1,35 @@
-import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
-from matplotlib.animation import FuncAnimation, writers
-import colour
-from random import randint as rint
 import numpy as np
 from colour import Color
 import torch
-import os
-
-#from e2c_model import E2C
-#from data.sample_planar import *
+from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 
 red = Color('blue')
-colors = list(red.range_to(Color("red"),36))
+colors = list(red.range_to(Color("red"),37))
 colors_rgb = [color.rgb for color in colors]
 
-def get_invalid_state(mdp, start, end, width, height):
+mdp = PlanarObstaclesMDP()
+
+half_agent_size = mdp.half_agent_size
+width = mdp.width
+height = mdp.height
+obstacles = mdp.obstacles.astype(np.int)
+
+def is_valid_state(s):
+    if np.any(s < half_agent_size) or np.any(s > width - half_agent_size):
+        return False
+    for obs in obstacles:
+        dis = np.abs(obs - s)
+        if np.all(dis <= 1):
+            return False
+    return True
+
+def get_invalid_state(start, end):
     invalid_pos = []
     for x in range(start, end + 1):
         for y in range(start, end + 1):
             s = [x,y]
-            if not mdp.is_valid_state(np.array(s)):
+            if not is_valid_state(np.array(s)):
                 invalid_pos.append(s)
     return invalid_pos
 
@@ -37,10 +46,10 @@ def random_gradient(start, end, width, height, invalid_pos):
         img_arr[x, y] = 255.
     return img_arr / 255., img
 
-def get_true_map(mdp, start, end, width, height, img):
+def get_true_map(start, end, width, height, img):
     img_scaled = Image.new("RGB", (width * 10, height*10), "#FFFFFF")
     draw = ImageDraw.Draw(img_scaled)
-    invalid_pos = get_invalid_state(mdp, start, end, width, height)
+    invalid_pos = get_invalid_state(start, end)
     for y in range(start, end + 1):
         for x in range(start, end + 1):
             if [y, x] in invalid_pos:
@@ -55,11 +64,10 @@ def get_true_map(mdp, start, end, width, height, img):
 def draw_latent_map(model, mdp):
     model.eval()
 
-    start = int(np.round(mdp.half_agent_size))
-    end = int(np.round(mdp.width - mdp.half_agent_size))
-    width, height = mdp.width, mdp.height
+    start = int(half_agent_size)
+    end = int(width - half_agent_size)
 
-    invalid_pos = get_invalid_state(mdp, start, end, width, height)
+    invalid_pos = get_invalid_state(start, end)
     img_arr, img = random_gradient(start, end, width, height, invalid_pos)
     # compute latent z
     all_z = []
@@ -69,7 +77,6 @@ def draw_latent_map(model, mdp):
             if [x,y] in invalid_pos:
                 all_z.append(np.zeros(2))
             else:
-                obs = mdp.render(s)
                 with torch.no_grad():
                     obs = torch.Tensor(mdp.render(s)).unsqueeze(0).view(-1,1600).double().cuda(0)
                     mu, sigma = model.encode(obs)
@@ -100,12 +107,11 @@ def draw_latent_map(model, mdp):
             draw.ellipse((x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2), fill = img.getpixel((y, x)))
     return img_latent
 
-# from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
+from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 
-# mdp = PlanarObstaclesMDP()
-# start = int(np.round(mdp.half_agent_size))
-# end = int(np.round(mdp.width - mdp.half_agent_size))
-# width, height = mdp.width, mdp.height
-# invalid_pos = get_invalid_state(mdp, start, end, width, height)
-# img_arr, img = random_gradient(start, end, width, height, invalid_pos)
-# get_true_map(mdp, start, end, width, height, img)
+mdp = PlanarObstaclesMDP()
+start = int(np.round(mdp.half_agent_size))
+end = int(np.round(mdp.width - mdp.half_agent_size))
+invalid_pos = get_invalid_state(start, end)
+img_arr, img = random_gradient(start, end, width, height, invalid_pos)
+get_true_map(start, end, width, height, img)
