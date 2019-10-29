@@ -17,11 +17,12 @@ def random_traj(mdp, s_start, z_start, horizon, dynamics):
     for i in range(horizon):
         z_seq.append(z)
         u = mdp.sample_valid_random_action(s)
+        u = torch.from_numpy(u).view(1,-1).cuda()
         u_seq.append(u)
         with torch.no_grad():
             z_next, _, _, _ = dynamics(z, u)
         z = z_next
-        s = mdp.transition_function(s, u)
+        s = mdp.transition_function(s, u.cpu().detach().numpy())
     z_seq.append(z)
     u_seq.append(None)
     return z_seq, u_seq
@@ -60,20 +61,20 @@ def random_start_goal(env_name, mdp):
     return a random start state and the goal state
     """
     if env_name == 'planar':
-        s_goal = np.random.uniform(mdp.height - mdp.rw - 3,
-                                    mdp.width - mdp.rw, size=2)
+        s_goal = np.random.uniform(mdp.height - mdp.half_agent_size - 3,
+                                    mdp.width - mdp.half_agent_size, size=2)
         idx = np.random.randint(0, 3)
         if idx == 0:
             s_start = np.random.uniform(mdp.half_agent_size, mdp.half_agent_size + 3, size=2)
         if idx == 1:
-            x = np.random.uniform(mdp.rw, mdp.rw+3)
-            y = np.random.uniform(mdp.width - mdp.rw - 3,
-                                mdp.width - mdp.rw)
+            x = np.random.uniform(mdp.half_agent_size, mdp.half_agent_size+3)
+            y = np.random.uniform(mdp.width - mdp.half_agent_size - 3,
+                                mdp.width - mdp.half_agent_size)
             s_start = np.array([x, y])
         if idx == 2:
-            x = np.random.uniform(mdp.width - mdp.rw - 3,
-                                mdp.width - mdp.rw)
-            y = np.random.uniform(mdp.rw, mdp.rw+3)
+            x = np.random.uniform(mdp.width - mdp.half_agent_size - 3,
+                                mdp.width - mdp.half_agent_size)
+            y = np.random.uniform(mdp.half_agent_size, mdp.half_agent_size+3)
             s_start = np.array([x, y])
     elif env_name == 'pendulum':
         s_goal = np.array([0, np.random.uniform(-mdp.max_speed, mdp.max_speed)])

@@ -97,7 +97,6 @@ def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
 
 def reciding_horizon(env_name, mdp, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon):
     # for the first step
-    z_dim, u_dim = R_z.size(0), R_u.size(0)
     z_seq, u_seq = random_traj(mdp, s_start, z_start, horizon, dynamics)
     loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
     print ('Horizon {:02d}: {:05f}'.format(0, loss.item()))
@@ -113,7 +112,7 @@ def reciding_horizon(env_name, mdp, sampler, img_dim, x_dim, R_z, R_u, s_start, 
 
         # get z_k+1 from the true dynamics
         if env_name == 'planar':
-            s = mdp.transition_function(s, u_first_opt.squeeze().cpu().detach())
+            s = mdp.transition_function(s, u_first_opt.squeeze().cpu().detach().numpy())
             # s = s + np.array(u_first_opt.squeeze().cpu().detach())
             next_obs = mdp.render(s)
             next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, x_dim)
@@ -214,7 +213,7 @@ def main(args):
             images = [image_start]
             close_steps = 0.0
             for i, u in enumerate(u_opt):
-                u = np.array(u.squeeze().cpu().detach())
+                u = u.squeeze().cpu().detach().numpy()
                 if env_name == 'planar':
                     s = mdp.transition_function(s, u)
                     image = mdp.render(s)
@@ -234,7 +233,7 @@ def main(args):
 
             # save trajectory as gif file
             gif_path = model_path + '/task_{:01d}.gif'.format(task+1)
-            save_traj(images, image_goal, gif_path)
+            save_traj(images, image_goal, gif_path, env_name)
         
         avg_percent = avg_percent / 10
         avg_model_percent += avg_percent

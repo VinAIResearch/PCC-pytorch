@@ -3,6 +3,7 @@ import numpy as np
 from colour import Color
 import torch
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
+from pcc_model import PCC
 
 red = Color('blue')
 colors = list(red.range_to(Color("red"),37))
@@ -64,8 +65,8 @@ def get_true_map(start, end, width, height, img):
 def draw_latent_map(model, mdp):
     model.eval()
 
-    start = int(half_agent_size)
-    end = int(width - half_agent_size)
+    start = int(np.round(mdp.half_agent_size))
+    end = int(np.round(mdp.width - mdp.half_agent_size))
 
     invalid_pos = get_invalid_state(start, end)
     img_arr, img = random_gradient(start, end, width, height, invalid_pos)
@@ -86,7 +87,7 @@ def draw_latent_map(model, mdp):
 
     # normalize and scale to plot
     z_min = np.min(all_z, axis = 0)
-    all_z = np.round(15 * (all_z - z_min) + 30).astype(np.int)
+    all_z = np.round(30 * (all_z - z_min) + 30).astype(np.int)
 
     # plot
     latent_map = {}
@@ -107,11 +108,16 @@ def draw_latent_map(model, mdp):
             draw.ellipse((x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2), fill = img.getpixel((y, x)))
     return img_latent
 
-from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-
+# from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
+#
 mdp = PlanarObstaclesMDP()
-start = int(np.round(mdp.half_agent_size))
-end = int(np.round(mdp.width - mdp.half_agent_size))
-invalid_pos = get_invalid_state(start, end)
-img_arr, img = random_gradient(start, end, width, height, invalid_pos)
-get_true_map(start, end, width, height, img)
+# start = int(np.round(mdp.half_agent_size))
+# end = int(np.round(mdp.width - mdp.half_agent_size))
+# invalid_pos = get_invalid_state(start, end)
+# img_arr, img = random_gradient(start, end, width, height, invalid_pos)
+# get_true_map(start, end, width, height, img)
+
+model = PCC(armotized=False, x_dim=1600, z_dim=2, u_dim=2, env = 'planar').cuda()
+model.load_state_dict(torch.load('./new_mdp_result/planar/log_10/model_5000'))
+latent_map = draw_latent_map(model, mdp)
+latent_map.show()
