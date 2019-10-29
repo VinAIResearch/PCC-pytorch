@@ -169,7 +169,7 @@ def main(args):
         print ('Performing iLQR for ' + log_base)
 
         model = PCC(armotized, x_dim, z_dim, u_dim, env_name).to(device)
-        model.load_state_dict(torch.load(log + '/model_5000'))
+        model.load_state_dict(torch.load(log + '/model_4000'))
         model.eval()
         dynamics = model.dynamics
         encoder = model.encoder
