@@ -148,7 +148,7 @@ def main(args):
     R_z = K_z * torch.eye(z_dim).cuda()
     R_u = K_u * torch.eye(u_dim).cuda()
 
-    folder = 'new_mdp_result/' + env_name
+    folder = 'result/' + env_name
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
     log_folders.sort()
     # print (log_folders)
@@ -163,13 +163,13 @@ def main(args):
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_new_mdp_result/' +  env_name + '/' + log_base
+        model_path = 'iLQR_result/' +  env_name + '/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print ('Performing iLQR for ' + log_base)
 
         model = PCC(armotized, x_dim, z_dim, u_dim, env_name).to(device)
-        model.load_state_dict(torch.load(log + '/model_4000'))
+        model.load_state_dict(torch.load(log + '/model_5000'))
         model.eval()
         dynamics = model.dynamics
         encoder = model.encoder
@@ -244,7 +244,7 @@ def main(args):
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_new_mdp_result/result.txt', 'w') as f:
+    with open('iLQR_result/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
  

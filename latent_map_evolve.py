@@ -9,28 +9,12 @@ red = Color('blue')
 colors = list(red.range_to(Color("red"),40))
 colors_rgb = [color.rgb for color in colors]
 
-mdp = PlanarObstaclesMDP()
-
-half_agent_size = mdp.half_agent_size
-width = mdp.width
-height = mdp.height
-obstacles = mdp.obstacles.astype(np.int)
-
-def is_valid_state(s):
-    if np.any(s < half_agent_size) or np.any(s > width - half_agent_size):
-        return False
-    for obs in obstacles:
-        dis = np.abs(obs - s)
-        if np.all(dis <= 1):
-            return False
-    return True
-
-def get_invalid_state(start, end):
+def get_invalid_state(mdp, start, end):
     invalid_pos = []
     for x in range(start, end + 1):
         for y in range(start, end + 1):
             s = [x,y]
-            if not is_valid_state(np.array(s)):
+            if not mdp.is_valid_state(np.array(s)):
                 invalid_pos.append(s)
     return invalid_pos
 
@@ -47,10 +31,10 @@ def random_gradient(start, end, width, height, invalid_pos):
         img_arr[x, y] = 255.
     return img_arr / 255., img
 
-def get_true_map(start, end, width, height, img):
+def get_true_map(mdp, start, end, width, height, img):
     img_scaled = Image.new("RGB", (width * 10, height*10), "#FFFFFF")
     draw = ImageDraw.Draw(img_scaled)
-    invalid_pos = get_invalid_state(start, end)
+    invalid_pos = get_invalid_state(mdp, start, end)
     for y in range(start, end + 1):
         for x in range(start, end + 1):
             if [y, x] in invalid_pos:
@@ -68,8 +52,8 @@ def draw_latent_map(model, mdp):
     start = 0
     end = 39
 
-    invalid_pos = get_invalid_state(start, end)
-    img_arr, img = random_gradient(start, end, width, height, invalid_pos)
+    invalid_pos = get_invalid_state(mdp, start, end)
+    img_arr, img = random_gradient(start, end, mdp.width, mdp.height, invalid_pos)
     # compute latent z
     all_z = []
     for x in range(start, end + 1):
@@ -87,7 +71,7 @@ def draw_latent_map(model, mdp):
 
     # normalize and scale to plot
     z_min = np.min(all_z, axis = 0)
-    all_z = np.round(30 * (all_z - z_min) + 30).astype(np.int)
+    all_z = np.round(20 * (all_z - z_min) + 30).astype(np.int)
 
     # plot
     latent_map = {}
@@ -108,14 +92,14 @@ def draw_latent_map(model, mdp):
             draw.ellipse((x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2), fill = img.getpixel((y, x)))
     return img_latent
 
-from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-
+# from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
+#
 # mdp = PlanarObstaclesMDP()
 # start = 0
 # end = 39
-# invalid_pos = get_invalid_state(start, end)
-# img_arr, img = random_gradient(start, end, width, height, invalid_pos)
-# get_true_map(start, end, width, height, img)
+# invalid_pos = get_invalid_state(mdp, start, end)
+# img_arr, img = random_gradient(start, end, mdp.width, mdp.height, invalid_pos)
+# get_true_map(mdp, start, end, mdp.width, mdp.height, img)
 
 # mdp = PlanarObstaclesMDP()
 # model = PCC(armotized=False, x_dim=1600, z_dim=2, u_dim=2, env = 'planar').cuda()

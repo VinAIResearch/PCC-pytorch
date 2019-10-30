@@ -52,7 +52,7 @@ class PlanarObstaclesMDP(object):
 
     def sample_valid_random_state(self):
         while True:
-            s = np.random.uniform(self.half_agent_size, self.width - self.half_agent_size, size = 2)
+            s = np.random.uniform(np.floor(self.half_agent_size), np.ceil(self.width - self.half_agent_size), size = 2)
             if self.is_valid_state(s):
                 return s
 
@@ -77,18 +77,18 @@ class PlanarObstaclesMDP(object):
 
     def get_pixel_location(self, s):
         # return the location of agent when rendered
-        # center_x, center_y = int(round(s[0])), int(round(s[1]))
-        # top = center_x - self.rw_rendered
-        # bottom = center_x + self.rw_rendered
-        # left = center_y - self.rw_rendered
-        # right = center_y + self.rw_rendered
-        # return top, bottom, left, right
-        topleft_x, topleft_y = int(s[0]), int(s[1])
-        top = topleft_x
-        bottom = topleft_x + self.rw_rendered + 1
-        left = topleft_y
-        right = topleft_y + self.rw_rendered + 1
+        center_x, center_y = int(round(s[0])), int(round(s[1]))
+        top = center_x - self.rw_rendered
+        bottom = center_x + self.rw_rendered
+        left = center_y - self.rw_rendered
+        right = center_y + self.rw_rendered
         return top, bottom, left, right
+        # topleft_x, topleft_y = int(s[0]), int(s[1])
+        # top = topleft_x
+        # bottom = topleft_x + self.rw_rendered + 1
+        # left = topleft_y
+        # right = topleft_y + self.rw_rendered + 1
+        # return top, bottom, left, right
 
     def generate_env(self):
         """
