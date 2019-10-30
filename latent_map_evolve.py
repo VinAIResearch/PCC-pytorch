@@ -110,12 +110,12 @@ def draw_latent_map(model, mdp):
 
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 
-mdp = PlanarObstaclesMDP()
-start = 0
-end = 39
-invalid_pos = get_invalid_state(start, end)
-img_arr, img = random_gradient(start, end, width, height, invalid_pos)
-get_true_map(start, end, width, height, img)
+# mdp = PlanarObstaclesMDP()
+# start = 0
+# end = 39
+# invalid_pos = get_invalid_state(start, end)
+# img_arr, img = random_gradient(start, end, width, height, invalid_pos)
+# get_true_map(start, end, width, height, img)
 
 # mdp = PlanarObstaclesMDP()
 # model = PCC(armotized=False, x_dim=1600, z_dim=2, u_dim=2, env = 'planar').cuda()

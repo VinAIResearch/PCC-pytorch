@@ -72,7 +72,7 @@ def write_to_file(mdp, sample_size, output_dir):
 def main(args):
     sample_size = args.sample_size
     noise = args.noise
-    mdp = PlanarObstaclesMDP(noise = noise)
+    mdp = PlanarObstaclesMDP(sampling=True, noise = noise)
     write_to_file(mdp, sample_size, root_path + '/data/planar/raw')
 
 if __name__ == "__main__":
