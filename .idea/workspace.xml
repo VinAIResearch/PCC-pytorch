@@ -3,7 +3,8 @@
   <component name="ChangeListManager">
     <list default="true" id="c6e8b552-18f1-4081-b7b0-4d658dd0e933" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mdp/pendulum_mdp.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datasets.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mdp/plane_obstacles_mdp.py" beforeDir="false" afterPath="$PROJECT_DIR$/mdp/plane_obstacles_mdp.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train_pcc.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_pcc.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -20,12 +21,12 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/iLQR.py">
+        <entry file="file://$PROJECT_DIR$/datasets.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1786">
-              <caret line="249" column="1" selection-start-line="249" selection-start-column="1" selection-end-line="249" selection-end-column="1" />
+            <state relative-caret-position="1410">
+              <caret line="102" column="72" selection-start-line="102" selection-start-column="72" selection-end-line="102" selection-end-column="72" />
               <folding>
-                <element signature="e#0#12#0" expanded="true" />
+                <element signature="e#0#9#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -34,8 +35,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/ilqr_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="121">
-              <caret line="88" column="23" selection-start-line="88" selection-start-column="23" selection-end-line="88" selection-end-column="23" />
+            <state relative-caret-position="1125">
+              <caret line="79" column="80" selection-start-line="79" selection-start-column="80" selection-end-line="79" selection-end-column="80" />
               <folding>
                 <element signature="e#0#31#0" expanded="true" />
               </folding>
@@ -44,45 +45,45 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/mdp/cartpole_base.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1363">
-              <caret line="157" column="13" selection-start-line="157" selection-start-column="8" selection-end-line="157" selection-end-column="13" />
-              <folding>
-                <element signature="e#26#64#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/mdp/pole_simple_mdp.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="390">
-              <caret line="78" selection-start-line="78" selection-end-line="78" />
+            <state relative-caret-position="105">
+              <caret line="17" column="41" selection-start-line="17" selection-start-column="41" selection-end-line="17" selection-end-column="41" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/data/sample_pendulum.py">
+        <entry file="file://$PROJECT_DIR$/train_pcc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="328">
-              <caret line="115" column="36" selection-start-line="115" selection-start-column="36" selection-end-line="115" selection-end-column="36" />
+            <state relative-caret-position="360">
+              <caret line="171" column="18" lean-forward="true" selection-start-line="171" selection-start-column="18" selection-end-line="171" selection-end-column="18" />
               <folding>
-                <element signature="e#32#70#0" expanded="true" />
+                <element signature="e#0#38#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data/sample_planar.py">
+        <entry file="file://$PROJECT_DIR$/latent_map_evolve.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="328">
-              <caret line="75" column="47" selection-start-line="75" selection-start-column="36" selection-end-line="75" selection-end-column="47" />
+            <state relative-caret-position="197">
+              <caret line="16" selection-start-line="16" selection-end-line="16" />
               <folding>
-                <element signature="e#0#18#0" expanded="true" />
+                <element signature="e#0#32#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data/sample_pendulum.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="765">
+              <caret line="63" column="67" selection-start-line="63" selection-start-column="67" selection-end-line="63" selection-end-column="67" />
+              <folding>
+                <element signature="e#32#70#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -117,15 +118,16 @@
         <option value="$PROJECT_DIR$/losses.py" />
         <option value="$PROJECT_DIR$/ilqr_utils.py" />
         <option value="$PROJECT_DIR$/iLQR.py" />
-        <option value="$PROJECT_DIR$/mdp/plane_obstacles_mdp.py" />
         <option value="$PROJECT_DIR$/latent_map_evolve.py" />
-        <option value="$PROJECT_DIR$/train_pcc.py" />
         <option value="$PROJECT_DIR$/mdp/pole_base.py" />
         <option value="$PROJECT_DIR$/mdp/cartpole_base.py" />
         <option value="$PROJECT_DIR$/data/sample_planar.py" />
         <option value="$PROJECT_DIR$/mdp/pole_simple_mdp.py" />
         <option value="$PROJECT_DIR$/data/simple_pole_dataset.py" />
         <option value="$PROJECT_DIR$/data/sample_pendulum.py" />
+        <option value="$PROJECT_DIR$/mdp/plane_obstacles_mdp.py" />
+        <option value="$PROJECT_DIR$/datasets.py" />
+        <option value="$PROJECT_DIR$/train_pcc.py" />
       </list>
     </option>
   </component>
@@ -148,16 +150,6 @@
             <path>
               <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
               <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-              <item name="mdp" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -254,18 +246,20 @@
       <workItem from="1572277421042" duration="15445000" />
       <workItem from="1572316958820" duration="11875000" />
       <workItem from="1572400203472" duration="1372000" />
-      <workItem from="1572418986098" duration="11417000" />
+      <workItem from="1572418986098" duration="12959000" />
+      <workItem from="1572449017985" duration="875000" />
+      <workItem from="1572450147150" duration="73000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="40109000" />
+    <option name="totallyTimeSpent" value="42599000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.13226342" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.13558385" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -279,7 +273,7 @@
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
       <window_info anchor="bottom" id="Event Log" order="10" side_tool="true" />
-      <window_info anchor="bottom" id="Terminal" order="11" visible="true" weight="0.32721382" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="11" visible="true" weight="0.32721382" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -315,10 +309,6 @@
     <option name="version" value="1" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/data/planar/raw/after-00009.png" />
-    <entry file="file://$PROJECT_DIR$/data/planar/raw/after-00010.png" />
-    <entry file="file://$PROJECT_DIR$/data/planar/raw/after-00011.png" />
-    <entry file="file://$PROJECT_DIR$/data/planar/raw/after-00012.png" />
     <entry file="file://$PROJECT_DIR$/data/planar/raw/after-00013.png" />
     <entry file="file://$PROJECT_DIR$/data/planar/raw/after-00005.png" />
     <entry file="file://$PROJECT_DIR$/data/planar/raw/after-00004.png" />
@@ -334,157 +324,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/result/planar/log_1/latent_map.gif">
+    <entry file="file://$PROJECT_DIR$/result/planar/new_mdp_log_1/latent_map.gif">
       <provider selected="true" editor-type-id="images" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_result/result.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" column="41" lean-forward="true" selection-start-line="1" selection-start-column="41" selection-end-line="1" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/log_1/task_2.gif">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/log_1/task_1.gif">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_2/task_1.gif">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/log_1/result.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="39" lean-forward="true" selection-start-line="10" selection-start-column="39" selection-end-line="10" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_2/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_5/result.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="150">
-          <caret line="10" column="26" lean-forward="true" selection-start-line="10" selection-start-column="26" selection-end-line="10" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_3/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_4/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/log_1/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_2/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_3/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_4/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_5/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/check_1/latent_map.gif">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/check_1/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/log_10/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/test/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/log_no_check_1/loss_4000">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="35" lean-forward="true" selection-start-column="35" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/check_1/loss_4000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/result/planar/log_1/loss_5000">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="36" lean-forward="true" selection-start-line="2" selection-start-column="36" selection-end-line="2" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_result/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/log_1/task_2.gif" />
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/log_1/task_1.gif" />
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_2/task_1.gif" />
+    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_2/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_5/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_3/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/new_mdp_log_4/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/log_1/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_2/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_3/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_4/result.txt" />
+    <entry file="file://$PROJECT_DIR$/iLQR_new_mdp_4000_result/planar/new_mdp_log_5/result.txt" />
+    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/check_1/latent_map.gif" />
+    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/check_1/loss_5000" />
+    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/log_10/loss_5000" />
+    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/test/loss_5000" />
+    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/log_no_check_1/loss_4000" />
+    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/check_1/loss_4000" />
     <entry file="file://$PROJECT_DIR$/map.png">
       <provider selected="true" editor-type-id="images" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/latent_map_evolve.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="615">
-          <caret line="41" column="17" lean-forward="true" selection-start-line="41" selection-start-column="17" selection-end-line="41" selection-end-column="17" />
-          <folding>
-            <element signature="e#0#32#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/train_pcc.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="330">
-          <caret line="181" column="45" selection-start-line="181" selection-start-column="45" selection-end-line="181" selection-end-column="45" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mdp/pole_base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
-          <folding>
-            <element signature="e#26#64#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mdp/pendulum_mdp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ilqr_utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="121">
-          <caret line="88" column="23" selection-start-line="88" selection-start-column="23" selection-end-line="88" selection-end-column="23" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/sample_pendulum.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="7" lean-forward="true" selection-start-line="20" selection-start-column="7" selection-end-line="20" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/mdp/pole_base.py" />
+    <entry file="file://$PROJECT_DIR$/mdp/pendulum_mdp.py" />
     <entry file="file://$PROJECT_DIR$/mdp/cartpole_mdp.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="525">
@@ -495,10 +362,31 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mdp/plane_obstacles_mdp.py">
+    <entry file="file://$PROJECT_DIR$/data/pendulum/raw/after-00001.png">
+      <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/pendulum/raw/after-00000.png">
+      <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/pendulum/raw/after-00002.png">
+      <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/pendulum/raw/after-00003.png">
+      <provider selected="true" editor-type-id="images" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/new_mdp_log_1/loss_5000">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="75" column="16" lean-forward="true" selection-start-line="75" selection-start-column="16" selection-end-line="75" selection-end-column="16" />
+        <state relative-caret-position="30">
+          <caret line="2" column="36" lean-forward="true" selection-start-line="2" selection-start-column="36" selection-end-line="2" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/log_1/result.txt" />
+    <entry file="file://$PROJECT_DIR$/new_mdp_result/planar/new_sample_3/loss_2000" />
+    <entry file="file://$PROJECT_DIR$/data/sample_planar.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="328">
+          <caret line="75" column="67" lean-forward="true" selection-start-line="75" selection-start-column="67" selection-end-line="75" selection-end-column="67" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
@@ -507,50 +395,84 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/iLQR.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1786">
-          <caret line="249" column="1" selection-start-line="249" selection-start-column="1" selection-end-line="249" selection-end-column="1" />
+        <state relative-caret-position="360">
+          <caret line="24" column="53" lean-forward="true" selection-start-line="24" selection-start-column="53" selection-end-line="24" selection-end-column="53" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/mdp/plane_obstacles_mdp.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="18" lean-forward="true" selection-start-column="18" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/mdp/cartpole_base.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1363">
-          <caret line="157" column="13" selection-start-line="157" selection-start-column="8" selection-end-line="157" selection-end-column="13" />
+        <state relative-caret-position="313">
+          <caret line="142" column="67" lean-forward="true" selection-start-line="142" selection-start-column="67" selection-end-line="142" selection-end-column="67" />
           <folding>
             <element signature="e#26#64#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/mdp/pole_simple_mdp.py">
+    <entry file="file://$PROJECT_DIR$/datasets.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="78" selection-start-line="78" selection-end-line="78" />
+        <state relative-caret-position="1410">
+          <caret line="102" column="72" selection-start-line="102" selection-start-column="72" selection-end-line="102" selection-end-column="72" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data/pendulum/raw/after-00000.png">
-      <provider selected="true" editor-type-id="images" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data/sample_planar.py">
+    <entry file="file://$PROJECT_DIR$/ilqr_utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="328">
-          <caret line="75" column="47" selection-start-line="75" selection-start-column="36" selection-end-line="75" selection-end-column="47" />
+        <state relative-caret-position="1125">
+          <caret line="79" column="80" selection-start-line="79" selection-start-column="80" selection-end-line="79" selection-end-column="80" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#31#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mdp/pole_simple_mdp.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="17" column="41" selection-start-line="17" selection-start-column="41" selection-end-line="17" selection-end-column="41" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/data/sample_pendulum.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="328">
-          <caret line="115" column="36" selection-start-line="115" selection-start-column="36" selection-end-line="115" selection-end-column="36" />
+        <state relative-caret-position="765">
+          <caret line="63" column="67" selection-start-line="63" selection-start-column="67" selection-end-line="63" selection-end-column="67" />
           <folding>
             <element signature="e#32#70#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/latent_map_evolve.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="197">
+          <caret line="16" selection-start-line="16" selection-end-line="16" />
+          <folding>
+            <element signature="e#0#32#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_pcc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="171" column="18" lean-forward="true" selection-start-line="171" selection-start-column="18" selection-end-line="171" selection-end-column="18" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
           </folding>
         </state>
       </provider>

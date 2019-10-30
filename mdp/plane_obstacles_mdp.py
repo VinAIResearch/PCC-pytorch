@@ -52,7 +52,7 @@ class PlanarObstaclesMDP(object):
 
     def sample_valid_random_state(self):
         while True:
-            s = np.random.uniform(np.floor(self.half_agent_size), np.ceil(self.width - self.half_agent_size), size = 2)
+            s = np.random.uniform(self.half_agent_size, self.width - self.half_agent_size, size = 2)
             if self.is_valid_state(s):
                 return s
 

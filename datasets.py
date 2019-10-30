@@ -6,7 +6,6 @@ import json
 from torchvision.transforms import ToTensor
 from torch.utils.data import Dataset
 from tqdm import tqdm
-import pickle
 import torch
 
 torch.set_default_dtype(torch.float64)
@@ -68,24 +67,14 @@ class PendulumDataset(Dataset):
     width = 48
     height = 48 * 2
     action_dim = 1
-    ratio = 4/5
-    training_file = 'training.pt'
-    test_file = 'test.pt'
+    data_file = 'data.pt'
 
-    def __init__(self, root, train=True):
-        self.root = root
-        self.train = train
-        self.raw_folder = path.join(self.root, 'raw')
-        self.processed_folder = path.join(self.root, 'processed')
-        if not path.exists(self.processed_folder):
-            os.makedirs(self.processed_folder)
+    def __init__(self, root_path):
+        self.root_path = root_path
+        self.raw_folder = path.join(self.root_path, 'raw')
         self._process()
-        
-        if self.train:
-            data_file = self.training_file
-        else:
-            data_file = self.test_file
-        self.data_x, self.data_u, self.data_x_next = torch.load(path.join(self.processed_folder, data_file))
+
+        self.data_x, self.data_u, self.data_x_next = torch.load(path.join(self.root_path, self.data_file))
 
     def __len__(self):
         return len(self.data_x)
@@ -94,16 +83,12 @@ class PendulumDataset(Dataset):
         return self.data_x[index], self.data_u[index], self.data_x_next[index]
 
     def check_exists(self):
-        return (path.exists(path.join(self.processed_folder,
-                                            self.training_file)) and
-                path.exists(path.join(self.processed_folder,
-                                            self.test_file)))
+        return (path.exists(path.join(self.root_path, self.data_file)))
 
     def _process_image(self, img):
-        # print ('image size ' + str(img.size))
-        return ToTensor()((img.convert('L').
-                           resize((PendulumDataset.width,
-                                   PendulumDataset.height))))
+        return ToTensor()(img.convert('L').
+                          resize((self.width,
+                                  self.height)))
 
     def _process(self):
         if self.check_exists():
@@ -127,14 +112,9 @@ class PendulumDataset(Dataset):
                 data_x_next[i] = self._process_image(after).transpose(-1, -2)
                 i += 1
 
-            train_len = int(self.ratio * data_len)
-            training_set = (data_x[:train_len], data_u[:train_len], data_x_next[:train_len])
-            test_set = (data_x[train_len:], data_u[train_len:], data_x_next[train_len:])
-
-            with open(path.join(self.processed_folder, self.training_file), 'wb') as f:
-                torch.save(training_set, f)
-            with open(path.join(self.processed_folder, self.test_file), 'wb') as f:
-                torch.save(test_set, f)
+            data_set = (data_x, data_u, data_x_next)
+            with open(path.join(self.root_path, self.data_file), 'wb') as f:
+                torch.save(data_set, f)
 
 # pendulum = PendulumDataset('data/pendulum')
 # print (pendulum[0][0])

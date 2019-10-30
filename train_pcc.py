@@ -138,7 +138,7 @@ def main(args):
     with open(result_path + '/settings', 'w') as f:
         json.dump(args.__dict__, f, indent=2)
 
-    latent_maps = [draw_latent_map(model, mdp)]
+    # latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
         avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam, vae_coeff, determ_coeff, optimizer, armotized)
         scheduler.step()
@@ -154,9 +154,9 @@ def main(args):
         writer.add_scalar('consistency loss', avg_consis_loss, i)
         writer.add_scalar('curvature loss', avg_cur_loss, i)
         writer.add_scalar('training loss', avg_loss, i)
-        if (i+1) % 10 == 0:
-            map_i = draw_latent_map(model, mdp)
-            latent_maps.append(map_i)
+        # if (i+1) % 10 == 0:
+        #     map_i = draw_latent_map(model, mdp)
+        #     latent_maps.append(map_i)
         # save model
         if (i + 1) % iter_save == 0:
             print('Saving the model.............')
@@ -168,7 +168,7 @@ def main(args):
                                 'Curvature loss: ' + str(avg_cur_loss),
                                 'Training loss: ' + str(avg_loss)
                                 ]))
-    latent_maps[0].save(result_path + '/latent_map.gif', format='GIF', append_images=latent_maps[1:], save_all=True, duration=100, loop=0)
+    # latent_maps[0].save(result_path + '/latent_map.gif', format='GIF', append_images=latent_maps[1:], save_all=True, duration=100, loop=0)
     writer.close()
 
 def str2bool(v):
