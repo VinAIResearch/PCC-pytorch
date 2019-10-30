@@ -127,12 +127,12 @@ def main(args):
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.999), eps=1e-8, lr=lr, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=int(epoches / 3), gamma=0.5)
 
-    log_path = 'new_mdp_logs/' + env_name + '/' + log_dir
+    log_path = 'logs/' + env_name + '/' + log_dir
     if not path.exists(log_path):
         os.makedirs(log_path)
     writer = SummaryWriter(log_path)
 
-    result_path = 'new_mdp_result/' + env_name + '/' + log_dir
+    result_path = 'result/' + env_name + '/' + log_dir
     if not path.exists(result_path):
         os.makedirs(result_path)
     with open(result_path + '/settings', 'w') as f:
