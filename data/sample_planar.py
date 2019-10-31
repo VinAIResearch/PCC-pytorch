@@ -15,12 +15,30 @@ from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 
 np.random.seed(1)
 
+def get_all_pos(mdp):
+    start = 0
+    end = mdp.width
+    state_list = []
+    for x in range(start, end):
+        for y in range(start, end):
+            state = np.array([x,y])
+            if mdp.is_valid_state(state):
+                state_list.append(state)
+    return state_list
+
 def sample(mdp, sample_size):
     """
     return [(s, u, s_next)]
     """
+    state_list = get_all_pos(mdp)
+    state_list = state_list * (sample_size // len(state_list))
     state_samples = []
-    for i in trange(sample_size, desc = 'Sampling data'):
+    print ("Creating a list of all possible states (discretized on integer grid).")
+    for s in state_list:
+        u = mdp.sample_valid_random_action(s)
+        s_next = mdp.transition_function(s, u)
+        state_samples.append((s, u, s_next))
+    for i in trange(sample_size - len(state_list), desc = 'Sampling remaining data'):
         s = mdp.sample_valid_random_state()
         u = mdp.sample_valid_random_action(s)
         s_next = mdp.transition_function(s, u)
@@ -73,6 +91,8 @@ def main(args):
     sample_size = args.sample_size
     noise = args.noise
     mdp = PlanarObstaclesMDP(sampling=True, noise = noise)
+    # state_list = get_all_pos(mdp)
+    # print (len(state_list))
     write_to_file(mdp, sample_size, root_path + '/data/planar/raw')
 
 if __name__ == "__main__":
