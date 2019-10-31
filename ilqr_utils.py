@@ -1,12 +1,11 @@
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation, writers
 import numpy as np
 import torch
-from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation, writers
 
 np.random.seed(0)
 
-def random_traj(mdp, s_start, z_start, horizon, dynamics):
+def random_traj(env_name, mdp, s_start, z_start, horizon, dynamics):
     """
     initialize a valid random trajectory
     """
@@ -16,13 +15,16 @@ def random_traj(mdp, s_start, z_start, horizon, dynamics):
     s = s_start
     for i in range(horizon):
         z_seq.append(z)
-        u = mdp.sample_valid_random_action(s)
+        if env_name == 'planar':
+            u = mdp.sample_valid_random_action(s)
+            s = mdp.transition_function(s, u)
+        elif env_name == 'pendulum':
+            u = mdp.sample_random_action()
         u = torch.from_numpy(u).view(1,-1).cuda()
         u_seq.append(u)
         with torch.no_grad():
             z_next, _, _, _ = dynamics(z, u)
         z = z_next
-        s = mdp.transition_function(s, u.cpu().detach().numpy())
     z_seq.append(z)
     u_seq.append(None)
     return z_seq, u_seq
@@ -76,27 +78,42 @@ def random_start_goal(env_name, mdp):
                                 mdp.width - mdp.half_agent_size)
             y = np.random.uniform(mdp.half_agent_size, mdp.half_agent_size+3)
             s_start = np.array([x, y])
+        x_start = mdp.render(s_start)
+        x_goal = mdp.render(s_goal)
     elif env_name == 'pendulum':
-        s_goal = np.array([0, np.random.uniform(-mdp.max_speed, mdp.max_speed)])
+        while True:
+            s_goal = np.zeros((2, 2))
+            x_goal = np.zeros((mdp.width, mdp.height, 2))
+            s0 = np.array([0.0, np.random.uniform(mdp.angular_rate_limits[0],
+                                                  mdp.angular_rate_limits[1])])
+            x0 = mdp.render(s0).squeeze()
+            s_goal[:, 0] = s0
+            x_goal[:, :, 0] = x0
+            a0 = mdp.sample_random_action()
+            s1, x1 = mdp.transition_function((s0, x0), a0)
+            if mdp.goal_limits[0] <= s1[0] <= mdp.goal_limits[1]:
+                s_goal[:, 1] = s1
+                x_goal[:, :, 1] = x1.squeeze()
+                x_goal = np.hstack((x_goal[:, :, 0], x_goal[:, :, 1]))
+                break
+        s_start = np.zeros((2, 2))
+        x_start = np.zeros((mdp.width, mdp.height, 2))
         idx = np.random.randint(0,2)
         if idx == 0: # swing up
-            s_start = np.array([np.pi, np.random.uniform(-mdp.max_speed, mdp.max_speed)])
+            s0 = np.array([np.pi/2 , np.random.uniform(mdp.angular_rate_limits[0],
+                                       mdp.angular_rate_limits[1])])
         if idx == 1: # balance
-            theta_0 = np.random.uniform(-np.pi/6, np.pi/6)
-            s_start = np.array([theta_0, np.random.uniform(-mdp.max_speed, mdp.max_speed)])
-    return idx, s_start, s_goal
-
-def angle_normalize(x):
-    # for normalizing theta in pendulum
-    return (((x+np.pi) % (2*np.pi)) - np.pi)
-
-def is_close_goal(env_name, s, s_goal):
-    # check if a state s is close to goal state
-    if env_name == 'planar':
-        return np.sqrt(np.sum(s - s_goal)**2) <= 2
-    elif env_name == 'pendulum':
-        theta = angle_normalize(s[0])
-        return np.abs(theta) <= (np.pi / 6)
+            s0 = np.array([0.0, np.random.uniform(mdp.angular_rate_limits[0],
+                                                        mdp.angular_rate_limits[1])])
+        x0 = mdp.render(s0).squeeze()
+        s_start[:, 0] = s0
+        x_start[:, :, 0] = x0
+        a0 = mdp.sample_random_action()
+        s1, x1 = mdp.transition_function((s0, x0), a0)
+        s_start[:, 1] = s1
+        x_start[:, :, 1] = x1.squeeze()
+        x_start = np.hstack((x_start[:, :, 0], x_start[:, :, 1]))
+    return idx, s_start[:, 1], x_start, s_goal[:, 1], x_goal
 
 def save_traj(images, image_goal, gif_path, env_name):
     # save trajectory as gif file

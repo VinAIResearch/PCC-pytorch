@@ -69,6 +69,16 @@ class PlanarObstaclesMDP(object):
         s_next = s + u + self.noise * np.random.randn()
         return s_next
 
+    def is_goal(self, s, s_goal):
+        return np.sqrt(np.sum(s - s_goal) ** 2) <= 2
+
+    def reward_function(self, s, s_goal):
+        if self.is_goal(s, s_goal):
+            reward = 1
+        else:
+            reward = 0
+        return reward
+
     def render(self, s):
         top, bottom, left, right = self.get_pixel_location(s)
         x = self.generate_env()

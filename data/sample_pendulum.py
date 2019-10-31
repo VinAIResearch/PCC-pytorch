@@ -36,28 +36,49 @@ def sample(sample_size=20000, width=48, height=48, frequency=50, noise=0.0):
 
     # Generate interaction tuples (random states and actions).
     for sample in trange(sample_size, desc = 'Sampling data'):
-        s00 = mdp.sample_random_state()
-        s01 = mdp.transition_function(s00, np.array([0.0]))
-
-        a = np.atleast_1d(
+        # s00 = mdp.sample_random_state()
+        # s01 = mdp.transition_function(s00, np.array([0.0]))
+        #
+        # a = np.atleast_1d(
+        #     np.random.uniform(mdp.avail_force[0], mdp.avail_force[1]))
+        #
+        # s10 = mdp.transition_function(s00, a)
+        # s11 = mdp.transition_function(s10, np.array([0.0]))
+        #
+        # ## Store interaction tuple.
+        # # Current state (w/ history).
+        # x_data[sample, :, :, 0] = s00[1][:, :, 0]
+        # x_data[sample, :, :, 1] = s01[1][:, :, 0]
+        # state_data[sample, :, 0] = s00[0][0:2]
+        # state_data[sample, :, 1] = s01[0][0:2]
+        # # Action.
+        # u_data[sample] = a
+        # # Next state (w/ history).
+        # x_next_data[sample, :, :, 0] = s10[1][:, :, 0]
+        # x_next_data[sample, :, :, 1] = s11[1][:, :, 0]
+        # state_next_data[sample, :, 0] = s10[0][0:2]
+        # state_next_data[sample, :, 1] = s11[0][0:2]
+        s0 = mdp.sample_random_state()
+        a0 = np.atleast_1d(
             np.random.uniform(mdp.avail_force[0], mdp.avail_force[1]))
-
-        s10 = mdp.transition_function(s00, a)
-        s11 = mdp.transition_function(s10, np.array([0.0]))
+        s1 = mdp.transition_function(s0, a0)
+        a1 = np.atleast_1d(
+            np.random.uniform(mdp.avail_force[0], mdp.avail_force[1]))
+        s2 = mdp.transition_function(s1, a1)
 
         ## Store interaction tuple.
         # Current state (w/ history).
-        x_data[sample, :, :, 0] = s00[1][:, :, 0]
-        x_data[sample, :, :, 1] = s01[1][:, :, 0]
-        state_data[sample, :, 0] = s00[0][0:2]
-        state_data[sample, :, 1] = s01[0][0:2]
+        x_data[sample, :, :, 0] = s0[1][:, :, 0]
+        x_data[sample, :, :, 1] = s1[1][:, :, 0]
+        state_data[sample, :, 0] = s0[0][0:2]
+        state_data[sample, :, 1] = s1[0][0:2]
         # Action.
-        u_data[sample] = a
+        u_data[sample] = a1
         # Next state (w/ history).
-        x_next_data[sample, :, :, 0] = s10[1][:, :, 0]
-        x_next_data[sample, :, :, 1] = s11[1][:, :, 0]
-        state_next_data[sample, :, 0] = s10[0][0:2]
-        state_next_data[sample, :, 1] = s11[0][0:2]
+        x_next_data[sample, :, :, 0] = s1[1][:, :, 0]
+        x_next_data[sample, :, :, 1] = s2[1][:, :, 0]
+        state_next_data[sample, :, 0] = s1[0][0:2]
+        state_next_data[sample, :, 1] = s2[0][0:2]
 
     return x_data, u_data, x_next_data, state_data, state_next_data
 

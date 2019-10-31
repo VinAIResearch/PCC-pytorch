@@ -1,29 +1,22 @@
-import torch
-import numpy as np
-from PIL import Image
-import imageio
-import os
-import json
 import argparse
-from torchvision.transforms import ToTensor
 
 from pcc_model import PCC
 import data.sample_planar as planar_sampler
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-from gym.envs.classic_control import PendulumEnv
+from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
 import data.sample_pendulum as pendulum_sampler
 from ilqr_utils import *
 from datasets import *
 
-np.random.seed(0)
-torch.manual_seed(0)
+np.random.seed(2)
+torch.manual_seed(2)
 torch.set_default_dtype(torch.float64)
 
 samplers = {'planar': planar_sampler, 'pendulum': pendulum_sampler}
-mdps = {'planar': PlanarObstaclesMDP, 'pendulum': PendulumEnv}
+mdps = {'planar': PlanarObstaclesMDP, 'pendulum': VisualPoleSimpleSwingUp}
 network_dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
 img_dims = {'planar': (40, 40), 'pendulum': (48, 96)}
-horizons = {'planar': 40, 'pendulum': 400}
+horizons = {'planar': 40, 'pendulum': 100}
 K_z = 10
 K_u = 1
 
@@ -95,36 +88,32 @@ def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
     loss += z_T_diff.view(1,-1).mm(R_z).mm(z_T_diff.view(-1,1))
     return loss
 
-def reciding_horizon(env_name, mdp, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon):
+def reciding_horizon(env_name, mdp, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon):
     # for the first step
-    z_seq, u_seq = random_traj(mdp, s_start, z_start, horizon, dynamics)
+    z_seq, u_seq = random_traj(env_name, mdp, s_start, z_start, horizon, dynamics)
     loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
     print ('Horizon {:02d}: {:05f}'.format(0, loss.item()))
     u_opt = []
     s = s_start
     for i in range(horizon):
-        # optimal perturbed policy at time step k
+        # optimal perturbed policy at time step t
         k, K = iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics)
         u_first_opt = u_seq[0] + k[0].view(1,-1)
         if torch.any(torch.isnan(u_first_opt)):
             return None
         u_opt.append(u_first_opt)
 
-        # get z_k+1 from the true dynamics
+        # get z_t+1 from the true dynamics
         if env_name == 'planar':
             s = mdp.transition_function(s, u_first_opt.squeeze().cpu().detach().numpy())
-            # s = s + np.array(u_first_opt.squeeze().cpu().detach())
             next_obs = mdp.render(s)
             next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, x_dim)
         elif env_name == 'pendulum':
-            s = mdp.step_from_state(s, u_first_opt.squeeze().cpu().detach().numpy())
-            next_obs_1, next_obs_2 = sampler.render(mdp, s)
-            next_obs = Image.fromarray(np.hstack((next_obs_1, next_obs_2)))
-            next_x = ToTensor()((Image.fromarray(next_obs).convert('L').
-                        resize((img_dim[0], img_dim[1])))).cuda().transpose(-1,-2).double()
-            print (next_x.size())
-        # next_obs = env.render_state(s)
-        # next_x = torch.from_numpy(next_obs).cuda().squeeze(0).view(-1, 1600)
+            image = mdp.render(s)
+            s, next_image = mdp.transition_function((s, image), u_first_opt.detach().cpu().numpy())
+            next_obs = np.hstack((image, next_image))
+            next_x = torch.from_numpy(next_obs).cuda().view(-1, x_dim).double()
+
         z_start, _ = encoder(next_x)
 
         # update the nominal trajectory
@@ -178,58 +167,48 @@ def main(args):
         for task in range(10):
             print ('Performing task ' + str(task+1))
             # draw random initial state and goal state
-            corner_idx, s_start, s_goal = random_start_goal(env_name, mdp)
+            idx, s_start, image_start, s_goal, image_goal = random_start_goal(env_name, mdp)
             if env_name == 'planar':
-                image_start = mdp.render(s_start)
-                image_goal = mdp.render(s_goal)
                 x_start = torch.from_numpy(image_start).cuda().squeeze(0).view(-1, x_dim)
                 x_goal = torch.from_numpy(image_goal).cuda().squeeze(0).view(-1, x_dim)
             elif env_name == 'pendulum':
-                image_start_1, image_start_2 = sampler.render(mdp, s_start)
-                image_start = Image.fromarray(np.hstack((image_start_1, image_start_2)))
-                image_goal_1, image_goal_2 = sampler.render(mdp, s_goal)
-                image_goal = Image.fromarray(np.hstack((image_goal_1, image_goal_2)))
-
                 # print ('x dim ' + str(x_dim))
-                x_start = ToTensor()(image_start.convert('L').
-                            resize((img_dim[0], img_dim[1]))).cuda().transpose(-1,-2).reshape(-1, x_dim).double()
+                x_start = torch.from_numpy(image_start).cuda().squeeze().view(-1, x_dim).double()
                 # print ('x start ' + str(x_start.size()))
-                x_goal = ToTensor()(image_goal.convert('L').
-                            resize((img_dim[0], img_dim[1]))).cuda().transpose(-1,-2).reshape(-1, x_dim).double()
+                x_goal = torch.from_numpy(image_goal).cuda().view(-1, x_dim).double()
                 # print ('x goal ' + str(x_goal.size()))
             z_start, _ = model.encode(x_start)
             z_goal, _ = model.encode(x_goal)
 
             # perform optimal control for this task
-            u_opt = reciding_horizon(env_name, mdp, sampler, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon)
+            u_opt = reciding_horizon(env_name, mdp, img_dim, x_dim, R_z, R_u, s_start, z_start, z_goal, dynamics, encoder, horizon)
             if u_opt is None:
                 avg_percent += 0
                 with open(model_path + '/result.txt', 'a+') as f:
-                    f.write('Task {:01d} start at corner {:01d}: '.format(task+1, corner_idx) + ' crashed' + '\n')
+                    f.write('Task {:01d} start at corner {:01d}: '.format(task+1, idx) + ' crashed' + '\n')
                 continue
 
             # compute the trajectory
             s = s_start
             images = [image_start]
-            close_steps = 0.0
+            reward = 0.0
             for i, u in enumerate(u_opt):
                 u = u.squeeze().cpu().detach().numpy()
                 if env_name == 'planar':
                     s = mdp.transition_function(s, u)
                     image = mdp.render(s)
                     images.append(image)
+                    reward += mdp.reward_function(s, s_goal)
                 elif env_name == 'pendulum':
-                    s = mdp.step_from_state(s, u)
-                    image = mdp.render_state(s[0])
+                    s, image = mdp.transition_function((s, images[-1]), u)
                     images.append(image)
-                if is_close_goal(env_name, s, s_goal):
-                    close_steps += 1
+                    reward += mdp.reward_function((s, image))
 
             # compute the percentage close to goal
-            percent = close_steps / 40
+            percent = reward / horizon
             avg_percent += percent
             with open(model_path + '/result.txt', 'a+') as f:
-                f.write('Task {:01d} start at corner {:01d}: '.format(task+1, corner_idx) + str(close_steps / 40) + '\n')
+                f.write('Task {:01d} start at corner {:01d}: '.format(task+1, idx) + str(percent) + '\n')
 
             # save trajectory as gif file
             gif_path = model_path + '/task_{:01d}.gif'.format(task+1)

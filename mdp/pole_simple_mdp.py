@@ -122,6 +122,7 @@ class VisualPoleSimpleSwingUp(CartPoleBase):
         angle_rate = np.random.uniform(self.angular_rate_limits[0],
                                        self.angular_rate_limits[1])
         true_state = np.array([angle, angle_rate])
+
         return (true_state, self.render(true_state))
 
     def _step_two_state(self, s, a):
