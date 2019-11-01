@@ -86,9 +86,11 @@ class PendulumDataset(Dataset):
         return (path.exists(path.join(self.root_path, self.data_file)))
 
     def _process_image(self, img):
-        return ToTensor()(img.convert('L').
-                          resize((self.width,
-                                  self.height)))
+        img_tensor =  ToTensor()(img.convert('L').
+                          resize((self.height,
+                                  self.width)))
+        img_tensor = torch.cat((img_tensor[:, :, :self.width], img_tensor[:, :, self.width:]), dim = 1)
+        return img_tensor
 
     def _process(self):
         if self.check_exists():
@@ -98,18 +100,18 @@ class PendulumDataset(Dataset):
                 self.data_json = json.load(f)
             data_len = len(self.data_json['samples'])
 
-            data_x = torch.zeros(data_len, self.width, self.height)
+            data_x = torch.zeros(data_len, self.height, self.width)
             data_u = torch.zeros(data_len, self.action_dim)
-            data_x_next = torch.zeros(data_len, self.width, self.height)
+            data_x_next = torch.zeros(data_len, self.height, self.width)
 
             i = 0
             for sample in tqdm(self.data_json['samples'], desc='processing data'):
                 before = Image.open(path.join(self.raw_folder, sample['before']))
                 after = Image.open(path.join(self.raw_folder, sample['after']))
 
-                data_x[i] = self._process_image(before).transpose(-1, -2)
+                data_x[i] = self._process_image(before)
                 data_u[i] = torch.from_numpy(np.array(sample['control']))
-                data_x_next[i] = self._process_image(after).transpose(-1, -2)
+                data_x_next[i] = self._process_image(after)
                 i += 1
 
             data_set = (data_x, data_u, data_x_next)
