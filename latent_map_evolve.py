@@ -5,9 +5,10 @@ import torch
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from pcc_model import PCC
 
-red = Color('blue')
-colors = list(red.range_to(Color("red"),40))
+blue = Color('blue')
+colors = list(blue.range_to(Color("red"),40))
 colors_rgb = [color.rgb for color in colors]
+# print (colors_rgb[5])
 
 def get_invalid_state(mdp, start, end):
     invalid_pos = []

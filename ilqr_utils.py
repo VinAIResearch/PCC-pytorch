@@ -81,39 +81,21 @@ def random_start_goal(env_name, mdp):
         x_start = mdp.render(s_start)
         x_goal = mdp.render(s_goal)
     elif env_name == 'pendulum':
-        while True:
-            s_goal = np.zeros((2, 2))
-            x_goal = np.zeros((mdp.width, mdp.height, 2))
-            s0 = np.array([0.0, np.random.uniform(mdp.angular_rate_limits[0],
-                                                  mdp.angular_rate_limits[1])])
-            x0 = mdp.render(s0).squeeze()
-            s_goal[:, 0] = s0
-            x_goal[:, :, 0] = x0
-            a0 = mdp.sample_random_action()
-            s1, x1 = mdp.transition_function((s0, x0), a0)
-            if mdp.goal_limits[0] <= s1[0] <= mdp.goal_limits[1]:
-                s_goal[:, 1] = s1
-                x_goal[:, :, 1] = x1.squeeze()
-                x_goal = np.hstack((x_goal[:, :, 0], x_goal[:, :, 1]))
-                break
-        s_start = np.zeros((2, 2))
-        x_start = np.zeros((mdp.width, mdp.height, 2))
+        s_goal = np.zeros(2)
+        x_goal = mdp.render(s_goal).squeeze()
+        x_goal = np.hstack((x_goal, x_goal))
+
         idx = np.random.randint(0,2)
         if idx == 0: # swing up
-            s0 = np.array([np.pi/2 , np.random.uniform(mdp.angular_rate_limits[0],
+            s_start = np.array([np.pi, np.random.uniform(mdp.angular_rate_limits[0],
                                        mdp.angular_rate_limits[1])])
         if idx == 1: # balance
-            s0 = np.array([0.0, np.random.uniform(mdp.angular_rate_limits[0],
-                                                        mdp.angular_rate_limits[1])])
-        x0 = mdp.render(s0).squeeze()
-        s_start[:, 0] = s0
-        x_start[:, :, 0] = x0
-        a0 = mdp.sample_random_action()
-        s1, x1 = mdp.transition_function((s0, x0), a0)
-        s_start[:, 1] = s1
-        x_start[:, :, 1] = x1.squeeze()
-        x_start = np.hstack((x_start[:, :, 0], x_start[:, :, 1]))
-    return idx, s_start[:, 1], x_start, s_goal[:, 1], x_goal
+            s_start = np.array([0.0, np.random.uniform(mdp.angular_rate_limits[0],
+                                                         mdp.angular_rate_limits[1])])
+        x_start = mdp.render(s_start).squeeze()
+        x_start = np.hstack((x_start, x_start))
+    return idx, s_start, x_start, s_goal, x_goal
+    # return idx, s_start[:, 0], x_start, s_goal[:, 0], x_goal
 
 def save_traj(images, image_goal, gif_path, env_name):
     # save trajectory as gif file
@@ -143,8 +125,8 @@ def save_traj(images, image_goal, gif_path, env_name):
         writer = Writer(fps=4, metadata=dict(artist='Me'), bitrate=1800)
     elif env_name == 'pendulum':
         anim = FuncAnimation(
-            fig, updatemat2, frames=400, interval=200, blit=True, repeat=True)
+            fig, updatemat2, frames=100, interval=200, blit=True, repeat=True)
         Writer = writers['imagemagick']  # animation.writers.avail
-        writer = Writer(fps=40, metadata=dict(artist='Me'), bitrate=1800)
+        writer = Writer(fps=10, metadata=dict(artist='Me'), bitrate=1800)
 
     anim.save(gif_path, writer=writer)

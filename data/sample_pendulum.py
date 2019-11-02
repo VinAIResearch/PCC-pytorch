@@ -95,14 +95,14 @@ def write_to_file(data, output_dir):
     for i in range(x_data.shape[0]):
         x_1 = x_data[i, :, :, 0]
         x_2 = x_data[i, :, :, 1]
-        before = np.concatenate((x_1, x_2), axis=1)
+        before = np.hstack((x_1, x_2))
         before_file = 'before-{:05d}.png'.format(i)
         Image.fromarray(before * 255.).convert('L').save(path.join(output_dir, before_file))
 
         after_file = 'after-{:05d}.png'.format(i)
         x_next_1 = x_next_data[i, :, :, 0]
         x_next_2 = x_next_data[i, :, :, 1]
-        after = np.concatenate((x_next_1, x_next_2), axis=1)
+        after = np.hstack((x_next_1, x_next_2))
         Image.fromarray(after * 255.).convert('L').save(path.join(output_dir, after_file))
 
         initial_state = state_data[i]

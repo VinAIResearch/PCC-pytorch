@@ -19,11 +19,11 @@ class PlanarObstaclesMDP(object):
     def is_valid_state(self, s):
         if np.any(s < self.half_agent_size) or np.any(s > self.width - self.half_agent_size):
             return False
-        # check if the agent crosses any obstacle
-        obstacles = self.obstacles.astype(np.int)
-        for obs in obstacles:
-            dis = np.abs(obs - s)
-            if np.all(dis <= 1):
+        # check if the agent crosses any obstacle (the obstacle is inside the agent)
+        top, bot = s[0] - self.half_agent_size, s[0] + self.half_agent_size
+        left, right = s[1] - self.half_agent_size, s[1] + self.half_agent_size
+        for obs in self.obstacles:
+            if top <= obs[0] <= bot and left <= obs[1] <= right:
                 return False
         return True
         # check if the agent center is inside any obstacle
