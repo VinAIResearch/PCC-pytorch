@@ -97,7 +97,7 @@ def forward(z_seq, u_seq, k, K, dynamics):
     u_seq_new.append(None)
     return z_seq_new, u_seq_new
 
-def iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters):
+def iLQR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters):
     """
     - run backward: linearize around the current trajectory and perform optimal control
     - run forward: update the current trajectory
@@ -152,9 +152,9 @@ def reciding_horizon(env_name, mdp, x_dim, R_z, R_u, s_start, z_start, z_goal, d
     for i in range(horizon):
         # optimal perturbed policy at time step t
         print('Horizon {:02d}'.format(i + 1))
-        z_seq, u_seq, k, K = iQLR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters_ilqr)
+        z_seq, u_seq, k, K = iLQR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters_ilqr)
         u_first_opt = u_seq[0]
-        u_opt.append(u_first_opt)
+        # u_opt.append(u_first_opt)
         if torch.any(torch.isnan(u_first_opt)):
             return None
         u_opt.append(u_first_opt)
@@ -232,7 +232,7 @@ def main(args):
     R_z = 10 * torch.eye(z_dim).cuda()
     R_u = 1 * torch.eye(u_dim).cuda()
 
-    folder = 'danang/' + env_name
+    folder = 'result/' + env_name
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
     log_folders.sort()
     # print (log_folders)

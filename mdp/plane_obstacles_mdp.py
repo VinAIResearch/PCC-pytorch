@@ -26,11 +26,6 @@ class PlanarObstaclesMDP(object):
             if top <= obs[0] <= bot and left <= obs[1] <= right:
                 return False
         return True
-        # check if the agent center is inside any obstacle
-        # dis_to_obs = np.sqrt(np.sum((self.obstacles - s)**2, axis=1))
-        # if np.any(dis_to_obs < self.obstacles_r):
-        #     return False
-        # return True
 
     def is_low_error(self, s, u, epsilon = 0.1):
         s_next = s + u
@@ -93,12 +88,6 @@ class PlanarObstaclesMDP(object):
         left = center_y - self.rw_rendered
         right = center_y + self.rw_rendered
         return top, bottom, left, right
-        # topleft_x, topleft_y = int(s[0]), int(s[1])
-        # top = topleft_x
-        # bottom = topleft_x + self.rw_rendered + 1
-        # left = topleft_y
-        # right = topleft_y + self.rw_rendered + 1
-        # return top, bottom, left, right
 
     def generate_env(self):
         """

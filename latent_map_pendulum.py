@@ -69,9 +69,9 @@ def assign_latent_color(pcc_model, angel, num_state_each_angle):
     # return dict(zip(all_z_for_angle, [ang_color_map[angel]]*len(all_z_for_angle)))
 
 model = PCC(armotized=False, x_dim=4608, z_dim=3, u_dim=1, env='pendulum').cuda()
-model.load_state_dict(torch.load('danang/pendulum/new_dataset_1/model_5000'))
+model.load_state_dict(torch.load('danang/pendulum/new_dataset_4/model_5000'))
 model.eval()
-num_angles = 50
+num_angles = 100
 num_obs_each_angle = 20
 angle_color_map, colors_rgb = draw_true_map(num_angles)
 colors_list = []
@@ -97,7 +97,7 @@ z_min = np.min(all_z, axis=0)
 z_max = np.max(all_z, axis=0)
 print (z_min)
 print (z_max)
-all_z = all_z * 30
+all_z = all_z * 35
 # all_z = np.round(all_z * 100).astype(int)
 
 
@@ -106,9 +106,9 @@ ax = plt.axes(projection='3d')
 ax.set_xlim([-100, 100])
 ax.set_ylim([-100, 100])
 ax.set_zlim([-100, 100])
-xdata = all_z[:, 2]
-ydata = all_z[:, 0]
-zdata = all_z[:, 1]
+xdata = all_z[:, 0]
+ydata = all_z[:, 1]
+zdata = all_z[:, 2]
 colors = ['red'] * 10 + ['blue'] * 10
 
 ax.scatter(xdata, ydata, zdata, c=colors_list, marker='o', s=10)
