@@ -23,7 +23,7 @@ class PlanarObstaclesMDP(object):
         top, bot = s[0] - self.half_agent_size, s[0] + self.half_agent_size
         left, right = s[1] - self.half_agent_size, s[1] + self.half_agent_size
         for obs in self.obstacles:
-            if top <= obs[0] <= bot and left <= obs[1] <= right:
+            if top < obs[0] <= bot and left < obs[1] <= right:
                 return False
         return True
 
@@ -56,6 +56,14 @@ class PlanarObstaclesMDP(object):
             u = np.random.uniform(-self.max_step, self.max_step, size=self.action_dim)
             if self.is_valid_action(s, u):
                 return u
+
+    def sample_random_action(self):
+        return np.random.uniform(-self.max_step, self.max_step, size=self.action_dim)
+
+    def sample_extreme_action(self):
+        x_direction = np.random.choice([-self.max_step, self.max_step])
+        y_direction = np.random.choice([-self.max_step, self.max_step])
+        return np.array([x_direction, y_direction])
 
     def transition_function(self, s, u):
         u = np.clip(u, -self.max_step, self.max_step)

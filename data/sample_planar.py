@@ -29,16 +29,16 @@ def sample(mdp, sample_size):
     """
     return [(s, u, s_next)]
     """
-    # state_list = get_all_pos(mdp)
-    # state_list = state_list * (sample_size // len(state_list))
+    state_list = get_all_pos(mdp)
+    state_list = state_list * (sample_size // len(state_list))
     state_samples = []
-    # print ("Creating a list of all possible states (discretized on integer grid).")
-    # for s in state_list:
-    #     u = mdp.sample_valid_random_action(s)
-    #     s_next = mdp.transition_function(s, u)
-    #     state_samples.append((s, u, s_next))
-    # for i in trange(sample_size - len(state_list), desc = 'Sampling remaining data'):
-    for i in trange(sample_size):
+    print ("Creating a list of all possible states (discretized on integer grid).")
+    for s in state_list:
+        u = mdp.sample_valid_random_action(s)
+        s_next = mdp.transition_function(s, u)
+        state_samples.append((s, u, s_next))
+    for i in trange(sample_size - len(state_list), desc = 'Sampling remaining data'):
+    # for i in trange(sample_size):
         s = mdp.sample_valid_random_state()
         u = mdp.sample_valid_random_action(s)
         s_next = mdp.transition_function(s, u)

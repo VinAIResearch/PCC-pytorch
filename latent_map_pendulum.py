@@ -50,26 +50,15 @@ def assign_latent_color(pcc_model, angel, num_state_each_angle):
         s_next, x_next = mdp.transition_function((s, x), u)
         x_next = x_next.squeeze()
         # reverse order: the state we want to represent is x not x_next
-        x_with_history = np.hstack((x_next, x))
-        x_with_history = Image.fromarray(x_with_history * 255.).convert('L')
-        x_with_history = ToTensor()(x_with_history.convert('L').resize((96, 48))).double()
-        x_with_history = torch.cat((x_with_history[:, :, :48], x_with_history[:, :, 48:]), dim=1)
-
-        # x_with_history = Image.fromarray(np.hstack((x, x_next)) * 255.).resize((48, 96))
-        # x_with_history = ToTensor()(x_with_history).double().transpose(-1, -2)
-        # break
+        x_with_history = np.vstack((x_next, x))
+        x_with_history = ToTensor()(x_with_history).double().cuda()
         with torch.no_grad():
-            z, _ = pcc_model.encode(x_with_history.cuda()
-                                .view(-1, x_with_history.shape[-1] * x_with_history.shape[-2]))
+            z, _ = pcc_model.encode(x_with_history.view(-1, x_with_history.shape[-1] * x_with_history.shape[-2]))
         all_z_for_angle.append(z.detach().squeeze().cpu().numpy())
     return all_z_for_angle
-    # all_z_for_angle = [tuple(z) for z in all_z_for_angle]
-    # print (all_z_for_angle)
-    # # map all latent vectors to the same color
-    # return dict(zip(all_z_for_angle, [ang_color_map[angel]]*len(all_z_for_angle)))
 
 model = PCC(armotized=False, x_dim=4608, z_dim=3, u_dim=1, env='pendulum').cuda()
-model.load_state_dict(torch.load('danang/pendulum/new_dataset_4/model_5000'))
+model.load_state_dict(torch.load('result/pendulum/new_dataset_4/model_5000'))
 model.eval()
 num_angles = 100
 num_obs_each_angle = 20

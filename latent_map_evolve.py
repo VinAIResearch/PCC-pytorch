@@ -93,14 +93,14 @@ def draw_latent_map(model, mdp):
             draw.ellipse((x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2), fill = img.getpixel((y, x)))
     return img_latent
 
-# from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-#
-# mdp = PlanarObstaclesMDP()
-# start = 0
-# end = 39
-# invalid_pos = get_invalid_state(mdp, start, end)
-# img_arr, img = random_gradient(start, end, mdp.width, mdp.height, invalid_pos)
-# get_true_map(mdp, start, end, mdp.width, mdp.height, img)
+from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
+
+mdp = PlanarObstaclesMDP()
+start = 0
+end = 39
+invalid_pos = get_invalid_state(mdp, start, end)
+img_arr, img = random_gradient(start, end, mdp.width, mdp.height, invalid_pos)
+get_true_map(mdp, start, end, mdp.width, mdp.height, img)
 
 # mdp = PlanarObstaclesMDP()
 # model = PCC(armotized=False, x_dim=1600, z_dim=2, u_dim=2, env = 'planar').cuda()
