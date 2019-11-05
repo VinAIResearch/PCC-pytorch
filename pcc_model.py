@@ -59,11 +59,11 @@ class PCC(nn.Module):
         mu_z_next_determ, _, A, B = self.transition(mu_p_z, u)
         x_next_determ = self.decode(mu_z_next_determ)
 
-        return x_next_recon, \
+        return x_next_recon.view(x_next_recon.size(0), -1), \
                 mu_q_z, logvar_q_z, mu_p_z, logvar_p_z, \
                 mu_q_z_next, logvar_q_z_next, \
                 z_next, mu_p_z_next, logvar_p_z_next, \
-                z_p, u, x_recon, x_next_determ
+                z_p, u, x_recon.view(x_recon.size(0), -1), x_next_determ.view(x_next_determ.size(0), -1)
 
     def predict(self, x, u):
         mu, logvar = self.encoder(x)
