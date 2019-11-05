@@ -5,7 +5,6 @@ from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
 from pcc_model import PCC
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
 from PIL import Image
 from torchvision.transforms import ToTensor
 

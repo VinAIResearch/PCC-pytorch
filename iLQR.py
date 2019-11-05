@@ -140,7 +140,7 @@ def main(args):
                     s_start = mdp.transition_function(s_start, action_chosen)
                     obs_traj.append(mdp.render(s_start).squeeze())
                 else:
-                    goal_counter += mdp.reward_function(s_start)
+                    goal_counter += mdp.reward_function((s_start, obs_traj[-1]))
                     s_start, observation = mdp.transition_function((s_start, obs_traj[-1]), action_chosen)
                     obs_traj.append(observation.squeeze())
 

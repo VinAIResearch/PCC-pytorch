@@ -2,26 +2,24 @@ from tensorboardX import SummaryWriter
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
 import argparse
-import sys
 
 from pcc_model import PCC
 from datasets import *
 from losses import *
 
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-from gym.envs.classic_control import PendulumEnv
+from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
+from mdp.cartpole_mdp import VisualCartPoleBalance
 from latent_map_evolve import *
 
 torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
 
 device = torch.device("cuda")
-mdps = {'planar': PlanarObstaclesMDP, 'pendulum': PendulumEnv}
-datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset}
-dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
-num_eval = 10 # number of images evaluated on tensorboard
+mdps = {'planar': PlanarObstaclesMDP, 'pendulum': VisualPoleSimpleSwingUp, 'cartpole': VisualCartPoleBalance}
+datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset, 'cartpole': CartPoleDataset}
+dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1), 'cartpole': ((2, 80, 80), 8, 1)}
 
 def compute_loss(model, armotized, x, x_next,
                 x_next_recon,
@@ -55,19 +53,21 @@ def compute_loss(model, armotized, x, x_next,
     return pred_loss, consis_loss, cur_loss, \
             lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
-def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized):
+def train(env_name, model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized):
     avg_pred_loss = 0.0
     avg_consis_loss = 0.0
     avg_cur_loss = 0.0
-    avg_loss = 0.0  
+    avg_loss = 0.0
     
     num_batches = len(train_loader)
     model.train()
     for x, u, x_next in train_loader:
-        x = x.to(device).double().view(-1, model.x_dim)
+        if env_name == 'planar' or env_name == 'pendulum':
+            x = x.view(-1, model.x_dim)
+            x_next = x_next.view(-1, model.x_dim)
+        x = x.to(device).double()
         u = u.to(device).double()
-        x_next = x_next.to(device).double().view(-1, model.x_dim)
-
+        x_next = x_next.to(device).double()
         optimizer.zero_grad()
 
         x_next_recon, \
@@ -97,8 +97,7 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
 
 def main(args):
     env_name = args.env
-    assert env_name in ['planar', 'pendulum']
-    mdp = mdps[env_name]()
+    assert env_name in ['planar', 'pendulum', 'cartpole']
     armotized = args.armotized
     log_dir = args.log_dir
     seed = args.seed
@@ -122,7 +121,7 @@ def main(args):
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=4)
 
     x_dim, z_dim, u_dim = dims[env_name]
-    model = PCC(armotized = armotized, x_dim=x_dim, z_dim=z_dim, u_dim=u_dim, env=env_name).to(device)
+    model = PCC(armotized=armotized, x_dim=x_dim, z_dim=z_dim, u_dim=u_dim, env=env_name).to(device)
 
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.999), eps=1e-8, lr=lr, weight_decay=weight_decay)
     scheduler = StepLR(optimizer, step_size=int(epoches / 3), gamma=0.5)
@@ -140,7 +139,7 @@ def main(args):
 
     # latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
-        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam, vae_coeff, determ_coeff, optimizer, armotized)
+        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(env_name, model, data_loader, lam, vae_coeff, determ_coeff, optimizer, armotized)
         scheduler.step()
         print('Epoch %d' % i)
         print("Prediction loss: %f" % (avg_pred_loss))

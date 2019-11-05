@@ -36,8 +36,8 @@ class VisualCartPoleBalance(CartPoleBase):
         """Init the MDP.
 
         Args:
-          width: integer indicating the width of the redered image.
-          height: integer indicating the height of the redered image.
+          width: integer indicating the width of the rendered image.
+          height: integer indicating the height of the rendered image.
           frequency: float indicating the simulator frequency (discrete steps).
           noise: float magnitude of additive noise to the transitions.
           line_width: width of the pendulum in the rendered image.

@@ -43,7 +43,6 @@ class PCC(nn.Module):
         mu_q_z_next, logvar_q_z_next = self.encode(x_next) # Q(z^_t+1 | x_t+1)
         z_next = self.reparam(mu_q_z_next, logvar_q_z_next) # sample z^_t+1
         x_next_recon = self.decode(z_next) # P(x_t+1 | z^t_t+1)
-
         # 2nd term
         mu_q_z, logvar_q_z = self.back_dynamics(z_next, u, x) # Q(z_t | z^_t+1, u_t, x_t)
         mu_p_z, logvar_p_z = self.encode(x) # P(z_t | x_t)

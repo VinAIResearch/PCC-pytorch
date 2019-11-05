@@ -118,5 +118,62 @@ class PendulumDataset(Dataset):
             with open(path.join(self.root_path, self.data_file), 'wb') as f:
                 torch.save(data_set, f)
 
+class CartPoleDataset(Dataset):
+    width = 80
+    height = 80 * 2
+    action_dim = 1
+    data_file = 'data.pt'
+
+    def __init__(self, root_path):
+        self.root_path = root_path
+        self.raw_folder = path.join(self.root_path, 'raw')
+        self._process()
+
+        self.data_x, self.data_u, self.data_x_next = torch.load(path.join(self.root_path, self.data_file))
+
+    def __len__(self):
+        return len(self.data_x)
+
+    def __getitem__(self, index):
+        return self.data_x[index], self.data_u[index], self.data_x_next[index]
+
+    def check_exists(self):
+        return (path.exists(path.join(self.root_path, self.data_file)))
+
+    def _process_image(self, img):
+        img_tensor =  ToTensor()(img.convert('L').
+                          resize((self.height,
+                                  self.width)))
+        img_tensor = torch.cat((img_tensor[:, :, :self.width], img_tensor[:, :, self.width:]), dim = 1)
+        return img_tensor.view(-1, 2, self.width, self.width)
+
+    def _process(self):
+        if self.check_exists():
+            return
+        else:
+            with open(path.join(self.raw_folder, 'data.json')) as f:
+                self.data_json = json.load(f)
+            data_len = len(self.data_json['samples'])
+
+            data_x = torch.zeros(data_len, 2, self.width, self.width)
+            data_u = torch.zeros(data_len, self.action_dim)
+            data_x_next = torch.zeros(data_len, 2, self.width, self.width)
+
+            i = 0
+            for sample in tqdm(self.data_json['samples'], desc='processing data'):
+                before = Image.open(path.join(self.raw_folder, sample['before']))
+                after = Image.open(path.join(self.raw_folder, sample['after']))
+
+                data_x[i] = self._process_image(before)
+                data_u[i] = torch.from_numpy(np.array(sample['control']))
+                data_x_next[i] = self._process_image(after)
+                i += 1
+
+            data_set = (data_x, data_u, data_x_next)
+            with open(path.join(self.root_path, self.data_file), 'wb') as f:
+                torch.save(data_set, f)
+
 # pendulum = PendulumDataset('data/pendulum')
 # print (pendulum[0][0])
+# cart = CartPoleDataset('data/cartpole')
+# print (cart[0][0].size())
