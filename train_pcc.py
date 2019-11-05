@@ -29,6 +29,8 @@ def compute_loss(model, armotized, x, x_next,
                 z, u, x_recon, x_next_determ,
                 lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3):
     # prediction loss
+    x = x.view(x.size(0), -1)
+    x_next = x_next.view(x_next.size(0), -1)
     pred_loss  = - bernoulli(x_next, x_next_recon) \
                 + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
                 - entropy(mu_q_z_next, logvar_q_z_next) \
