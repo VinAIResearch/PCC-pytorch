@@ -13,7 +13,7 @@ def cost_dz(R_z, z, z_goal):
 
 def cost_du(R_u, u):
     # compute the first-order deravative of latent cost w.r.t u
-    return np.squeeze(2 * np.matmul(R_u, np.expand_dims(u, axis=-1)))
+    return np.atleast_1d(np.squeeze(2 * np.matmul(R_u, np.expand_dims(u, axis=-1))))
 
 def cost_dzz(R_z):
     # compute the second-order deravative of latent cost w.r.t z
@@ -23,9 +23,9 @@ def cost_duu(R_u):
     # compute the second-order deravative of latent cost w.r.t u
     return 2 * R_u
 
-def cost_duz():
+def cost_duz(z, u):
     # compute the second-order deravative of latent cost w.r.t uz
-    return 0.0
+    return np.zeros((u.shape[-1], z.shape[-1]))
 
 def latent_cost(R_z, R_u, z_seq, z_goal, u_seq):
     z_diff = np.expand_dims(z_seq - z_goal, axis=-1)
@@ -47,7 +47,7 @@ def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_prime_next_z, V_prime_next_zz,
     Q_z = cost_dz(R_z, z, z_goal) + np.matmul(A.transpose(), V_prime_next_z)
     Q_u = cost_du(R_u, u) + np.matmul(B.transpose(), V_prime_next_z)
     Q_zz = cost_dzz(R_z) + np.matmul(np.matmul(A.transpose(), V_prime_next_zz), A)
-    Q_uz = cost_duz() + np.matmul(np.matmul(B.transpose(), V_prime_next_zz), A)
+    Q_uz = cost_duz(z, u) + np.matmul(np.matmul(B.transpose(), V_prime_next_zz), A)
     Q_uu = cost_duu(R_u) + np.matmul(np.matmul(B.transpose(), V_prime_next_zz), B)
 
     # compute k and K matrix, add regularization to Q_uu
@@ -72,8 +72,6 @@ def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, mu_inv_regulator):
     k, K = [], []
     act_seq_len = len(u_seq)
     for t in reversed(range(act_seq_len)):
-        # print ('Backward step ' + str(i-2))
-        # t = act_seq_len - i
         k_t, K_t, V_prime_z, V_prime_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t], V_prime_next_z, V_prime_next_zz, mu_inv_regulator)
         k.insert(0, k_t)
         K.insert(0, K_t)
@@ -166,7 +164,7 @@ def jacobian(dynamics, z, u):
     z_next, _, _, _ = dynamics(z_tensor, u_tensor)
     grad_inp = torch.eye(z_dim)
     A, B = torch.autograd.grad(z_next, [z_tensor, u_tensor], [grad_inp, grad_inp])
-    return A.squeeze().numpy(), B.squeeze().numpy()
+    return A.numpy(), B.numpy()
 
 def seq_jacobian(dynamics, z_seq, u_seq):
     """
