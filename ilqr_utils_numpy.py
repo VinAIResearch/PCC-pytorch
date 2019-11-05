@@ -8,11 +8,12 @@ np.random.seed(0)
 
 def cost_dz(R_z, z, z_goal):
     # compute the first-order deravative of latent cost w.r.t z
-    return 2 * R_z.mm((z - z_goal).view(-1,1))
+    z_diff = np.expand_dims(z - z_goal, axis=-1)
+    return np.squeeze(2 * np.matmul(R_z, z_diff))
 
 def cost_du(R_u, u):
     # compute the first-order deravative of latent cost w.r.t u
-    return 2 * R_u.mm(u.view(-1,1))
+    return np.squeeze(2 * np.matmul(R_u, np.expand_dims(u, axis=-1)))
 
 def cost_dzz(R_z):
     # compute the second-order deravative of latent cost w.r.t z
@@ -24,16 +25,16 @@ def cost_duu(R_u):
 
 def cost_duz():
     # compute the second-order deravative of latent cost w.r.t uz
-    return 0
+    return 0.0
 
 def latent_cost(R_z, R_u, z_seq, z_goal, u_seq):
-    cost = 0.0
-    for t in range(len(z_seq) - 1):
-        z_t_diff, u_t = z_seq[t] - z_goal, u_seq[t]
-        cost += z_t_diff.view(1,-1).mm(R_z).mm(z_t_diff.view(-1,1)) + u_t.view(1,-1).mm(R_u).mm(u_t.view(-1,1))
-    z_T_diff = z_seq[-1] - z_goal
-    cost += z_T_diff.view(1,-1).mm(R_z).mm(z_T_diff.view(-1,1))
-    return cost
+    z_diff = np.expand_dims(z_seq - z_goal, axis=-1)
+    cost_z = np.squeeze(np.matmul(
+                np.matmul(z_diff.transpose((0,2,1)), R_z), z_diff))
+    u_seq_reshaped = np.expand_dims(u_seq, axis=-1)
+    cost_u = np.squeeze(np.matmul(
+                np.matmul(u_seq_reshaped.transpose((0,2,1)), R_u), u_seq_reshaped))
+    return np.sum(cost_z) + np.sum(cost_u)
 
 def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_prime_next_z, V_prime_next_zz, mu_inv_regulator):
     """
@@ -43,21 +44,21 @@ def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_prime_next_z, V_prime_next_zz,
     B: derivative of F(z, u) w.r.t u at z_bar_t, u_bar_t
     """
     # compute Q_z, Q_u, Q_zz, Q_uu, Q_uz using cost function, A, B and V
-    Q_z = cost_dz(R_z, z, z_goal) + A.transpose(1,0).mm(V_prime_next_z.view(-1,1))
-    Q_u = cost_du(R_u, u) + B.transpose(1,0).mm(V_prime_next_z.view(-1,1))
-    Q_zz = cost_dzz(R_z) + A.transpose(1,0).mm(V_prime_next_zz).mm(A)
-    Q_uz = cost_duz() + B.transpose(1,0).mm(V_prime_next_zz).mm(A)
-    Q_uu = cost_duu(R_u) + B.transpose(1,0).mm(V_prime_next_zz).mm(B)
+    Q_z = cost_dz(R_z, z, z_goal) + np.matmul(A.transpose(), V_prime_next_z)
+    Q_u = cost_du(R_u, u) + np.matmul(B.transpose(), V_prime_next_z)
+    Q_zz = cost_dzz(R_z) + np.matmul(np.matmul(A.transpose(), V_prime_next_zz), A)
+    Q_uz = cost_duz() + np.matmul(np.matmul(B.transpose(), V_prime_next_zz), A)
+    Q_uu = cost_duu(R_u) + np.matmul(np.matmul(B.transpose(), V_prime_next_zz), B)
 
     # compute k and K matrix, add regularization to Q_uu
-    Q_uu_regularized = Q_uu + mu_inv_regulator * torch.eye(Q_u.size(0)).cuda()
-    Q_uu_in = torch.inverse(Q_uu_regularized)
-    k = -Q_uu_in.mm(Q_u)
-    K = -Q_uu_in.mm(Q_uz)
+    Q_uu_regularized = Q_uu + mu_inv_regulator * np.eye(Q_uu.shape[0])
+    Q_uu_in = np.linalg.inv(Q_uu_regularized)
+    k = -np.matmul(Q_uu_in, Q_u)
+    K = -np.matmul(Q_uu_in, Q_uz)
 
     # compute V_z and V_zz using k and K
-    V_prime_z = Q_z.transpose(1,0) - k.transpose(1,0).mm(Q_uu).mm(K)
-    V_prime_zz = Q_zz - K.transpose(1,0).mm(Q_uu).mm(K)
+    V_prime_z = Q_z + np.matmul(Q_uz.transpose(), k)
+    V_prime_zz = Q_zz + np.matmul(Q_uz.transpose(), K)
     return k, K, V_prime_z, V_prime_zz
 
 def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, mu_inv_regulator):
@@ -69,10 +70,10 @@ def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, mu_inv_regulator):
     V_prime_next_z = cost_dz(R_z, z_seq[-1], z_goal)
     V_prime_next_zz = cost_dzz(R_z)
     k, K = [], []
-    act_seq_len = len(z_seq)
-    for i in range(2, act_seq_len + 1):
+    act_seq_len = len(u_seq)
+    for t in reversed(range(act_seq_len)):
         # print ('Backward step ' + str(i-2))
-        t = act_seq_len - i
+        # t = act_seq_len - i
         k_t, K_t, V_prime_z, V_prime_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t], V_prime_next_z, V_prime_next_zz, mu_inv_regulator)
         k.insert(0, k_t)
         K.insert(0, K_t)
@@ -86,33 +87,31 @@ def forward(u_seq, k, K, A_seq, B_seq, alpha):
     """
     u_new_seq = []
     horizon = len(u_seq)
-    z_dim = K[0].size(1)
+    z_dim = K[0].shape[1]
     for i in range(0, horizon):
         if i == 0:
-            z_delta = torch.zeros(size=(z_dim, 1)).cuda()
+            z_delta = np.zeros(z_dim)
         else:
-            z_delta = A_seq[i-1].mm(z_delta) + B_seq[i-1].mm(u_delta)
-        u_delta = alpha * k[i] + K[i].mm(z_delta)
-        u_new_seq.append(u_seq[i] + u_delta.view(1,-1))
-    return u_new_seq
+            z_delta = np.matmul(A_seq[i-1], z_delta) + np.matmul(B_seq[i-1], u_delta)
+        u_delta = alpha * k[i] + np.matmul(K[i], z_delta)
+        u_new_seq.append(u_seq[i] + u_delta)
+    return np.array(u_new_seq)
 
 def random_uniform_actions(mdp, horizon):
     # create a trajectory of random actions
     random_actions = []
     for i in range(horizon):
         action = mdp.sample_random_action()
-        action = torch.from_numpy(action).cuda().view(1, -1).double()
         random_actions.append(action)
-    return random_actions
+    return np.array(random_actions)
 
 def random_extreme_actions(mdp, horizon):
     # create a trajectory of extreme actions
     extreme_actions = []
     for i in range(horizon):
         action = mdp.sample_extreme_action()
-        action = torch.from_numpy(action).cuda().view(1, -1).double()
         extreme_actions.append(action)
-    return extreme_actions
+    return np.array(extreme_actions)
 
 def random_actions_trajs(mdp, num_uniform, num_extreme, horizon):
     actions_trajs = []
@@ -141,31 +140,33 @@ def compute_latent_traj(s_start, u_seq, env_name, mdp, dynamics, encoder):
     with torch.no_grad():
         z_start, _ = encoder(x_start)
     horizon = len(u_seq)
-    z_seq = [z_start]
+    z_seq = [z_start.squeeze().numpy()]
     for i in range(horizon):
-        z = z_seq[i]
-        u = u_seq[i]
+        z = torch.from_numpy(z_seq[i]).view(1, -1).double()
+        u = torch.from_numpy(u_seq[i]).view(1, -1).double()
         with torch.no_grad():
             z_next, _, _, _ = dynamics(z, u)
-        z_seq.append(z_next)
+        z_seq.append(z_next.squeeze().numpy())
     return z_seq
 
 def jacobian(dynamics, z, u):
     """
     compute the jacobian of F(z,u) w.r.t z, u
     """
-    z_dim = z.size(1)
-    u_dim = u.size(1)
+    z_dim = z.shape[0]
+    u_dim = u.shape[0]
+    z_tensor = torch.from_numpy(z).view(1,-1).double()
+    u_tensor = torch.from_numpy(u).view(1,-1).double()
     if dynamics.armotized:
-        z_next, _, A, B = dynamics(z, u)
-        return A.view(z_dim, z_dim), B.view(z_dim, u_dim)
-    z, u = z.squeeze().repeat(z_dim, 1), u.squeeze().repeat(z_dim, 1)
-    z = z.detach().requires_grad_(True)
-    u = u.detach().requires_grad_(True)
-    z_next, _, _, _ = dynamics(z, u)
-    grad_inp = torch.eye(z_dim).cuda()
-    A, B = torch.autograd.grad(z_next, [z, u], [grad_inp, grad_inp])
-    return A, B
+        z_next, _, A, B = dynamics(z_tensor, u_tensor)
+        return A.squeeze().view(z_dim, z_dim).numpy(), B.squeeze().view(z_dim, u_dim).numpy()
+    z_tensor, u_tensor = z_tensor.squeeze().repeat(z_dim, 1), u_tensor.squeeze().repeat(z_dim, 1)
+    z_tensor = z_tensor.detach().requires_grad_(True)
+    u_tensor = u_tensor.detach().requires_grad_(True)
+    z_next, _, _, _ = dynamics(z_tensor, u_tensor)
+    grad_inp = torch.eye(z_dim)
+    A, B = torch.autograd.grad(z_next, [z_tensor, u_tensor], [grad_inp, grad_inp])
+    return A.squeeze().numpy(), B.squeeze().numpy()
 
 def seq_jacobian(dynamics, z_seq, u_seq):
     """
