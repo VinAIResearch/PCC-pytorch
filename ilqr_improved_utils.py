@@ -69,6 +69,8 @@ def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, mu_inv_regulator):
     # first and second order derivative of the value function at time step T
     V_prime_next_z = cost_dz(R_z, z_seq[-1], z_goal)
     V_prime_next_zz = cost_dzz(R_z)
+    # print(V_prime_next_zz.shape)
+    # print(V_prime_next_z.shape)
     k, K = [], []
     act_seq_len = len(u_seq)
     for t in reversed(range(act_seq_len)):
@@ -238,8 +240,8 @@ def save_traj(images, image_goal, gif_path, env_name):
         writer = Writer(fps=4, metadata=dict(artist='Me'), bitrate=1800)
     elif env_name == 'pendulum':
         anim = FuncAnimation(
-            fig, updatemat2, frames=100, interval=200, blit=True, repeat=True)
+            fig, updatemat2, frames=400, interval=200, blit=True, repeat=True)
         Writer = writers['imagemagick']  # animation.writers.avail
-        writer = Writer(fps=10, metadata=dict(artist='Me'), bitrate=1800)
+        writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
 
     anim.save(gif_path, writer=writer)

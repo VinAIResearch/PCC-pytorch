@@ -57,7 +57,7 @@ def assign_latent_color(pcc_model, angel, num_state_each_angle):
     return all_z_for_angle
 
 model = PCC(armotized=False, x_dim=4608, z_dim=3, u_dim=1, env='pendulum').cuda()
-model.load_state_dict(torch.load('result/pendulum/new_dataset_4/model_5000'))
+model.load_state_dict(torch.load('result/pendulum/new_dataset_1/model_5000'))
 model.eval()
 num_angles = 100
 num_obs_each_angle = 20

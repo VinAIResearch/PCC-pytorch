@@ -5,18 +5,17 @@ import torch
 from pcc_model import PCC
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
-from ilqr_utils import *
+from ilqr_improved_utils import *
 from datasets import *
 
 np.random.seed(0)
 torch.manual_seed(0)
 torch.set_default_dtype(torch.float64)
-device = torch.device("cuda")
 
 mdps = {'planar': PlanarObstaclesMDP, 'pendulum': VisualPoleSimpleSwingUp}
 network_dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
 img_dims = {'planar': (40, 40), 'pendulum': (48, 96)}
-horizons = {'planar': 40, 'pendulum': 100}
+horizons = {'planar': 40, 'pendulum': 400}
 R_z = 10
 R_u = 1
 
@@ -35,14 +34,14 @@ def main(args):
     mdp = mdps[env_name]()
     x_dim, z_dim, u_dim = network_dims[env_name]
     horizon = horizons[env_name]
-    R_z = 10 * torch.eye(z_dim).cuda()
-    R_u = 1 * torch.eye(u_dim).cuda()
+    R_z = 10 * np.eye(z_dim)
+    R_u = 1 * np.eye(u_dim)
 
     # get all models trained for this env
     folder = 'result/' + env_name
-    log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder,dI))]
+    log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
     log_folders.sort()
-    
+
     avg_model_percent = 0.0
     best_model_percent = 0.0
     # run iLQR for all models and compute the average performance
@@ -52,13 +51,13 @@ def main(args):
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_result/' +  env_name + '/' + log_base
+        model_path = 'iLQR_result/' + env_name + '/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
-        print ('iLQR for ' + log_base)
+        print('iLQR for ' + log_base)
 
         # load the trained model
-        model = PCC(armotized, x_dim, z_dim, u_dim, env_name).to(device)
+        model = PCC(armotized, x_dim, z_dim, u_dim, env_name)
         model.load_state_dict(torch.load(log + '/model_5000'))
         model.eval()
         dynamics = model.dynamics
@@ -66,18 +65,19 @@ def main(args):
 
         # run iLQR for a particular model
         avg_percent = 0.0
-        for task in range(10): # perform 10 random tasks (10 different start states and goal states)
-            print ('Performing task ' + str(task+1))
+        for task in range(10):  # perform 10 random tasks (10 different start states and goal states)
+            print('Performing task ' + str(task + 1))
             # draw random initial state and goal state
             idx, s_start, s_goal = random_start_goal(env_name, mdp)
             image_start = mdp.render(s_start).squeeze()
             image_goal = mdp.render(s_goal).squeeze()
-            if env_name != 'planar':
+            if env_name == 'pendulum':
                 image_goal = np.vstack((image_goal, image_goal))
-            x_goal = ToTensor()(image_goal).double().cuda().view(-1, x_dim)
+            x_goal = ToTensor()(image_goal).double().view(-1, x_dim)
             with torch.no_grad():
                 z_goal, _ = encoder(x_goal)
 
+            z_goal = z_goal.squeeze().numpy()
             # initialize actions trajectories
             all_actions_trajs = random_actions_trajs(mdp, num_uniform, num_extreme, horizon)
             actions_final = []
@@ -86,11 +86,11 @@ def main(args):
 
             # perform reciding horizon iLQR
             for plan_iter in range(1, horizon + 1):
-                print ('Planining iteration ' + str(plan_iter))
+                print('Planining iteration ' + str(plan_iter))
                 latent_cost_list = [None] * len(all_actions_trajs)
                 # iterate over all trajectories
                 for traj_id in range(len(all_actions_trajs)):
-                    print ('Running iLQR for trajectory ' + str(traj_id + 1))
+                    print('Running iLQR for trajectory ' + str(traj_id + 1))
                     # initialize the inverse regulator
                     mu_inv_regulator = init_mu
                     for iter in range(1, ilqr_iters + 1):
@@ -107,16 +107,16 @@ def main(args):
                         latent_cost_list[traj_id] = current_cost
                         # forward using line search
                         alpha = init_alpha
-                        accept = False # if any alpha is accepted
+                        accept = False  # if any alpha is accepted
                         while alpha > alpha_min:
                             u_seq_cand = forward(all_actions_trajs[traj_id], k_small, K_big, A_seq, B_seq, alpha)
                             z_seq_cand = compute_latent_traj(s_start, u_seq_cand, env_name, mdp, dynamics, encoder)
                             cost_cand = latent_cost(R_z, R_u, z_seq_cand, z_goal, u_seq_cand)
-                            if cost_cand < current_cost: # accept the trajectory candidate
+                            if cost_cand < current_cost:  # accept the trajectory candidate
                                 accept = True
                                 all_actions_trajs[traj_id] = u_seq_cand
                                 latent_cost_list[traj_id] = cost_cand
-                                print ('Found a better action sequence. New latent cost: ' + str(cost_cand.item()))
+                                print('Found a better action sequence. New latent cost: ' + str(cost_cand.item()))
                                 break
                             else:
                                 alpha *= alpha_mul
@@ -125,13 +125,13 @@ def main(args):
                         else:
                             mu_inv_regulator *= mu_mul
                         if mu_inv_regulator > mu_max:
-                            print ('Can not improve. Stop iLQR.')
+                            print('Can not improve. Stop iLQR.')
                             break
 
-                    print ('===================================================================')
+                    print('===================================================================')
 
                 traj_opt_id = np.argmin(latent_cost_list)
-                action_chosen = all_actions_trajs[traj_opt_id][0].squeeze().cpu().detach().numpy()
+                action_chosen = all_actions_trajs[traj_opt_id][0]
                 actions_final.append(action_chosen)
                 all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, mdp,
                                                           horizon - plan_iter, num_uniform, num_extreme)
@@ -148,10 +148,10 @@ def main(args):
             percent = goal_counter / horizon
             avg_percent += percent
             with open(model_path + '/result.txt', 'a+') as f:
-                f.write('Task {:01d} start at corner {:01d}: '.format(task+1, idx) + str(percent) + '\n')
+                f.write('Task {:01d} start at corner {:01d}: '.format(task + 1, idx) + str(percent) + '\n')
 
             # save trajectory as gif file
-            gif_path = model_path + '/task_{:01d}.gif'.format(task+1)
+            gif_path = model_path + '/task_{:01d}.gif'.format(task + 1)
             save_traj(obs_traj, image_goal, gif_path, env_name)
 
         avg_percent = avg_percent / 10
@@ -166,7 +166,8 @@ def main(args):
     with open('iLQR_result' + env_name + '/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
- 
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='run iLQR')
     parser.add_argument('--env', required=True, type=str, help='name of the environment')
