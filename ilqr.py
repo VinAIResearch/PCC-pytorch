@@ -255,6 +255,9 @@ def main(args):
 
             # compute the trajectory
             s = s_start
+            if env_name != 'planar':
+                image_start = image_start[:, :48]
+                image_goal = image_goal[:, :48]
             images = [image_start]
             reward = 0.0
             for i, u in enumerate(u_opt):
