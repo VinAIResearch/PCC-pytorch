@@ -3,6 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
 from torchvision.transforms import ToTensor
+from PIL import Image
 
 np.random.seed(0)
 
@@ -69,12 +70,11 @@ def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq, mu_inv_regulator):
     # first and second order derivative of the value function at time step T
     V_prime_next_z = cost_dz(R_z, z_seq[-1], z_goal)
     V_prime_next_zz = cost_dzz(R_z)
-    # print(V_prime_next_zz.shape)
-    # print(V_prime_next_z.shape)
     k, K = [], []
     act_seq_len = len(u_seq)
     for t in reversed(range(act_seq_len)):
-        k_t, K_t, V_prime_z, V_prime_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t], V_prime_next_z, V_prime_next_zz, mu_inv_regulator)
+        k_t, K_t, V_prime_z, V_prime_zz = one_step_back(R_z, R_u, z_seq[t], u_seq[t], z_goal, A_seq[t], B_seq[t],
+                                                        V_prime_next_z, V_prime_next_zz, mu_inv_regulator)
         k.insert(0, k_t)
         K.insert(0, K_t)
         V_prime_next_z, V_prime_next_zz = V_prime_z, V_prime_zz
@@ -134,9 +134,14 @@ def refresh_actions_trajs(actions_trajs, traj_opt_id, mdp, length, num_uniform, 
 
 def compute_latent_traj(s_start, u_seq, env_name, mdp, dynamics, encoder):
     x_start = mdp.render(s_start).squeeze()
+    if env_name == 'planar':
+        x_start = ToTensor()(x_start).double().view(-1, encoder.x_dim)
     if env_name == 'pendulum':
-        x_start = np.vstack((x_start, x_start))
-    x_start = ToTensor()(x_start).double().view(-1, encoder.x_dim)
+        x_start = np.hstack((x_start, x_start))
+        x_dim = x_start.shape[0] * x_start.shape[1]
+        x_start = Image.fromarray(x_start * 255.).convert('L')
+        x_start = ToTensor()(x_start.convert('L').resize((96, 48))).double()
+        x_start = torch.cat((x_start[:, :, :48], x_start[:, :, 48:]), dim=1).view(-1, x_dim)
     with torch.no_grad():
         z_start, _ = encoder(x_start)
     horizon = len(u_seq)

@@ -51,7 +51,7 @@ def main(args):
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_result/' + env_name + '/' + log_base
+        model_path = 'iLQR_improved_result/' + env_name + '/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print('iLQR for ' + log_base)
@@ -72,8 +72,12 @@ def main(args):
             image_start = mdp.render(s_start).squeeze()
             image_goal = mdp.render(s_goal).squeeze()
             if env_name == 'pendulum':
-                image_goal = np.vstack((image_goal, image_goal))
-            x_goal = ToTensor()(image_goal).double().view(-1, x_dim)
+                image_goal = np.hstack((image_goal, image_goal))
+                image_goal = Image.fromarray(image_goal * 255.).convert('L')
+                image_goal = ToTensor()(image_goal.convert('L').resize((96, 48))).double()
+                x_goal = torch.cat((image_goal[:, :, :48], image_goal[:, :, 48:]), dim=1).view(-1, x_dim)
+            else:
+                x_goal = ToTensor()(image_goal).double().view(-1, x_dim)
             with torch.no_grad():
                 z_goal, _ = encoder(x_goal)
 
@@ -152,7 +156,7 @@ def main(args):
 
             # save trajectory as gif file
             gif_path = model_path + '/task_{:01d}.gif'.format(task + 1)
-            save_traj(obs_traj, image_goal, gif_path, env_name)
+            save_traj(obs_traj, image_goal.squeeze().numpy(), gif_path, env_name)
 
         avg_percent = avg_percent / 10
         avg_model_percent += avg_percent
@@ -163,7 +167,7 @@ def main(args):
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_result' + env_name + '/result.txt', 'w') as f:
+    with open('iLQR_improved_result/' + env_name + '/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
 
@@ -172,13 +176,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='run iLQR')
     parser.add_argument('--env', required=True, type=str, help='name of the environment')
     parser.add_argument('--ilqr_iters', required=True, type=int, help='number of ilqr iterations')
-    parser.add_argument('--num_uniform', default=10, type=int, help='number of uniform actions trajectories')
-    parser.add_argument('--num_extreme', default=10, type=int, help='number of extreme actions trajectories')
+    parser.add_argument('--num_uniform', default=5, type=int, help='number of uniform actions trajectories')
+    parser.add_argument('--num_extreme', default=5, type=int, help='number of extreme actions trajectories')
     parser.add_argument('--init_mu', default=0.1, type=float, help='the initial value of the invserse regulator')
     parser.add_argument('--mu_mul', default=2, type=float, help='the inverse regulator multiplier')
     parser.add_argument('--mu_max', default=1.0, type=float, help='the maximum inverse regulator')
     parser.add_argument('--init_alpha', default=1.0, type=float, help='the initial alpha in line search')
-    parser.add_argument('--alpha_mul', default=0.9, type=float, help='the alpha multiplier')
+    parser.add_argument('--alpha_mul', default=0.8, type=float, help='the alpha multiplier')
     parser.add_argument('--alpha_min', default=0.5, type=float, help='the minimum inverse regulator')
 
     args = parser.parse_args()

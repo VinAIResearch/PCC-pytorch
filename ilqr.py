@@ -1,9 +1,9 @@
 import argparse
 
 from pcc_model import PCC
-import data.sample_planar as planar_sampler
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
+from mdp.cartpole_mdp import VisualCartPoleBalance
 from ilqr_utils import *
 from datasets import *
 
@@ -11,39 +11,33 @@ np.random.seed(0)
 torch.manual_seed(0)
 torch.set_default_dtype(torch.float64)
 
-mdps = {'planar': PlanarObstaclesMDP, 'pendulum': VisualPoleSimpleSwingUp}
-network_dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
-img_dims = {'planar': (40, 40), 'pendulum': (48, 96)}
-horizons = {'planar': 40, 'pendulum': 400}
+mdps = {'planar': PlanarObstaclesMDP, 'pendulum': VisualPoleSimpleSwingUp, 'cartpole': VisualCartPoleBalance}
+network_dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1), 'cartpole': ((2, 80, 80), 8, 1)}
+img_dims = {'planar': (40, 40), 'pendulum': (48, 96), 'cartpole': (2,80,80)}
+horizons = {'planar': 40, 'pendulum': 400, 'cartpole': 200}
 R_z = 10
 R_u = 1
-
 
 def cost_dz(R_z, z, z_goal):
     # compute the first-order deravative of latent cost w.r.t z
     z_diff = np.expand_dims(z - z_goal, axis=-1)
     return np.squeeze(2 * np.matmul(R_z, z_diff))
 
-
 def cost_du(R_u, u):
     # compute the first-order deravative of latent cost w.r.t u
     return np.atleast_1d(np.squeeze(2 * np.matmul(R_u, np.expand_dims(u, axis=-1))))
-
 
 def cost_dzz(R_z):
     # compute the second-order deravative of latent cost w.r.t z
     return 2 * R_z
 
-
 def cost_duu(R_u):
     # compute the second-order deravative of latent cost w.r.t u
     return 2 * R_u
 
-
 def cost_duz(z, u):
     # compute the second-order deravative of latent cost w.r.t uz
     return np.zeros((u.shape[-1], z.shape[-1]))
-
 
 def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
     z_diff = np.expand_dims(z_seq - z_goal, axis=-1)
@@ -53,7 +47,6 @@ def compute_loss(R_z, R_u, z_seq, z_goal, u_seq):
     cost_u = np.squeeze(np.matmul(
         np.matmul(u_seq_reshaped.transpose((0, 2, 1)), R_u), u_seq_reshaped))
     return np.sum(cost_z) + np.sum(cost_u)
-
 
 def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_prime_next_z, V_prime_next_zz):
     """
@@ -78,7 +71,6 @@ def one_step_back(R_z, R_u, z, u, z_goal, A, B, V_prime_next_z, V_prime_next_zz)
     V_prime_zz = Q_zz + np.matmul(Q_uz.transpose(), K)
     return k, K, V_prime_z, V_prime_zz
 
-
 def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq):
     """
     do the backward pass
@@ -96,6 +88,22 @@ def backward(R_z, R_u, z_seq, u_seq, z_goal, A_seq, B_seq):
         V_prime_next_z, V_prime_next_zz = V_prime_z, V_prime_zz
     return k, K
 
+# def forward(z_seq, u_seq, k, K, A_seq, B_seq):
+#     """
+#     update the trajectory, given k and K
+#     !!!! update using the linearization matricies (A and B), not the learned dynamics
+#     """
+#     z_seq_new = []
+#     z_seq_new.append(z_seq[0])
+#     u_seq_new = []
+#     for i in range(0, len(u_seq)):
+#         z_delta = z_seq_new[i] - z_seq[i]
+#         u_delta = k[i] + np.matmul(K[i], z_delta)
+#         u_new = u_seq[i] + k[i] + np.matmul(K[i], z_delta)
+#         u_seq_new.append(u_new)
+#         z_delta_next = np.matmul(A_seq[i], z_delta) + np.matmul(B_seq[i], u_delta)
+#         z_seq_new.append(z_seq[i+1] + z_delta_next)
+#     return np.array(z_seq_new), np.array(u_seq_new)
 
 def forward(z_seq, u_seq, k, K, dynamics):
     """
@@ -113,7 +121,6 @@ def forward(z_seq, u_seq, k, K, dynamics):
                                       torch.from_numpy(u_new).unsqueeze(0))
         z_seq_new.append(z_new.squeeze().numpy())
     return z_seq_new, u_seq_new
-
 
 def iLQR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters):
     """
@@ -160,8 +167,8 @@ def reciding_horizon(env_name, mdp, x_dim, R_z, R_u, s_start, z_start, z_goal, d
         print('Horizon {:02d}'.format(i + 1))
         z_seq, u_seq, k, K = iLQR_solver(R_z, R_u, z_seq, z_goal, u_seq, dynamics, iters_ilqr)
         u_first_opt = u_seq[0]
-        if np.any(np.isnan(u_first_opt)):
-            return None
+        # if np.any(np.isnan(u_first_opt)):
+        #     return None
         u_opt.append(u_first_opt)
 
         # get z_t+1 from the true dynamics
@@ -176,6 +183,11 @@ def reciding_horizon(env_name, mdp, x_dim, R_z, R_u, s_start, z_start, z_goal, d
             next_x = Image.fromarray(next_obs * 255.).convert('L')
             next_x = ToTensor()(next_x.convert('L').resize((96, 48))).double()
             next_x = torch.cat((next_x[:, :, :48], next_x[:, :, 48:]), dim=1).view(-1, x_dim)
+        elif env_name == 'cartpole':
+            image = mdp.render(s).squeeze()
+            s, next_image = mdp.transition_function((s, image), u_first_opt)
+            next_obs = np.vstack((image, next_image.squeeze())).reshape((2, mdp.width, mdp.height))
+            next_x = torch.from_numpy(next_obs).unsqueeze(0)
         with torch.no_grad():
             z_start, _ = encoder(next_x)
 
@@ -183,10 +195,7 @@ def reciding_horizon(env_name, mdp, x_dim, R_z, R_u, s_start, z_start, z_goal, d
         z_seq, u_seq = z_seq[1:], u_seq[1:]
         k, K = k[1:], K[1:]
         z_seq, u_seq = update_seq_act(z_seq, z_start, u_seq, k, K, dynamics)
-        print('==============================')
-        # loss = compute_loss(R_z, R_u, z_seq, z_goal, u_seq)
-        # if torch.isnan(loss):
-        #     return None
+        print('==========================================')
     return u_opt
 
 
@@ -238,6 +247,9 @@ def main(args):
                 x_goal = Image.fromarray(image_goal * 255.).convert('L')
                 x_goal = ToTensor()(x_goal.convert('L').resize((96, 48))).double()
                 x_goal = torch.cat((x_goal[:, :, :48], x_goal[:, :, 48:]), dim=1).view(-1, x_dim)
+            elif env_name == 'cartpole':
+                x_goal = torch.from_numpy(image_goal).unsqueeze(0)
+                x_start = torch.from_numpy(image_start).unsqueeze(0)
             with torch.no_grad():
                 z_start, _ = model.encode(x_start)
                 z_goal, _ = model.encode(x_goal)
@@ -255,9 +267,12 @@ def main(args):
 
             # compute the trajectory
             s = s_start
-            if env_name != 'planar':
+            if env_name == 'pendulum':
                 image_start = image_start[:, :48]
                 image_goal = image_goal[:, :48]
+            if env_name == 'cartpole':
+                image_start = image_start[0]
+                image_goal = image_goal[0]
             images = [image_start]
             reward = 0.0
             for i, u in enumerate(u_opt):
@@ -267,7 +282,7 @@ def main(args):
                     image = mdp.render(s)
                     images.append(image)
                     reward += mdp.reward_function(s, s_goal)
-                elif env_name == 'pendulum':
+                else:
                     s, image = mdp.transition_function((s, images[-1]), u)
                     images.append(image.squeeze())
                     reward += mdp.reward_function((s, image))
@@ -291,7 +306,7 @@ def main(args):
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_result/result.txt', 'w') as f:
+    with open('iLQR_result/' + env_name + '/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
 

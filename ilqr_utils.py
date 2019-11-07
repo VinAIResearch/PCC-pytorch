@@ -3,6 +3,7 @@ import torch
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
 
+from mdp.common import StateIndex
 np.random.seed(0)
 
 def random_traj(env_name, mdp, s_start, z_start, horizon, dynamics):
@@ -17,7 +18,7 @@ def random_traj(env_name, mdp, s_start, z_start, horizon, dynamics):
         if env_name == 'planar':
             u = mdp.sample_valid_random_action(s)
             s = mdp.transition_function(s, u)
-        elif env_name == 'pendulum':
+        else:
             u = mdp.sample_random_action()
         u = torch.from_numpy(u).view(1,-1).double()
         with torch.no_grad():
@@ -94,6 +95,16 @@ def random_start_goal(env_name, mdp):
                                                          mdp.angular_rate_limits[1])])
         x_start = mdp.render(s_start).squeeze()
         x_start = np.hstack((x_start, x_start))
+    elif env_name == 'cartpole':
+        s_goal = np.zeros(4)
+        x_goal = mdp.render(s_goal).squeeze()
+        x_goal = np.vstack((x_goal, x_goal)).reshape((2, mdp.width, mdp.height))
+
+        idx = 0
+
+        s_start, x_start = mdp.sample_random_state()
+        x_start = x_start.squeeze()
+        x_start = np.vstack((x_start, x_start)).reshape((2, mdp.width, mdp.height))
     return idx, s_start, x_start, s_goal, x_goal
     # return idx, s_start[:, 0], x_start, s_goal[:, 0], x_goal
 
@@ -128,5 +139,10 @@ def save_traj(images, image_goal, gif_path, env_name):
             fig, updatemat2, frames=400, interval=200, blit=True, repeat=True)
         Writer = writers['imagemagick']  # animation.writers.avail
         writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
+    elif env_name == 'cartpole':
+        anim = FuncAnimation(
+            fig, updatemat2, frames=200, interval=200, blit=True, repeat=True)
+        Writer = writers['imagemagick']  # animation.writers.avail
+        writer = Writer(fps=10, metadata=dict(artist='Me'), bitrate=1800)
 
     anim.save(gif_path, writer=writer)

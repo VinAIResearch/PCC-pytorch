@@ -3,11 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="c6e8b552-18f1-4081-b7b0-4d658dd0e933" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/draw_latent_map.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/draw_latent_map.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/iLQR.py" beforeDir="false" afterPath="$PROJECT_DIR$/iLQR.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ilqr_numpy.py" beforeDir="false" afterPath="$PROJECT_DIR$/ilqr_numpy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ilqr.py" beforeDir="false" afterPath="$PROJECT_DIR$/ilqr.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ilqr_improved.py" beforeDir="false" afterPath="$PROJECT_DIR$/ilqr_improved.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ilqr_improved_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/ilqr_improved_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ilqr_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/ilqr_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ilqr_utils_numpy.py" beforeDir="false" afterPath="$PROJECT_DIR$/ilqr_utils_numpy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/latent_map_pendulum.py" beforeDir="false" afterPath="$PROJECT_DIR$/latent_map_pendulum.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/losses.py" beforeDir="false" afterPath="$PROJECT_DIR$/losses.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/networks.py" beforeDir="false" afterPath="$PROJECT_DIR$/networks.py" afterDir="false" />
@@ -46,10 +45,10 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ilqr_utils_numpy.py">
+        <entry file="file://$PROJECT_DIR$/ilqr_improved_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="95" column="57" lean-forward="true" selection-start-line="95" selection-start-column="57" selection-end-line="95" selection-end-column="57" />
+            <state relative-caret-position="420">
+              <caret line="97" column="30" selection-start-line="97" selection-start-column="30" selection-end-line="97" selection-end-column="30" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
@@ -58,45 +57,12 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ilqr_numpy.py">
+        <entry file="file://$PROJECT_DIR$/datasets.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="195">
-              <caret line="127" column="64" lean-forward="true" selection-start-line="127" selection-start-column="64" selection-end-line="127" selection-end-column="64" />
+            <state relative-caret-position="433">
+              <caret line="144" column="46" selection-start-line="144" selection-start-column="46" selection-end-line="144" selection-end-column="46" />
               <folding>
-                <element signature="e#0#15#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/ilqr_utils.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="539">
-              <caret line="131" column="38" selection-start-line="131" selection-start-column="38" selection-end-line="131" selection-end-column="38" />
-              <folding>
-                <element signature="e#0#18#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/iLQR.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="434">
-              <caret line="296" column="67" lean-forward="true" selection-start-line="296" selection-start-column="67" selection-end-line="296" selection-end-column="67" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/losses.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="450">
-              <caret line="31" column="18" selection-start-line="31" selection-start-column="18" selection-end-line="31" selection-end-column="18" />
-              <folding>
-                <element signature="e#0#12#0" expanded="true" />
+                <element signature="e#0#9#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -105,8 +71,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/train_pcc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="210">
-              <caret line="27" column="44" selection-start-line="27" selection-start-column="44" selection-end-line="27" selection-end-column="44" />
+            <state relative-caret-position="315">
+              <caret line="21" column="89" selection-start-line="21" selection-start-column="70" selection-end-line="21" selection-end-column="89" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
               </folding>
@@ -115,25 +81,34 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/pcc_model.py">
+        <entry file="file://$PROJECT_DIR$/ilqr_utils.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="450">
-              <caret line="32" column="46" selection-start-line="32" selection-start-column="46" selection-end-line="32" selection-end-column="46" />
+            <state relative-caret-position="270">
+              <caret line="18" column="49" lean-forward="true" selection-start-line="18" selection-start-column="49" selection-end-line="18" selection-end-column="49" />
               <folding>
-                <element signature="e#0#12#0" expanded="true" />
+                <element signature="e#0#18#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/networks.py">
+        <entry file="file://$PROJECT_DIR$/ilqr.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="270">
-              <caret line="111" column="31" selection-start-line="111" selection-start-column="31" selection-end-line="111" selection-end-column="31" />
+            <state relative-caret-position="347">
+              <caret line="230" column="33" lean-forward="true" selection-start-line="230" selection-start-column="33" selection-end-line="230" selection-end-column="33" />
               <folding>
-                <element signature="e#0#12#0" expanded="true" />
+                <element signature="e#0#15#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/mdp/cartpole_mdp.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="645">
+              <caret line="120" column="34" selection-start-line="120" selection-start-column="34" selection-end-line="120" selection-end-column="34" />
             </state>
           </provider>
         </entry>
@@ -141,11 +116,20 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/latent_map_pendulum.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="195">
-              <caret line="21" column="55" selection-start-line="21" selection-start-column="55" selection-end-line="21" selection-end-column="55" />
+            <state relative-caret-position="360">
+              <caret line="71" column="48" selection-start-line="71" selection-start-column="48" selection-end-line="71" selection-end-column="48" />
               <folding>
                 <element signature="e#0#18#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/mdp/common.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="420">
+              <caret line="30" column="19" selection-start-line="30" selection-start-column="19" selection-end-line="30" selection-end-column="19" />
             </state>
           </provider>
         </entry>
@@ -188,6 +172,8 @@
       <find>print</find>
       <find>device</find>
       <find>atle</find>
+      <find>dynamics</find>
+      <find>crashed</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -210,12 +196,15 @@
         <option value="$PROJECT_DIR$/pcc_model.py" />
         <option value="$PROJECT_DIR$/losses.py" />
         <option value="$PROJECT_DIR$/train_pcc.py" />
-        <option value="$PROJECT_DIR$/latent_map_pendulum.py" />
         <option value="$PROJECT_DIR$/ilqr_numpy.py" />
         <option value="$PROJECT_DIR$/ilqr_utils_numpy.py" />
-        <option value="$PROJECT_DIR$/ilqr_utils.py" />
         <option value="$PROJECT_DIR$/iLQR.py" />
         <option value="$PROJECT_DIR$/networks.py" />
+        <option value="$PROJECT_DIR$/ilqr_improved_utils.py" />
+        <option value="$PROJECT_DIR$/ilqr_improved.py" />
+        <option value="$PROJECT_DIR$/ilqr_utils.py" />
+        <option value="$PROJECT_DIR$/latent_map_pendulum.py" />
+        <option value="$PROJECT_DIR$/ilqr.py" />
       </list>
     </option>
   </component>
@@ -223,7 +212,7 @@
     <option name="x" value="67" />
     <option name="y" value="25" />
     <option name="width" value="927" />
-    <option name="height" value="1053" />
+    <option name="height" value="1055" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -238,6 +227,29 @@
             <path>
               <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
               <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
+              <item name="iLQR_result" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
+              <item name="iLQR_result" type="462c0819:PsiDirectoryNode" />
+              <item name="pendulum" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
+              <item name="iLQR_result" type="462c0819:PsiDirectoryNode" />
+              <item name="pendulum" type="462c0819:PsiDirectoryNode" />
+              <item name="new_dataset_3" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
+              <item name="result" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -422,18 +434,17 @@
       <workItem from="1572886858877" duration="7441000" />
       <workItem from="1572934248109" duration="31200000" />
       <workItem from="1573009044889" duration="20527000" />
-      <workItem from="1573059468067" duration="3407000" />
+      <workItem from="1573059468067" duration="25680000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="251584000" />
+    <option name="totallyTimeSpent" value="273857000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.15495296" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15495296" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -447,7 +458,7 @@
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
       <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5008301" side_tool="true" weight="0.32721382" />
-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4991699" visible="true" weight="0.32397407" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="11" sideWeight="0.4991699" visible="true" weight="0.32397407" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -488,32 +499,6 @@
     </ignored-roots>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/result/planar/no_check_error_1/loss_5000" />
-    <entry file="file://$PROJECT_DIR$/aws/pendulum/log_1/loss_5000" />
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_3/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_4/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_5/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_6/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_7/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_9/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_8/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_1/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/backup/result_new_planar/no_discretized_10/loss_5000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -632,33 +617,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/datasets.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="316">
-          <caret line="147" column="61" selection-start-line="147" selection-start-column="61" selection-end-line="147" selection-end-column="61" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mdp/cartpole_base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="340">
-          <caret line="125" selection-start-line="125" selection-end-line="125" />
-          <folding>
-            <element signature="e#26#64#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/mdp/cartpole_mdp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="29" selection-start-line="29" selection-end-line="29" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/mdp/plane_obstacles_mdp.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="122">
@@ -672,7 +630,7 @@
     <entry file="file://$PROJECT_DIR$/iLQR_result/planar/3x3_1/result.txt">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_1/loss_5000">
+    <entry file="file://$PROJECT_DIR$/result/new_dataset_1/loss_5000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/losses.py">
@@ -685,79 +643,143 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/train_pcc.py">
+    <entry file="file://$PROJECT_DIR$/networks.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="210">
-          <caret line="27" column="44" selection-start-line="27" selection-start-column="44" selection-end-line="27" selection-end-column="44" />
+        <state relative-caret-position="360">
+          <caret line="117" column="43" lean-forward="true" selection-start-line="117" selection-start-column="43" selection-end-line="117" selection-end-column="43" />
           <folding>
-            <element signature="e#0#38#0" expanded="true" />
+            <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pcc_model.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="450">
-          <caret line="32" column="46" selection-start-line="32" selection-start-column="46" selection-end-line="32" selection-end-column="46" />
+        <state relative-caret-position="300">
+          <caret line="20" column="62" lean-forward="true" selection-start-line="20" selection-start-column="62" selection-end-line="20" selection-end-column="62" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/latent_map_pendulum.py">
+    <entry file="file://$PROJECT_DIR$/mdp/cartpole_base.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="21" column="55" selection-start-line="21" selection-start-column="55" selection-end-line="21" selection-end-column="55" />
+        <state relative-caret-position="1065">
+          <caret line="119" column="72" lean-forward="true" selection-start-line="119" selection-start-column="72" selection-end-line="119" selection-end-column="72" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#26#64#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ilqr_utils_numpy.py">
+    <entry file="file://$PROJECT_DIR$/result/cartpole/log_1/loss_2000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/cartpole/log_1/loss_1000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_pcc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="95" column="57" lean-forward="true" selection-start-line="95" selection-start-column="57" selection-end-line="95" selection-end-column="57" />
+        <state relative-caret-position="315">
+          <caret line="21" column="89" selection-start-line="21" selection-start-column="70" selection-end-line="21" selection-end-column="89" />
           <folding>
-            <element signature="e#0#18#0" expanded="true" />
+            <element signature="e#0#38#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ilqr_numpy.py">
+    <entry file="file://$PROJECT_DIR$/mdp/common.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="127" column="64" lean-forward="true" selection-start-line="127" selection-start-column="64" selection-end-line="127" selection-end-column="64" />
+        <state relative-caret-position="420">
+          <caret line="30" column="19" selection-start-line="30" selection-start-column="19" selection-end-line="30" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/iLQR_result/cartpole/log_1/result.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ilqr_improved.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret line="18" column="8" selection-start-line="18" selection-start-column="8" selection-end-line="18" selection-end-column="8" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ilqr_utils.py">
+    <entry file="file://$PROJECT_DIR$/datasets.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="539">
-          <caret line="131" column="38" selection-start-line="131" selection-start-column="38" selection-end-line="131" selection-end-column="38" />
+        <state relative-caret-position="433">
+          <caret line="144" column="46" selection-start-line="144" selection-start-column="46" selection-end-line="144" selection-end-column="46" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/iLQR_result/planar/result.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/iLQR_improved_result/pendulum/new_dataset_1/result.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/mdp/cartpole_mdp.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="645">
+          <caret line="120" column="34" selection-start-line="120" selection-start-column="34" selection-end-line="120" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_3/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_3/loss_3000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_3/loss_2000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ilqr_improved_utils.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="420">
+          <caret line="97" column="30" selection-start-line="97" selection-start-column="30" selection-end-line="97" selection-end-column="30" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/iLQR.py">
+    <entry file="file://$PROJECT_DIR$/iLQR_result/pendulum/new_dataset_3/result.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/latent_map_pendulum.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="434">
-          <caret line="296" column="67" lean-forward="true" selection-start-line="296" selection-start-column="67" selection-end-line="296" selection-end-column="67" />
+        <state relative-caret-position="360">
+          <caret line="71" column="48" selection-start-line="71" selection-start-column="48" selection-end-line="71" selection-end-column="48" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/networks.py">
+    <entry file="file://$PROJECT_DIR$/ilqr_utils.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
-          <caret line="111" column="31" selection-start-line="111" selection-start-column="31" selection-end-line="111" selection-end-column="31" />
+          <caret line="18" column="49" lean-forward="true" selection-start-line="18" selection-start-column="49" selection-end-line="18" selection-end-column="49" />
           <folding>
-            <element signature="e#0#12#0" expanded="true" />
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ilqr.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="347">
+          <caret line="230" column="33" lean-forward="true" selection-start-line="230" selection-start-column="33" selection-end-line="230" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
