@@ -5,6 +5,7 @@ import torch
 from pcc_model import PCC
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
+from mdp.cartpole_mdp import VisualCartPoleBalance
 from ilqr_improved_utils import *
 from datasets import *
 
@@ -12,109 +13,129 @@ np.random.seed(0)
 torch.manual_seed(0)
 torch.set_default_dtype(torch.float64)
 
-mdps = {'planar': PlanarObstaclesMDP, 'pendulum': VisualPoleSimpleSwingUp}
-network_dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1)}
-img_dims = {'planar': (40, 40), 'pendulum': (48, 96)}
-horizons = {'planar': 40, 'pendulum': 400}
-R_z = 10
-R_u = 1
+config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing_up.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
+envs = {'plane': 'planar', 'swing': 'pendulum', 'balance': 'pendulum', 'cartpole': 'cartpole'}
 
 def main(args):
-    env_name = args.env
-    ilqr_iters = args.ilqr_iters
-    num_uniform = args.num_uniform
-    num_extreme = args.num_extreme
-    init_mu = args.init_mu
-    mu_mul = args.mu_mul
-    mu_max = args.mu_max
-    init_alpha = args.init_alpha
-    alpha_mul = args.alpha_mul
-    alpha_min = args.alpha_min
+    task = args.task
+    assert task in ['plane', 'swing', 'balance', 'cartpole']
+    with open(config_path[task]) as f:
+        config = json.load(f)
 
-    mdp = mdps[env_name]()
-    x_dim, z_dim, u_dim = network_dims[env_name]
-    horizon = horizons[env_name]
-    R_z = 10 * np.eye(z_dim)
-    R_u = 1 * np.eye(u_dim)
+    # environment specification
+    env_name = envs[task]
+    horizon = config['horizon_prob']
+    plan_len = config['plan_len']
+    x_dim = config['obs_shape']
+    if task in ['plane', 'swing', 'balance']: # mlp
+        x_dim = np.prod(x_dim)
+    u_dim = config['action_dim']
+    z_dim = config['latent_dim']
 
-    # get all models trained for this env
+    # ilqr specification
+    R_z = config['q_weight'] * np.eye(z_dim)
+    R_u = config['r_weight'] * np.eye(u_dim)
+    num_uniform = config['uniform_trajs']
+    num_extreme = config['extreme_trajs']
+    ilqr_iters = config['ilqr_iters']
+    inv_regulator_init = config['pinv_init']
+    inv_regulator_multi = config['pinv_mult']
+    inv_regulator_max = config['pinv_max']
+    alpha_init = config['alpha_init']
+    alpha_mult = config['alpha_mult']
+    alpha_min = config['alpha_min']
+
+    # the epoch number the model was saved at
+    epoch = config['epoch']
+
+    # the folder where all trained models are saved
     folder = 'result/' + env_name
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
     log_folders.sort()
 
     avg_model_percent = 0.0
     best_model_percent = 0.0
-    # run iLQR for all models and compute the average performance
     for log in log_folders:
         with open(log + '/settings', 'r') as f:
             settings = json.load(f)
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_improved_result/' + env_name + '/' + log_base
+        model_path = 'iLQR_improved_result/' + task + '/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print('iLQR for ' + log_base)
 
         # load the trained model
         model = PCC(armotized, x_dim, z_dim, u_dim, env_name)
-        model.load_state_dict(torch.load(log + '/model_5000'))
+        model.load_state_dict(torch.load(log + '/model_' + str(epoch)))
         model.eval()
         dynamics = model.dynamics
         encoder = model.encoder
 
         # run iLQR for a particular model
         avg_percent = 0.0
-        for task in range(10):  # perform 10 random tasks (10 different start states and goal states)
-            print('Performing task ' + str(task + 1))
-            # draw random initial state and goal state
-            idx, s_start, s_goal = random_start_goal(env_name, mdp)
-            image_start = mdp.render(s_start).squeeze()
-            image_goal = mdp.render(s_goal).squeeze()
-            if env_name == 'pendulum':
-                image_goal = np.hstack((image_goal, image_goal))
-                image_goal = Image.fromarray(image_goal * 255.).convert('L')
-                image_goal = ToTensor()(image_goal.convert('L').resize((96, 48))).double()
-                x_goal = torch.cat((image_goal[:, :, :48], image_goal[:, :, 48:]), dim=1).view(-1, x_dim)
-            else:
-                x_goal = ToTensor()(image_goal).double().view(-1, x_dim)
+        for random_task_id in range(10):  # perform 10 random tasks (10 different start states and goal states)
+            print('Performing task ' + str(random_task_id + 1))
+            # sample random start and goal state
+            s_start_min, s_start_max = config['start_min'], config['start_max']
+            s_start = np.random.uniform(low=s_start_min, high=s_start_max)
+            s_goal = config['goal'][np.random.choice(len(config['goal']))]
+            s_goal = np.array(s_goal)
+
+            # mdp
+            if task == 'plane':
+                mdp = PlanarObstaclesMDP(goal=s_goal, goal_thres=config['distance_thresh'],
+                                         noise=config['noise'])
+            if task in ['swing', 'balance']:
+                mdp = VisualPoleSimpleSwingUp(frequency=config['frequency'],
+                                              noise=config['noise'], torque=config['torque'])
+            if task == 'cartpole':
+                mdp = VisualCartPoleBalance(frequency=config['frequency'], noise=config['noise'])
+            # get z_start and z_goal
+            image_start, x_start = get_x_data(mdp, s_start, config)
+            image_goal, x_goal = get_x_data(mdp, s_goal, config)
             with torch.no_grad():
+                z_start, _ = encoder(x_start)
                 z_goal, _ = encoder(x_goal)
-
+            z_start = z_start.squeeze().numpy()
             z_goal = z_goal.squeeze().numpy()
-            # initialize actions trajectories
-            all_actions_trajs = random_actions_trajs(mdp, num_uniform, num_extreme, horizon)
-            actions_final = []
-            obs_traj = [image_start]
-            goal_counter = 0.0
 
+            # initialize actions trajectories
+            all_actions_trajs = random_actions_trajs(mdp, num_uniform, num_extreme, plan_len)
+            actions_final = []
             # perform reciding horizon iLQR
+            s_start_horizon = np.copy(s_start)  # start state will be changed at each horizon
+            image_start_horizon = np.copy(image_start)
+            z_start_horizon = np.copy(z_start)
             for plan_iter in range(1, horizon + 1):
-                print('Planining iteration ' + str(plan_iter))
+                print('Planning for horizon ' + str(plan_iter))
                 latent_cost_list = [None] * len(all_actions_trajs)
                 # iterate over all trajectories
                 for traj_id in range(len(all_actions_trajs)):
                     print('Running iLQR for trajectory ' + str(traj_id + 1))
                     # initialize the inverse regulator
-                    mu_inv_regulator = init_mu
+                    inv_regulator = inv_regulator_init
                     for iter in range(1, ilqr_iters + 1):
                         # compute the latent trajectory
-                        z_seq = compute_latent_traj(s_start, all_actions_trajs[traj_id],
-                                                    env_name, mdp, dynamics, encoder)
+                        z_seq = compute_latent_traj(z_start_horizon,
+                                                    all_actions_trajs[traj_id], dynamics)
                         # compute the linearization matrices
                         A_seq, B_seq = seq_jacobian(dynamics, z_seq, all_actions_trajs[traj_id])
                         # run backward
                         k_small, K_big = backward(R_z, R_u, z_seq, all_actions_trajs[traj_id],
-                                                  z_goal, A_seq, B_seq, mu_inv_regulator)
+                                                  z_goal, A_seq, B_seq, inv_regulator)
                         # compute the latent cost for current u_seq
                         current_cost = latent_cost(R_z, R_u, z_seq, z_goal, all_actions_trajs[traj_id])
                         latent_cost_list[traj_id] = current_cost
                         # forward using line search
-                        alpha = init_alpha
+                        alpha = alpha_init
                         accept = False  # if any alpha is accepted
                         while alpha > alpha_min:
                             u_seq_cand = forward(all_actions_trajs[traj_id], k_small, K_big, A_seq, B_seq, alpha)
-                            z_seq_cand = compute_latent_traj(s_start, u_seq_cand, env_name, mdp, dynamics, encoder)
+                            z_seq_cand = compute_latent_traj(z_start_horizon,
+                                                             u_seq_cand, dynamics)
+                            # z_seq_cand, u_seq_cand = forward(z_seq, all_actions_trajs[traj_id], k_small, K_big, dynamics, alpha)
                             cost_cand = latent_cost(R_z, R_u, z_seq_cand, z_goal, u_seq_cand)
                             if cost_cand < current_cost:  # accept the trajectory candidate
                                 accept = True
@@ -123,12 +144,12 @@ def main(args):
                                 print('Found a better action sequence. New latent cost: ' + str(cost_cand.item()))
                                 break
                             else:
-                                alpha *= alpha_mul
+                                alpha *= alpha_mult
                         if accept:
-                            mu_inv_regulator = init_mu
+                            inv_regulator = inv_regulator_init
                         else:
-                            mu_inv_regulator *= mu_mul
-                        if mu_inv_regulator > mu_max:
+                            inv_regulator *= inv_regulator_multi
+                        if inv_regulator > inv_regulator_max:
                             print('Can not improve. Stop iLQR.')
                             break
 
@@ -138,25 +159,43 @@ def main(args):
                 action_chosen = all_actions_trajs[traj_opt_id][0]
                 actions_final.append(action_chosen)
                 all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, mdp,
-                                                          horizon - plan_iter, num_uniform, num_extreme)
+                                                          np.min([plan_len, horizon - plan_iter]),
+                                                          num_uniform, num_extreme)
                 if env_name == 'planar':
-                    goal_counter += mdp.reward_function(s_start, s_goal)
-                    s_start = mdp.transition_function(s_start, action_chosen)
-                    obs_traj.append(mdp.render(s_start).squeeze())
-                else:
-                    goal_counter += mdp.reward_function((s_start, obs_traj[-1]))
-                    s_start, observation = mdp.transition_function((s_start, obs_traj[-1]), action_chosen)
-                    obs_traj.append(observation.squeeze())
+                    s_start_horizon = mdp.transition_function(s_start_horizon, action_chosen)
+                    image_start_horizon, x_start_new = get_x_data(mdp, s_start_horizon, config)
+                elif env_name == 'pendulum':
+                    s_start_horizon, image_start_next_horizon = mdp.transition_function((s_start_horizon, image_start_horizon), action_chosen)
+                    image_start_next_horizon = image_start_next_horizon.squeeze()
+                    image_start_stacked = np.vstack((image_start_horizon, image_start_next_horizon))
+                    x_start_horizon = torch.from_numpy(image_start_stacked).view(x_dim).unsqueeze(0).double()
+                    with torch.no_grad():
+                        z_start_horizon, _ = model.encode(x_start_horizon)
+                    z_start_horizon = z_start_horizon.squeeze().numpy()
+                    image_start_horizon = image_start_next_horizon
+                elif env_name == 'cartpole':
+                    s_start_horizon, image_start_next_horizon = mdp.transition_function(
+                        (s_start_horizon, image_start_horizon), action_chosen)
+                    image_start_next_horizon = image_start_next_horizon.squeeze()
+                    x_start_horizon = torch.zeros(size=(2, 80, 80))
+                    x_start_horizon[0, :, :] = torch.from_numpy(image_start_horizon)
+                    x_start_horizon[1, :, :] = torch.from_numpy(image_start_next_horizon)
+                    x_start_horizon = x_start_horizon.unsqueeze(0)
+                    with torch.no_grad():
+                        z_start_horizon, _ = model.encode(x_start_horizon)
+                    z_start_horizon = z_start_horizon.squeeze().numpy()
+                    image_start_horizon = image_start_next_horizon
 
+            obs_traj, goal_counter = traj_opt_actions(s_start, image_start, actions_final, mdp, env_name)
             # compute the percentage close to goal
             percent = goal_counter / horizon
             avg_percent += percent
             with open(model_path + '/result.txt', 'a+') as f:
-                f.write('Task {:01d} start at corner {:01d}: '.format(task + 1, idx) + str(percent) + '\n')
+                f.write('Task {:01d}: '.format(random_task_id + 1) + str(percent) + '\n')
 
             # save trajectory as gif file
-            gif_path = model_path + '/task_{:01d}.gif'.format(task + 1)
-            save_traj(obs_traj, image_goal.squeeze().numpy(), gif_path, env_name)
+            gif_path = model_path + '/task_{:01d}.gif'.format(random_task_id + 1)
+            save_traj(obs_traj, image_goal, gif_path, task)
 
         avg_percent = avg_percent / 10
         avg_model_percent += avg_percent
@@ -167,24 +206,14 @@ def main(args):
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_improved_result/' + env_name + '/result.txt', 'w') as f:
+    with open('iLQR_improved_result/' + task + '/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='run iLQR')
-    parser.add_argument('--env', required=True, type=str, help='name of the environment')
-    parser.add_argument('--ilqr_iters', required=True, type=int, help='number of ilqr iterations')
-    parser.add_argument('--num_uniform', default=5, type=int, help='number of uniform actions trajectories')
-    parser.add_argument('--num_extreme', default=5, type=int, help='number of extreme actions trajectories')
-    parser.add_argument('--init_mu', default=0.1, type=float, help='the initial value of the invserse regulator')
-    parser.add_argument('--mu_mul', default=2, type=float, help='the inverse regulator multiplier')
-    parser.add_argument('--mu_max', default=1.0, type=float, help='the maximum inverse regulator')
-    parser.add_argument('--init_alpha', default=1.0, type=float, help='the initial alpha in line search')
-    parser.add_argument('--alpha_mul', default=0.8, type=float, help='the alpha multiplier')
-    parser.add_argument('--alpha_min', default=0.5, type=float, help='the minimum inverse regulator')
-
+    parser.add_argument('--task', required=True, type=str, help='name of the environment')
     args = parser.parse_args()
 
     main(args)

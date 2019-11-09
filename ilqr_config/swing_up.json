@@ -1,0 +1,32 @@
+{
+  "task": "swing",
+
+  "pinv_init": 1e-5,
+  "pinv_mult": 2.0,
+  "pinv_max": 10.0,
+  "alpha_init": 1.0,
+  "alpha_mult": 0.5,
+  "alpha_min": 1e-4,
+
+  "start_min": [2.827433388230814, 0],
+  "start_max": [2.9845130209103035, 0],
+  "goal": [[0, 0]],
+
+  "q_weight": 50,
+  "r_weight": 1,
+
+  "frequency": 50,
+  "noise": 0.0,
+  "torque": 0.5,
+  "epoch": "5000",
+
+  "ilqr_iters": 4,
+  "horizon_prob": 400,
+  "plan_len": 10,
+  "uniform_trajs": 3,
+  "extreme_trajs": 3,
+
+  "obs_shape": [2, 48, 48],
+  "action_dim": 1,
+  "latent_dim": 3
+}

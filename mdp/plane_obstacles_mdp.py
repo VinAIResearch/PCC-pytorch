@@ -11,7 +11,9 @@ class PlanarObstaclesMDP(object):
     max_step = 3
     action_dim = 2
 
-    def __init__(self, sampling = False, noise = 0):
+    def __init__(self, goal, goal_thres, noise = 0, sampling = False):
+        self.goal = goal
+        self.goal_thres = goal_thres
         self.is_sampling = sampling
         self.noise = noise
         super(PlanarObstaclesMDP, self).__init__()
@@ -72,11 +74,11 @@ class PlanarObstaclesMDP(object):
         s_next = s + u + self.noise * np.random.randn()
         return s_next
 
-    def is_goal(self, s, s_goal):
-        return np.sqrt(np.sum(s - s_goal) ** 2) <= 2
+    def is_goal(self, s):
+        return np.sqrt(np.sum(s - self.goal) ** 2) <= self.goal_thres
 
-    def reward_function(self, s, s_goal):
-        if self.is_goal(s, s_goal):
+    def reward_function(self, s):
+        if self.is_goal(s):
             reward = 1
         else:
             reward = 0
