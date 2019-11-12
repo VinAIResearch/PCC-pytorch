@@ -26,7 +26,7 @@ class PlanarDataset(Dataset):
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         self._process()
-        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:.0f}_noise.pt'.format(self.noise))
 
     def __len__(self):
         return len(self.data_x)
@@ -75,7 +75,7 @@ class PendulumDataset(Dataset):
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         self._process()
-        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:.0f}_noise.pt'.format(self.noise))
 
     def __len__(self):
         return len(self.data_x)
@@ -125,7 +125,7 @@ class CartPoleDataset(Dataset):
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         self._process()
-        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:.0f}_noise.pt'.format(self.noise))
 
     def __len__(self):
         return len(self.data_x)
