@@ -22,7 +22,7 @@ class PlanarDataset(Dataset):
     def __init__(self, sample_size, noise):
         self.sample_size = sample_size
         self.noise = noise
-        self.data_path = 'data/planar/{:.0f}_noise.pt'.format(noise)
+        self.data_path = 'data/planar/'
         self._process()
         self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
@@ -36,7 +36,7 @@ class PlanarDataset(Dataset):
         return torch.from_numpy(img.flatten()).unsqueeze(0)
 
     def check_exists(self):
-        return (path.exists(self.data_path))
+        return (path.exists(self.data_path + '{:.0f}_noise.pt'.format(self.noise)))
 
     def _process(self):
         if self.check_exists():
@@ -58,7 +58,7 @@ class PlanarDataset(Dataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path, 'wb') as f:
+            with open(self.data_path + '{:.0f}_noise.pt'.format(self.noise), 'wb') as f:
                 torch.save(data_set, f)
 
 class PendulumDataset(Dataset):
@@ -69,7 +69,7 @@ class PendulumDataset(Dataset):
     def __init__(self, sample_size, noise):
         self.sample_size = sample_size
         self.noise = noise
-        self.data_path = 'data/pendulum/{:.0f}_noise.pt'.format(noise)
+        self.data_path = 'data/pendulum/'
         self._process()
         self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
@@ -84,7 +84,7 @@ class PendulumDataset(Dataset):
         return torch.from_numpy(x).unsqueeze(0)
 
     def check_exists(self):
-        return (path.exists(self.data_path))
+        return (path.exists(self.data_path + '{:.0f}_noise.pt'.format(self.noise)))
 
     def _process(self):
         if self.check_exists():
@@ -106,7 +106,7 @@ class PendulumDataset(Dataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path, 'wb') as f:
+            with open(self.data_path + '{:.0f}_noise.pt'.format(self.noise), 'wb') as f:
                 torch.save(data_set, f)
 
 class CartPoleDataset(Dataset):
@@ -117,7 +117,7 @@ class CartPoleDataset(Dataset):
     def __init__(self, sample_size, noise):
         self.sample_size = sample_size
         self.noise = noise
-        self.data_path = 'data/cartpole/{:.0f}_noise.pt'.format(noise)
+        self.data_path = 'data/cartpole/'
         self._process()
         self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
@@ -128,7 +128,7 @@ class CartPoleDataset(Dataset):
         return self.data_x[index], self.data_u[index], self.data_x_next[index]
 
     def check_exists(self):
-        return (path.exists(self.data_path))
+        return (path.exists(self.data_path + '{:.0f}_noise.pt'.format(self.noise)))
 
     def _process_image(self, img):
         x = torch.zeros(size=(2, self.width, self.width))
@@ -156,7 +156,7 @@ class CartPoleDataset(Dataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path, 'wb') as f:
+            with open(self.data_path + '{:.0f}_noise.pt'.format(self.noise), 'wb') as f:
                 torch.save(data_set, f)
 
 # cart = CartPoleDataset('data/cartpole')
