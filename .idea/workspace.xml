@@ -10063,8 +10063,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_pcc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="301">
-              <caret line="228" column="53" selection-start-line="228" selection-start-column="53" selection-end-line="228" selection-end-column="53" />
+            <state relative-caret-position="406">
+              <caret line="235" selection-start-line="235" selection-end-line="235" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
               </folding>
@@ -10176,24 +10176,6 @@
               <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
               <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
               <item name="data" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="cartpole" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="pendulum" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
-              <item name="planar" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -10393,12 +10375,12 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="398769000" />
+    <option name="totallyTimeSpent" value="398773000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.15771998" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15771998" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -10412,7 +10394,7 @@
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
       <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5017026" side_tool="true" weight="0.32467532" />
-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4982974" visible="true" weight="0.44708425" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="11" sideWeight="0.4982974" visible="true" weight="0.44708425" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -10492,12 +10474,8 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/backup/iLQR_result/pendulum/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/backup/iLQR_result/planar/result.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
+    <entry file="file://$PROJECT_DIR$/backup/iLQR_result/pendulum/result.txt" />
+    <entry file="file://$PROJECT_DIR$/backup/iLQR_result/planar/result.txt" />
     <entry file="file://$PROJECT_DIR$/backup/test_jacobian.ipynb">
       <provider selected="true" editor-type-id="ipnb-editor">
         <state>
@@ -10725,8 +10703,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_pcc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="301">
-          <caret line="228" column="53" selection-start-line="228" selection-start-column="53" selection-end-line="228" selection-end-column="53" />
+        <state relative-caret-position="406">
+          <caret line="235" selection-start-line="235" selection-end-line="235" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
           </folding>

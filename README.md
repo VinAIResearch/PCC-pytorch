@@ -76,21 +76,21 @@ We evaluate the PCC model in 2 ways: quality of the latent map and the percentag
 #### Latent map
 Below is a random latent map PCC produces. You can watch a video clip comparing how latent maps produced by E2C and PCC evolve at this link: https://www.youtube.com/watch?v=pBmzFvvE2bo.
 
-![Latent space learned by PCC](./latent_map_sample.png)
+![Latent space learned by PCC](sample_results/latent_map_sample.png)
 
 #### Control result
 We got around 41% on average and around 76% for the best model. Below are 2 sample trajectories of the agent.
 
-![Sample planar trajectory 1](./planar_1.gif)
+![Sample planar trajectory 1](sample_results/planar_1.gif)
 
-![Sample planar trajectory 2](./planar_2.gif)
+![Sample planar trajectory 2](sample_results/planar_2.gif)
 
 ### Inverted pendulum
 We got around 51% on average and around 86.4% for the best model. Below are 2 sample trajectories of the inverted pendulum.
 
-![Sample inverted pendulum trajectory 1](./pendulum_1.gif)
+![Sample inverted pendulum trajectory 1](sample_results/pendulum_1.gif)
 
-![Sample inverted pendulum trajectory 2](./pendulum_2.gif)
+![Sample inverted pendulum trajectory 2](sample_results/pendulum_2.gif)
 ### Acknowledgment
 Many thanks to Nir Levine for answering my questions about the paper, and Yinlam Chow for the MDP and iLQR implementation.
 
