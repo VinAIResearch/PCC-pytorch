@@ -8,7 +8,6 @@ from pcc_model import PCC
 blue = Color('blue')
 colors = list(blue.range_to(Color("red"),40))
 colors_rgb = [color.rgb for color in colors]
-# print (colors_rgb[5])
 
 def get_invalid_state(mdp, start, end):
     invalid_pos = []
@@ -93,14 +92,12 @@ def draw_latent_map(model, mdp):
             draw.ellipse((x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2), fill = img.getpixel((y, x)))
     return img_latent
 
-from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-
-mdp = PlanarObstaclesMDP()
-start = 0
-end = 39
-invalid_pos = get_invalid_state(mdp, start, end)
-img_arr, img = random_gradient(start, end, mdp.width, mdp.height, invalid_pos)
-get_true_map(mdp, start, end, mdp.width, mdp.height, img)
+# mdp = PlanarObstaclesMDP()
+# start = 0
+# end = 39
+# invalid_pos = get_invalid_state(mdp, start, end)
+# img_arr, img = random_gradient(start, end, mdp.width, mdp.height, invalid_pos)
+# get_true_map(mdp, start, end, mdp.width, mdp.height, img)
 
 # mdp = PlanarObstaclesMDP()
 # model = PCC(armotized=False, x_dim=1600, z_dim=2, u_dim=2, env = 'planar').cuda()

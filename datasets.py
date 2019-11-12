@@ -8,20 +8,23 @@ from torch.utils.data import Dataset
 from tqdm import tqdm
 import torch
 
+from data import sample_pendulum
+from data import sample_planar
+from data import sample_cartpole
+
 torch.set_default_dtype(torch.float64)
 
 class PlanarDataset(Dataset):
     width = 40
     height = 40
     action_dim = 2
-    data_file = 'data.pt'
 
-    def __init__(self, root_path):
-        self.root_path = root_path
-        self.raw_folder = path.join(self.root_path, 'raw')
+    def __init__(self, sample_size, noise):
+        self.sample_size = sample_size
+        self.noise = noise
+        self.data_path = 'data/planar/{:.0f}_noise.pt'.format(noise)
         self._process()
-        
-        self.data_x, self.data_u, self.data_x_next = torch.load(path.join(self.root_path, self.data_file))
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
     def __len__(self):
         return len(self.data_x)
@@ -30,106 +33,93 @@ class PlanarDataset(Dataset):
         return self.data_x[index], self.data_u[index], self.data_x_next[index]
 
     def _process_image(self, img):
-        return ToTensor()(img.convert('L').
-                           resize((self.width,
-                                   self.height)))
+        return torch.from_numpy(img.flatten()).unsqueeze(0)
 
     def check_exists(self):
-        return (path.exists(path.join(self.root_path, self.data_file)))
-
-    def _process(self):
-        if self.check_exists():
-            return
-        with open(path.join(self.raw_folder, 'data.json')) as f:
-            self.data_json = json.load(f)
-        data_len = len(self.data_json['samples'])
-
-        data_x = torch.zeros(data_len, self.width, self.height)
-        data_u = torch.zeros(data_len, self.action_dim)
-        data_x_next = torch.zeros(data_len, self.width, self.height)
-
-        i = 0
-        for sample in tqdm(self.data_json['samples'], desc='processing data'):
-            before = Image.open(path.join(self.raw_folder, sample['before']))
-            after = Image.open(path.join(self.raw_folder, sample['after']))
-
-            data_x[i] = self._process_image(before)
-            data_u[i] = torch.from_numpy(np.array(sample['control']))
-            data_x_next[i] = self._process_image(after)
-            i += 1
-
-        data_set = (data_x, data_u, data_x_next)
-
-        with open(path.join(self.root_path, self.data_file), 'wb') as f:
-            torch.save(data_set, f)
-
-class PendulumDataset(Dataset):
-    width = 48
-    height = 48 * 2
-    action_dim = 1
-    data_file = 'data.pt'
-
-    def __init__(self, root_path):
-        self.root_path = root_path
-        self.raw_folder = path.join(self.root_path, 'raw')
-        self._process()
-
-        self.data_x, self.data_u, self.data_x_next = torch.load(path.join(self.root_path, self.data_file))
-
-    def __len__(self):
-        return len(self.data_x)
-
-    def __getitem__(self, index):
-        return self.data_x[index], self.data_u[index], self.data_x_next[index]
-
-    def check_exists(self):
-        return (path.exists(path.join(self.root_path, self.data_file)))
-
-    def _process_image(self, img):
-        img_tensor =  ToTensor()(img.convert('L').
-                          resize((self.height,
-                                  self.width)))
-        img_tensor = torch.cat((img_tensor[:, :, :self.width], img_tensor[:, :, self.width:]), dim = 1)
-        return img_tensor
+        return (path.exists(self.data_path))
 
     def _process(self):
         if self.check_exists():
             return
         else:
-            with open(path.join(self.raw_folder, 'data.json')) as f:
-                self.data_json = json.load(f)
-            data_len = len(self.data_json['samples'])
+            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
+                                sample_planar.sample(sample_size=self.sample_size, noise=self.noise)
+            data_len = len(x_numpy_data)
 
-            data_x = torch.zeros(data_len, self.height, self.width)
+            # place holder for data
+            data_x = torch.zeros(data_len, self.width * self.height)
             data_u = torch.zeros(data_len, self.action_dim)
-            data_x_next = torch.zeros(data_len, self.height, self.width)
+            data_x_next = torch.zeros(data_len, self.width * self.height)
 
-            i = 0
-            for sample in tqdm(self.data_json['samples'], desc='processing data'):
-                before = Image.open(path.join(self.raw_folder, sample['before']))
-                after = Image.open(path.join(self.raw_folder, sample['after']))
-
-                data_x[i] = self._process_image(before)
-                data_u[i] = torch.from_numpy(np.array(sample['control']))
-                data_x_next[i] = self._process_image(after)
-                i += 1
+            for i in range(data_len):
+                data_x[i] = self._process_image(x_numpy_data[i])
+                data_u[i] = torch.from_numpy(u_numpy_data[i])
+                data_x_next[i] = self._process_image(x_next_numpy_data[i])
 
             data_set = (data_x, data_u, data_x_next)
-            with open(path.join(self.root_path, self.data_file), 'wb') as f:
+
+            with open(self.data_path, 'wb') as f:
+                torch.save(data_set, f)
+
+class PendulumDataset(Dataset):
+    width = 48
+    height = 48 * 2
+    action_dim = 1
+
+    def __init__(self, sample_size, noise):
+        self.sample_size = sample_size
+        self.noise = noise
+        self.data_path = 'data/pendulum/{:.0f}_noise.pt'.format(noise)
+        self._process()
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
+
+    def __len__(self):
+        return len(self.data_x)
+
+    def __getitem__(self, index):
+        return self.data_x[index], self.data_u[index], self.data_x_next[index]
+
+    def _process_image(self, img):
+        x = np.vstack((img[:, :, 0], img[:, :, 1])).flatten()
+        return torch.from_numpy(x).unsqueeze(0)
+
+    def check_exists(self):
+        return (path.exists(self.data_path))
+
+    def _process(self):
+        if self.check_exists():
+            return
+        else:
+            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
+                sample_pendulum.sample(sample_size=self.sample_size, noise=self.noise)
+            data_len = len(x_numpy_data)
+
+            # place holder for data
+            data_x = torch.zeros(data_len, self.width * self.height)
+            data_u = torch.zeros(data_len, self.action_dim)
+            data_x_next = torch.zeros(data_len, self.width * self.height)
+
+            for i in range(data_len):
+                data_x[i] = self._process_image(x_numpy_data[i])
+                data_u[i] = torch.from_numpy(u_numpy_data[i])
+                data_x_next[i] = self._process_image(x_next_numpy_data[i])
+
+            data_set = (data_x, data_u, data_x_next)
+
+            with open(self.data_path, 'wb') as f:
                 torch.save(data_set, f)
 
 class CartPoleDataset(Dataset):
     width = 80
     height = 80 * 2
     action_dim = 1
-    data_file = 'data.pt'
 
-    def __init__(self, root_path):
-        self.root_path = root_path
-        self.raw_folder = path.join(self.root_path, 'raw')
+    def __init__(self, sample_size, noise):
+        self.sample_size = sample_size
+        self.noise = noise
+        self.data_path = 'data/cartpole/{:.0f}_noise.pt'.format(noise)
         self._process()
-
-        self.data_x, self.data_u, self.data_x_next = torch.load(path.join(self.root_path, self.data_file))
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
     def __len__(self):
         return len(self.data_x)
@@ -138,42 +128,37 @@ class CartPoleDataset(Dataset):
         return self.data_x[index], self.data_u[index], self.data_x_next[index]
 
     def check_exists(self):
-        return (path.exists(path.join(self.root_path, self.data_file)))
+        return (path.exists(self.data_path))
 
     def _process_image(self, img):
-        img_tensor =  ToTensor()(img.convert('L').
-                          resize((self.height,
-                                  self.width)))
-        img_tensor = torch.cat((img_tensor[:, :, :self.width], img_tensor[:, :, self.width:]), dim = 1)
-        return img_tensor.view(-1, 2, self.width, self.width)
+        x = torch.zeros(size=(2, self.width, self.width))
+        x[0, :, :] = torch.from_numpy(img[:, :, 0])
+        x[1, :, :] = torch.from_numpy(img[:, :, 1])
+        return x.unsqueeze(0)
 
     def _process(self):
         if self.check_exists():
             return
         else:
-            with open(path.join(self.raw_folder, 'data.json')) as f:
-                self.data_json = json.load(f)
-            data_len = len(self.data_json['samples'])
+            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
+                sample_cartpole.sample(sample_size=self.sample_size, noise=self.noise)
+            data_len = len(x_numpy_data)
 
+            # place holder for data
             data_x = torch.zeros(data_len, 2, self.width, self.width)
             data_u = torch.zeros(data_len, self.action_dim)
             data_x_next = torch.zeros(data_len, 2, self.width, self.width)
 
-            i = 0
-            for sample in tqdm(self.data_json['samples'], desc='processing data'):
-                before = Image.open(path.join(self.raw_folder, sample['before']))
-                after = Image.open(path.join(self.raw_folder, sample['after']))
-
-                data_x[i] = self._process_image(before)
-                data_u[i] = torch.from_numpy(np.array(sample['control']))
-                data_x_next[i] = self._process_image(after)
-                i += 1
+            for i in range(data_len):
+                data_x[i] = self._process_image(x_numpy_data[i])
+                data_u[i] = torch.from_numpy(u_numpy_data[i])
+                data_x_next[i] = self._process_image(x_next_numpy_data[i])
 
             data_set = (data_x, data_u, data_x_next)
-            with open(path.join(self.root_path, self.data_file), 'wb') as f:
+
+            with open(self.data_path, 'wb') as f:
                 torch.save(data_set, f)
 
-# pendulum = PendulumDataset('data/pendulum')
-# print (pendulum[0][0])
 # cart = CartPoleDataset('data/cartpole')
 # print (cart[0][0].size())
+# planar_dataset = PlanarDataset(sample_size=5000, noise=0.0)

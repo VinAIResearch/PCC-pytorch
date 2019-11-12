@@ -3,38 +3,44 @@ import math
 
 torch.set_default_dtype(torch.float64)
 
-def bernoulli(x, p):
-    return torch.mean(torch.sum(x * torch.log(1e-8 + p)
-                                + (1 - x) * torch.log(1e-8 + 1 - p), dim=1))
+def bernoulli(x, p, iwae=False):
+    # if using -> dont take mean
+    log_x_p = torch.sum(x * torch.log(1e-8 + p)
+                                + (1 - x) * torch.log(1e-8 + 1 - p), dim=-1)
+    if not iwae:
+        log_x_p = torch.mean(log_x_p)
+    return log_x_p
 
-def KL(mu1, logvar1, mu2, logvar2):
+def KL(mu1, logvar1, mu2, logvar2, iwae=False):
     var1 = torch.exp(logvar1)
     var2 = torch.exp(logvar2)
-    d = mu1.size(1)
-    sum = lambda x: torch.sum(x, dim=1)
-    kl = 0.5 * torch.mean(sum(
+    d = mu1.size(-1)
+    kl = 0.5 * torch.sum(
         logvar2 - logvar1 - 1
         + var1 / var2
-        + (mu2 - mu1)**2 / var2
-    ))
+        + (mu2 - mu1)**2 / var2, dim=-1)
+    if not iwae:
+        kl = torch.mean(kl)
     return kl
 
-def entropy(mu, logvar):
-    d = mu.size(1) 
-    return 0.5 * torch.mean(d
-                    + d * torch.log(2 * torch.Tensor([math.pi]).cuda())
-                    + torch.sum(logvar, dim = 1)
-                    )
+def entropy(mu, logvar, iwae = False):
+    d = mu.size(-1)
+    H = d + d * torch.log(2 * torch.Tensor([math.pi]).cuda()) \
+        + torch.sum(logvar, dim=-1)
+    if not iwae:
+        H = torch.mean(H)
+    return 0.5 * H
 
-def gaussian(z, mu, logvar):
-    d = mu.size(1)
+def gaussian(z, mu, logvar, iwae=False):
+    d = mu.size(-1)
     var = torch.exp(logvar)
-    sum = lambda x: torch.sum(x, dim=1)
-    return -0.5 * torch.mean(
-        sum((z - mu)**2 / var)
-        + d * torch.log(2 * torch.Tensor([math.pi]).cuda())
+    sum = lambda x: torch.sum(x, dim=-1)
+    log_z_mu_logvar = sum((z - mu)**2 / var) \
+        + d * torch.log(2 * torch.Tensor([math.pi]).cuda()) \
         + sum(logvar)
-    )
+    if not iwae:
+        log_z_mu_logvar = torch.mean(log_z_mu_logvar)
+    return -0.5 * log_z_mu_logvar
 
 def curvature(model, z, u, delta, armotized):
     z_alias = z.detach().requires_grad_(True)

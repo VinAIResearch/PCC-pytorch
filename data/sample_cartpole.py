@@ -19,7 +19,7 @@ os.sys.path.append(root_path)
 
 from mdp.cartpole_mdp import VisualCartPoleBalance
 
-def sample(sample_size=20000, width=80, height=80, frequency=50, noise=0.0):
+def sample(sample_size=15000, width=80, height=80, frequency=50, noise=0.0):
     """
     return [(x, u, x_next, s, s_next)]
     """
@@ -62,14 +62,16 @@ def sample(sample_size=20000, width=80, height=80, frequency=50, noise=0.0):
 
     return x_data, u_data, x_next_data, state_data, state_next_data
 
-def write_to_file(data, output_dir):
+def write_to_file(sample_size, noise):
     """
     write [(x, u, x_next)] to output dir
     """
+    output_dir = root_path + '/data/cartpole/raw_{:.0f}_noise'.format(noise)
     if not path.exists(output_dir):
         os.makedirs(output_dir)
 
     samples = []
+    data = sample(sample_size=sample_size, noise=noise)
     x_data, u_data, x_next_data, state_data, state_next_data = data
 
     for i in range(x_data.shape[0]):
@@ -111,8 +113,7 @@ def write_to_file(data, output_dir):
 def main(args):
     sample_size = args.sample_size
     noise = args.noise
-    data = sample(sample_size=sample_size, width=80, height=80, frequency=50, noise=noise)
-    write_to_file(data, root_path + '/data/cartpole/raw')
+    write_to_file(sample_size, noise)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='sample cartpole data')

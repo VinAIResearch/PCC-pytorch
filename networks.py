@@ -13,7 +13,7 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         # mean and variance of p(z|x)
-        return self.net(x).chunk(2, dim = 1)
+        return self.net(x).chunk(2, dim = -1)
 
 class Decoder(nn.Module):
     # P(x_t+1 | z^_t+1)
@@ -39,9 +39,9 @@ class Dynamics(nn.Module):
         self.armotized = armotized
 
     def forward(self, z_t, u_t):
-        z_u_t = torch.cat((z_t, u_t), dim = 1)
+        z_u_t = torch.cat((z_t, u_t), dim = -1)
         h = self.net(z_u_t)
-        mu, logvar = self.net_z_next(h).chunk(2, dim = 1)
+        mu, logvar = self.net_z_next(h).chunk(2, dim = -1)
         if self.armotized:
             A = self.net_A(h)
             B = self.net_B(h)
@@ -67,8 +67,8 @@ class BackwardDynamics(nn.Module):
         u_t_out = self.net_u(u_t)
         x_t_out = self.net_x(x_t)
 
-        z_u_x = torch.cat((z_t_out, u_t_out, x_t_out), dim = 1)
-        return self.net_joint(z_u_x).chunk(2, dim = 1)
+        z_u_x = torch.cat((z_t_out, u_t_out, x_t_out), dim = -1)
+        return self.net_joint(z_u_x).chunk(2, dim = -1)
 
 class PlanarEncoder(Encoder):
     def __init__(self, x_dim = 1600, z_dim = 2):

@@ -89,8 +89,8 @@ class VisualCartPoleBalance(CartPoleBase):
         next_true = self._step_four_state(true_state, a)
         next_true += self.noise * np.random.normal(loc=0., scale=1.,
                                                    size=next_true.shape)
-        next_image = self.render(next_true)
-        return (next_true, next_image)
+        # next_image = self.render(next_true)
+        return next_true
 
     def is_fail(self, s):
         """Indicates whether the state results in failure."""
@@ -128,4 +128,4 @@ class VisualCartPoleBalance(CartPoleBase):
         vel = np.random.uniform(self.velocity_limits[0],
                                 self.velocity_limits[1])
         true_state = np.array([angle, angle_rate, pos, vel])
-        return true_state, self.render(true_state)
+        return true_state

@@ -25,47 +25,63 @@ def get_all_pos(mdp):
                 state_list.append(state)
     return state_list
 
-def sample(mdp, sample_size):
+def sample(sample_size=5000, noise=0.0):
     """
     return [(s, u, s_next)]
     """
+    mdp = PlanarObstaclesMDP(noise=noise, sampling=True)
+
+    # place holder for data
+    x_data = np.zeros((sample_size, mdp.width, mdp.height), dtype='float32')
+    u_data = np.zeros((sample_size, mdp.action_dim), dtype='float32')
+    x_next_data = np.zeros((sample_size, mdp.width, mdp.height), dtype='float32')
+    state_data = np.zeros((sample_size, 2), dtype='float32')
+    state_next_data = np.zeros((sample_size, 2), dtype='float32')
+
+    # get all possible states (discretized on integer grid)
     state_list = get_all_pos(mdp)
     state_list = state_list * (sample_size // len(state_list))
-    state_samples = []
+    print ('Sampling data...')
     print ("Creating a list of all possible states (discretized on integer grid).")
-    for s in state_list:
-        u = mdp.sample_valid_random_action(s)
-        s_next = mdp.transition_function(s, u)
-        state_samples.append((s, u, s_next))
-    for i in trange(sample_size - len(state_list), desc = 'Sampling remaining data'):
-    # for i in trange(sample_size):
-        s = mdp.sample_random_state()
-        u = mdp.sample_valid_random_action(s)
-        s_next = mdp.transition_function(s, u)
-        state_samples.append((s, u, s_next))
-    obs_samples = [(mdp.render(s), u, mdp.render(s_next)) for s, u, s_next in state_samples]
-    return state_samples, obs_samples
+    for i, s in enumerate(state_list):
+        state_data[i] = s
+        x_data[i] = mdp.render(s).squeeze()
+        u_data[i] = mdp.sample_valid_random_action(s)
+        state_next_data[i] = mdp.transition_function(s, u_data[i])
+        x_next_data[i] = mdp.render(state_next_data[i])
 
-def write_to_file(mdp, sample_size, output_dir):
+    # sample remaining data
+    start_idx = len(state_list)
+    for j in trange(sample_size - len(state_list), desc = 'Sampling remaining data'):
+        state_data[j + start_idx] = mdp.sample_random_state()
+        x_data[j + start_idx] = mdp.render(state_data[j + start_idx])
+        u_data[j + start_idx] = mdp.sample_valid_random_action(state_data[j + start_idx])
+        state_next_data[j + start_idx] = mdp.transition_function(state_data[j + start_idx], u_data[j + start_idx])
+        x_next_data[j + start_idx] = mdp.render(state_next_data[j + start_idx])
+    return x_data, u_data, x_next_data, state_data, state_next_data
+
+def write_to_file(noise, sample_size):
     """
     write [(x, u, x_next)] to output dir
     """
+    output_dir = root_path + '/data/planar/raw_{:.0f}_noise'.format(noise)
     if not path.exists(output_dir):
         os.makedirs(output_dir)
 
-    state_samples, obs_samples = sample(mdp, sample_size)
+    x_data, u_data, x_next_data, state_data, state_next_data = sample(sample_size, noise)
 
     samples = []
 
-    for i, (before, u, after) in enumerate(obs_samples):
+    for i, _ in enumerate(x_data):
         before_file = 'before-{:05d}.png'.format(i)
-        Image.fromarray(before * 255.).convert('L').save(path.join(output_dir, before_file))
+        Image.fromarray(x_data[i] * 255.).convert('L').save(path.join(output_dir, before_file))
 
         after_file = 'after-{:05d}.png'.format(i)
-        Image.fromarray(after * 255.).convert('L').save(path.join(output_dir, after_file))
+        Image.fromarray(x_next_data[i] * 255.).convert('L').save(path.join(output_dir, after_file))
 
-        initial_state = state_samples[i][0]
-        after_state = state_samples[i][2]
+        initial_state = state_data[i]
+        after_state = state_next_data[i]
+        u = u_data[i]
 
         samples.append({
             'before_state': initial_state.tolist(),
@@ -80,7 +96,6 @@ def write_to_file(mdp, sample_size, output_dir):
             {
                 'metadata': {
                     'num_samples': sample_size,
-                    'max_distance': mdp.max_step,
                     'time_created': str(datetime.now()),
                     'version': 1
                 },
@@ -90,10 +105,7 @@ def write_to_file(mdp, sample_size, output_dir):
 def main(args):
     sample_size = args.sample_size
     noise = args.noise
-    mdp = PlanarObstaclesMDP(sampling=True, noise = noise)
-    # state_list = get_all_pos(mdp)
-    # print (len(state_list))
-    write_to_file(mdp, sample_size, root_path + '/data/planar/raw')
+    write_to_file(noise, sample_size)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='sample planar data')

@@ -6,7 +6,6 @@ from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
 from mdp.cartpole_mdp import VisualCartPoleBalance
 from ilqr_utils import *
-from datasets import *
 
 np.random.seed(0)
 torch.manual_seed(0)
@@ -111,8 +110,6 @@ def main(args):
             for plan_iter in range(1, horizon + 1):
                 print('Planning for horizon ' + str(plan_iter))
                 latent_cost_list = [None] * len(all_actions_trajs)
-                # all_k_small, all_K_big = [None] * len(all_actions_trajs), [None] * len(all_actions_trajs)
-                # all_z_seq = [None] * len(all_actions_trajs)
                 # iterate over all trajectories
                 for traj_id in range(len(all_actions_trajs)):
                     print('Running iLQR for trajectory ' + str(traj_id + 1))
@@ -131,15 +128,11 @@ def main(args):
                         alpha = alpha_init
                         accept = False  # if any alpha is accepted
                         while alpha > alpha_min:
-                            # u_seq_cand = forward(all_actions_trajs[traj_id], k_small, K_big, A_seq, B_seq, alpha)
-                            # z_seq_cand = compute_latent_traj(z_start_horizon, u_seq_cand, dynamics)
                             z_seq_cand, u_seq_cand = forward(z_seq, all_actions_trajs[traj_id], k_small, K_big, dynamics, alpha)
                             cost_cand = latent_cost(R_z, R_u, z_seq_cand, z_goal, u_seq_cand)
                             if cost_cand < current_cost:  # accept the trajectory candidate
                                 accept = True
                                 all_actions_trajs[traj_id] = u_seq_cand
-                                # z_seq = z_seq_cand
-                                # current_cost = cost_cand
                                 latent_cost_list[traj_id] = cost_cand
                                 print('Found a better action sequence. New latent cost: ' + str(cost_cand.item()))
                                 break
@@ -152,9 +145,6 @@ def main(args):
                         if inv_regulator > inv_regulator_max:
                             print('Can not improve. Stop iLQR.')
                             break
-                    # all_k_small[traj_id] = k_small
-                    # all_K_big[traj_id] = K_big
-                    # all_z_seq[traj_id] = z_seq
 
                     print('===================================================================')
 
@@ -164,15 +154,11 @@ def main(args):
                 traj_opt_id = np.argmin(latent_cost_list)
                 action_chosen = all_actions_trajs[traj_opt_id][0]
                 actions_final.append(action_chosen)
-                # best_z_seq = compute_latent_traj(z_start_horizon, all_actions_trajs[traj_opt_id], dynamics)
                 s_start_horizon, z_start_horizon = update_horizon_start(mdp, s_start_horizon,
                                                                         action_chosen, encoder, config)
                 all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, mdp,
                                                           np.min([plan_len, horizon - plan_iter]),
                                                           num_uniform, num_extreme)
-                # all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, best_z_seq, z_start_horizon, all_k_small[traj_opt_id], all_K_big[traj_opt_id], dynamics, mdp,
-                #                                           np.min([plan_len, horizon - plan_iter]),
-                #                                           num_uniform, num_extreme)
 
             obs_traj, goal_counter = traj_opt_actions(s_start, actions_final, mdp)
             # compute the percentage close to goal

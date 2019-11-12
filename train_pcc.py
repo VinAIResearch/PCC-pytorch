@@ -14,12 +14,51 @@ from mdp.cartpole_mdp import VisualCartPoleBalance
 from latent_map_evolve import *
 
 torch.set_default_dtype(torch.float64)
-torch.set_num_threads(1)
 
 device = torch.device("cuda")
 mdps = {'planar': PlanarObstaclesMDP, 'pendulum': VisualPoleSimpleSwingUp, 'cartpole': VisualCartPoleBalance}
 datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset, 'cartpole': CartPoleDataset}
 dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1), 'cartpole': ((2, 80, 80), 8, 1)}
+
+def pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+                      mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k):
+    """
+    :param mu_q_z_next: q(z_t+1 | x_t+1)
+    :param logvar_q_z_next: q(z_t+1 | x_t+1)
+    :param mu_q_z: q(z_t | z_t+1, x_t, u_t)
+    :param logvar_q_z: q(z_t | z_t+1, x_t, u_t)
+    :param k: number of particles
+    :return:
+    """
+    x = x.expand(k, x.size(0), x.size(1))
+    u = u.expand(k, u.size(0), u.size(1))
+    x_next = x_next.expand(k, x_next.size(0), x_next.size(1))
+    z_next = model.reparam(mu_q_z_next, logvar_q_z_next)
+    z_next = z_next.expand(k, z_next.size(0), z_next.size(1))
+
+    # sample k particles
+    mu_q_z = mu_q_z.expand(k, mu_q_z.size(0), mu_q_z.size(1))
+    logvar_q_z = logvar_q_z.expand(k, logvar_q_z.size(0), logvar_q_z.size(1))
+    z_samples = model.reparam(mu_q_z, logvar_q_z)
+
+    # compute w_i
+    log_p_z_x = gaussian(z_samples, mu_p_z, logvar_p_z, iwae=True)
+    mu_z_next_pred, logvar_z_next_pred, _, _ = model.transition(z_samples, u)
+    log_p_z_next_z = gaussian(z_next, mu_z_next_pred, logvar_z_next_pred, iwae=True)
+    log_x_next_z_next = bernoulli(x_next, x_next_recon, iwae=True)
+    log_q_z_particle = gaussian(z_samples, mu_q_z, logvar_q_z)
+    log_weight = log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle
+    log_weight = log_weight - torch.max(log_weight, dim=0)[0]
+    with torch.no_grad():
+        w = torch.exp(log_weight)
+        w = w / torch.sum(w, dim=0)
+
+    entropy_q_z_next = entropy(mu_q_z_next, logvar_q_z_next)
+    return -torch.mean(torch.sum(w * (log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle), dim=0))\
+           - entropy_q_z_next
+
+def consis_partial_iwae():
+    pass
 
 def compute_loss(model, armotized, x, x_next,
                 x_next_recon,
@@ -27,14 +66,19 @@ def compute_loss(model, armotized, x, x_next,
                 mu_q_z_next, logvar_q_z_next,
                 z_next, mu_p_z_next, logvar_p_z_next,
                 z, u, x_recon, x_next_determ,
-                lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3):
+                lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3,
+                iwae=False, k=50):
     # prediction loss
     x = x.view(x.size(0), -1)
     x_next = x_next.view(x_next.size(0), -1)
-    pred_loss  = - bernoulli(x_next, x_next_recon) \
-                + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
-                - entropy(mu_q_z_next, logvar_q_z_next) \
-                - gaussian(z_next, mu_p_z_next, logvar_p_z_next)
+    if not iwae:
+        pred_loss  = - bernoulli(x_next, x_next_recon) \
+                    + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
+                    - entropy(mu_q_z_next, logvar_q_z_next) \
+                    - gaussian(z_next, mu_p_z_next, logvar_p_z_next)
+    else:
+        pred_loss = pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+                                  mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k)
 
     # consistency loss
     consis_loss = - entropy(mu_q_z_next, logvar_q_z_next) \
@@ -55,7 +99,7 @@ def compute_loss(model, armotized, x, x_next,
     return pred_loss, consis_loss, cur_loss, \
             lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
-def train(env_name, model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized):
+def train(env_name, model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k):
     avg_pred_loss = 0.0
     avg_consis_loss = 0.0
     avg_cur_loss = 0.0
@@ -85,8 +129,8 @@ def train(env_name, model, train_loader, lam, vae_coeff, determ_coeff, optimizer
                 mu_q_z_next, logvar_q_z_next,
                 z_next, mu_p_z_next, logvar_p_z_next,
                 z, u, x_recon, x_next_determ,
-                lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff
-                )
+                lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff,
+                iwae=iwae, k=k)
 
         avg_pred_loss += pred_loss.item()
         avg_consis_loss += consis_loss.item()
@@ -103,6 +147,8 @@ def main(args):
     armotized = args.armotized
     log_dir = args.log_dir
     seed = args.seed
+    data_size = args.data_size
+    noise_level = args.noise
     batch_size = args.batch_size
     lam_p = args.lam_p
     lam_c = args.lam_c
@@ -114,12 +160,14 @@ def main(args):
     weight_decay = args.decay
     epoches = args.num_iter
     iter_save = args.iter_save
+    iwae = args.iwae
+    k = args.k
 
     np.random.seed(seed)
     torch.manual_seed(seed)
 
     dataset = datasets[env_name]
-    data = dataset('data/' + env_name)
+    data = dataset(sample_size=data_size, noise=noise_level)
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=4)
 
     x_dim, z_dim, u_dim = dims[env_name]
@@ -141,7 +189,8 @@ def main(args):
 
     # latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
-        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(env_name, model, data_loader, lam, vae_coeff, determ_coeff, optimizer, armotized)
+        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(env_name, model, data_loader, lam,
+                                                                       vae_coeff, determ_coeff, optimizer, armotized, iwae, k)
         scheduler.step()
         print('Epoch %d' % i)
         print("Prediction loss: %f" % (avg_pred_loss))
@@ -191,6 +240,8 @@ if __name__ == "__main__":
                         const=True, default=False, help='type of dynamics model')
     parser.add_argument('--log_dir', required=True, type=str, help='directory to save training log')
     parser.add_argument('--seed', required=True, type=int, help='seed number')
+    parser.add_argument('--data_size', required=True, type=int, help='the bumber of data points used for training')
+    parser.add_argument('--noise', default=0, type=int, help='the level of noise')
     parser.add_argument('--batch_size', default=128, type=int, help='batch size')
     parser.add_argument('--lam_p', default=1.0, type=float, help='weight of prediction loss')
     parser.add_argument('--lam_c', default=8.0, type=float, help='weight of consistency loss')
@@ -201,7 +252,9 @@ if __name__ == "__main__":
     parser.add_argument('--decay', default=0.001, type=float, help='L2 regularization')
     parser.add_argument('--num_iter', default=5000, type=int, help='number of epoches')
     parser.add_argument('--iter_save', default=1000, type=int, help='save model and result after this number of iterations')
-
+    parser.add_argument('--iwae', default=False, type=str2bool, nargs='?',
+                        const=True, help='use iwae or not')
+    parser.add_argument('--k', default=50, type=int, help='the number of particles')
     args = parser.parse_args()
 
     main(args)
