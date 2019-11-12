@@ -23,6 +23,8 @@ class PlanarDataset(Dataset):
         self.sample_size = sample_size
         self.noise = noise
         self.data_path = 'data/planar/'
+        if not os.path.exists(self.data_path):
+            os.makedirs(self.data_path)
         self._process()
         self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
@@ -70,6 +72,8 @@ class PendulumDataset(Dataset):
         self.sample_size = sample_size
         self.noise = noise
         self.data_path = 'data/pendulum/'
+        if not os.path.exists(self.data_path):
+            os.makedirs(self.data_path)
         self._process()
         self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
@@ -118,6 +122,8 @@ class CartPoleDataset(Dataset):
         self.sample_size = sample_size
         self.noise = noise
         self.data_path = 'data/cartpole/'
+        if not os.path.exists(self.data_path):
+            os.makedirs(self.data_path)
         self._process()
         self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path)
 
