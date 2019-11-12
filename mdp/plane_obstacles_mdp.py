@@ -11,7 +11,7 @@ class PlanarObstaclesMDP(object):
     max_step = 3
     action_dim = 2
 
-    def __init__(self, goal, goal_thres, noise = 0, sampling = False):
+    def __init__(self, goal=[37,37], goal_thres=2, noise = 0, sampling = False):
         self.goal = goal
         self.goal_thres = goal_thres
         self.is_sampling = sampling
@@ -47,7 +47,7 @@ class PlanarObstaclesMDP(object):
             return False
         return True
 
-    def sample_valid_random_state(self):
+    def sample_random_state(self):
         while True:
             s = np.random.uniform(self.half_agent_size, self.width - self.half_agent_size, size = 2)
             if self.is_valid_state(s):

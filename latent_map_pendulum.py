@@ -46,20 +46,20 @@ def assign_latent_color(pcc_model, angel, num_state_each_angle):
         # take a random action
         u = mdp.sample_random_action()
         # u = np.array([0.0])
-        s_next, x_next = mdp.transition_function((s, x), u)
-        x_next = x_next.squeeze()
+        s_next = mdp.transition_function(s, u)
+        x_next = mdp.render(s_next).squeeze()
         # reverse order: the state we want to represent is x not x_next
         x_with_history = np.vstack((x_next, x))
-        x_with_history = ToTensor()(x_with_history).double().cuda()
+        x_with_history = ToTensor()(x_with_history).double()
         with torch.no_grad():
             z, _ = pcc_model.encode(x_with_history.view(-1, x_with_history.shape[-1] * x_with_history.shape[-2]))
-        all_z_for_angle.append(z.detach().squeeze().cpu().numpy())
+        all_z_for_angle.append(z.detach().squeeze().numpy())
     return all_z_for_angle
 
-model = PCC(armotized=False, x_dim=4608, z_dim=3, u_dim=1, env='pendulum').cuda()
-model.load_state_dict(torch.load('result/pendulum/new_dataset_1/model_2000'))
+model = PCC(armotized=False, x_dim=4608, z_dim=3, u_dim=1, env='pendulum')
+model.load_state_dict(torch.load('result/pendulum/new_dataset_10/model_5000', map_location='cpu'))
 model.eval()
-num_angles = 100
+num_angles = 50
 num_obs_each_angle = 20
 angle_color_map, colors_rgb = draw_true_map(num_angles)
 colors_list = []

@@ -85,7 +85,7 @@ class VisualCartPoleBalance(CartPoleBase):
         """Transition function."""
         if project_actions:
             a = self.project_actions(a)
-        true_state = s[0]
+        true_state = s
         next_true = self._step_four_state(true_state, a)
         next_true += self.noise * np.random.normal(loc=0., scale=1.,
                                                    size=next_true.shape)
@@ -94,8 +94,8 @@ class VisualCartPoleBalance(CartPoleBase):
 
     def is_fail(self, s):
         """Indicates whether the state results in failure."""
-        angle = s[0][StateIndex.THETA]
-        position = s[0][StateIndex.X]
+        angle = s[StateIndex.THETA]
+        position = s[StateIndex.X]
         if ((self.goal_limits[0] < angle < self.goal_limits[1])
                 and (self.position_limits[0] < position < self.position_limits[1])):
             return False
@@ -104,7 +104,7 @@ class VisualCartPoleBalance(CartPoleBase):
 
     def is_goal(self, s):
         """Inidicates whether the state achieves the goal."""
-        angle = s[0][StateIndex.THETA]
+        angle = s[StateIndex.THETA]
         if self.goal_limits[0] < angle < self.goal_limits[1]:
             return True
         else:

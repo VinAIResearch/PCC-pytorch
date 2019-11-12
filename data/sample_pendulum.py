@@ -35,26 +35,29 @@ def sample(sample_size=20000, width=48, height=48, frequency=50, noise=0.0):
     # Generate interaction tuples (random states and actions).
     for sample in trange(sample_size, desc = 'Sampling data'):
         s0 = mdp.sample_random_state()
+        x0 = mdp.render(s0)
         a0 = np.atleast_1d(
             np.random.uniform(mdp.avail_force[0], mdp.avail_force[1]))
         s1 = mdp.transition_function(s0, a0)
+
+        x1 = mdp.render(s1)
         a1 = np.atleast_1d(
             np.random.uniform(mdp.avail_force[0], mdp.avail_force[1]))
         s2 = mdp.transition_function(s1, a1)
-
+        x2 = mdp.render(s2)
         ## Store interaction tuple.
         # Current state (w/ history).
-        x_data[sample, :, :, 0] = s0[1][:, :, 0]
-        x_data[sample, :, :, 1] = s1[1][:, :, 0]
-        state_data[sample, :, 0] = s0[0][0:2]
-        state_data[sample, :, 1] = s1[0][0:2]
+        x_data[sample, :, :, 0] = x0[:, :, 0]
+        x_data[sample, :, :, 1] = x1[:, :, 0]
+        state_data[sample, :, 0] = s0[0:2]
+        state_data[sample, :, 1] = s1[0:2]
         # Action.
         u_data[sample] = a1
         # Next state (w/ history).
-        x_next_data[sample, :, :, 0] = s1[1][:, :, 0]
-        x_next_data[sample, :, :, 1] = s2[1][:, :, 0]
-        state_next_data[sample, :, 0] = s1[0][0:2]
-        state_next_data[sample, :, 1] = s2[0][0:2]
+        x_next_data[sample, :, :, 0] = x1[:, :, 0]
+        x_next_data[sample, :, :, 1] = x2[:, :, 0]
+        state_next_data[sample, :, 0] = s1[0:2]
+        state_next_data[sample, :, 1] = s2[0:2]
 
     return x_data, u_data, x_next_data, state_data, state_next_data
 

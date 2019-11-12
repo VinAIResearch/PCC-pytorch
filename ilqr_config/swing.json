@@ -17,7 +17,7 @@
 
   "frequency": 50,
   "noise": 0.0,
-  "torque": 0.5,
+  "torque": 1.0,
   "epoch": "5000",
 
   "ilqr_iters": 4,

@@ -39,7 +39,7 @@ def sample(mdp, sample_size):
         state_samples.append((s, u, s_next))
     for i in trange(sample_size - len(state_list), desc = 'Sampling remaining data'):
     # for i in trange(sample_size):
-        s = mdp.sample_valid_random_state()
+        s = mdp.sample_random_state()
         u = mdp.sample_valid_random_action(s)
         s_next = mdp.transition_function(s, u)
         state_samples.append((s, u, s_next))

@@ -43,7 +43,7 @@ def get_true_map(mdp, start, end, width, height, img):
             else:
                 x_scaled, y_scaled = x * 10, y * 10
                 draw.ellipse((x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2), fill = img.getpixel((x,y)))
-    img_scaled.save('map.png', 'PNG')
+    img_scaled.save('true_map.png', 'PNG')
     img_arr_scaled = np.array(img_scaled) / 255.
     return img_arr_scaled
 

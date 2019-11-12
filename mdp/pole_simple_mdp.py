@@ -87,12 +87,13 @@ class VisualPoleSimpleSwingUp(CartPoleBase):
         """Transition function."""
         if project_actions:
             a = self.project_actions(a)
-        next_true = self._step_two_state(s[0], a)
+        next_true = self._step_two_state(s, a)
         next_true = next_true[0:2]
         next_true += self.noise * np.random.normal(loc=0., scale=1.,
                                                    size=next_true.shape)
-        next_image = self.render(next_true)
-        return (next_true, next_image)
+        return next_true
+        # next_image = self.render(next_true)
+        # return (next_true, next_image)
 
     def is_fail(self, s):
         """Indicates whether the state results in failure."""
@@ -102,7 +103,7 @@ class VisualPoleSimpleSwingUp(CartPoleBase):
 
     def is_goal(self, s):
         """Inidicates whether the state achieves the goal."""
-        angle = s[0][StateIndex.THETA]
+        angle = s[StateIndex.THETA]
         if self.goal_limits[0] < angle < self.goal_limits[1]:
             return True
         else:
@@ -122,8 +123,8 @@ class VisualPoleSimpleSwingUp(CartPoleBase):
         angle_rate = np.random.uniform(self.angular_rate_limits[0],
                                        self.angular_rate_limits[1])
         true_state = np.array([angle, angle_rate])
-
-        return (true_state, self.render(true_state))
+        return true_state
+        # return (true_state, self.render(true_state))
 
     def _step_two_state(self, s, a):
         """Computes the next state from the current state and the action."""
