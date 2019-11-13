@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c6e8b552-18f1-4081-b7b0-4d658dd0e933" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/datasets.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/draw_latent_map.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/draw_latent_map.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_pcc.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_pcc.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -36,10 +38,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/datasets.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="600">
+            <state relative-caret-position="152">
               <caret line="127" column="117" selection-start-line="127" selection-start-column="117" selection-end-line="127" selection-end-column="117" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -51,8 +53,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/networks.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="690">
-              <caret line="47" column="13" selection-start-line="47" selection-start-column="13" selection-end-line="47" selection-end-column="13" />
+            <state relative-caret-position="420">
+              <caret line="209" selection-start-line="209" selection-end-line="209" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -60,13 +62,25 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_pcc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="406">
-              <caret line="235" selection-start-line="235" selection-end-line="235" />
+            <state relative-caret-position="126">
+              <caret line="98" column="46" lean-forward="true" selection-start-line="98" selection-start-column="46" selection-end-line="98" selection-end-column="46" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/pcc_model.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-900">
+              <caret line="27" selection-start-line="27" selection-end-line="27" />
+              <folding>
+                <element signature="e#0#12#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -83,8 +97,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>forwa</find>
-      <find>size</find>
       <find>cuda</find>
       <find>ToTens</find>
       <find>totensor</find>
@@ -113,6 +125,8 @@
       <find>Data</find>
       <find>dat</find>
       <find>data</find>
+      <find>view</find>
+      <find>train</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -148,8 +162,8 @@
         <option value="$PROJECT_DIR$/data/sample_cartpole.py" />
         <option value="$PROJECT_DIR$/ilqr.py" />
         <option value="$PROJECT_DIR$/latent_map_evolve.py" />
-        <option value="$PROJECT_DIR$/train_pcc.py" />
         <option value="$PROJECT_DIR$/datasets.py" />
+        <option value="$PROJECT_DIR$/train_pcc.py" />
       </list>
     </option>
   </component>
@@ -171,11 +185,6 @@
             <path>
               <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
               <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
-              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
-              <item name="data" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -371,12 +380,12 @@
       <workItem from="1573490648855" duration="4112000" />
       <workItem from="1573535704633" duration="11850000" />
       <workItem from="1573556984846" duration="1688000" />
-      <workItem from="1573561032924" duration="766000" />
+      <workItem from="1573561032924" duration="5240000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="399539000" />
+    <option name="totallyTimeSpent" value="404013000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
@@ -396,7 +405,7 @@
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
       <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5017026" side_tool="true" weight="0.32467532" />
-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4982974" weight="0.44708425" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="11" sideWeight="0.4982974" visible="true" weight="0.44708425" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -437,35 +446,6 @@
     </ignored-roots>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/data/planar/raw/data.json" />
-    <entry file="file://$PROJECT_DIR$/swing_eval.py" />
-    <entry file="file://$PROJECT_DIR$/balance_eval.py" />
-    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_6/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_1/loss_5000" />
-    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_5/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file:///run/user/1000/jupyter/nbserver-11259-open.html" />
-    <entry file="file://$PROJECT_DIR$/evaluate_saved_model.ipynb">
-      <provider selected="true" editor-type-id="ipnb-editor">
-        <state>
-          <selected id="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/ilqr_config/plane.json">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="17" selection-start-line="17" selection-end-line="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/.gitmodules">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/result/log_1/loss_2000" />
     <entry file="file://$PROJECT_DIR$/result/cartpole/cartpole_1_5000/loss_2000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -505,12 +485,6 @@
           </folding>
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/result/planar/3x3_1/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/result/planar/3x3_2/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/../E2C/data/env.png">
       <provider selected="true" editor-type-id="images" />
@@ -638,26 +612,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/losses.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="309">
-          <caret line="36" column="16" selection-start-line="36" selection-start-column="16" selection-end-line="36" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/pcc_model.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/data/sample_pendulum.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="211">
@@ -679,10 +633,83 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/datasets.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="127" column="117" selection-start-line="127" selection-start-column="117" selection-end-line="127" selection-end-column="117" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_1/loss_1000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_2/loss_1000">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="33" lean-forward="true" selection-start-line="3" selection-start-column="33" selection-end-line="3" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_1/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_2/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_3/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_4/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_5/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_5/loss_1000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_6/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_7/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_8/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_9/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_10/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pcc_model.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-900">
+          <caret line="27" selection-start-line="27" selection-end-line="27" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/networks.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="690">
-          <caret line="47" column="13" selection-start-line="47" selection-start-column="13" selection-end-line="47" selection-end-column="13" />
+        <state relative-caret-position="420">
+          <caret line="209" selection-start-line="209" selection-end-line="209" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/losses.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="602">
+          <caret line="64" column="26" selection-start-line="64" selection-start-column="22" selection-end-line="64" selection-end-column="26" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
@@ -691,20 +718,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_pcc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="406">
-          <caret line="235" selection-start-line="235" selection-end-line="235" />
+        <state relative-caret-position="126">
+          <caret line="98" column="46" lean-forward="true" selection-start-line="98" selection-start-column="46" selection-end-line="98" selection-end-column="46" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/datasets.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="600">
-          <caret line="127" column="117" selection-start-line="127" selection-start-column="117" selection-end-line="127" selection-end-column="117" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>

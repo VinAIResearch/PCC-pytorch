@@ -99,7 +99,7 @@ def compute_loss(model, armotized, x, x_next,
     return pred_loss, consis_loss, cur_loss, \
             lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
-def train(env_name, model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k):
+def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k):
     avg_pred_loss = 0.0
     avg_consis_loss = 0.0
     avg_cur_loss = 0.0
@@ -108,9 +108,6 @@ def train(env_name, model, train_loader, lam, vae_coeff, determ_coeff, optimizer
     num_batches = len(train_loader)
     model.train()
     for x, u, x_next in train_loader:
-        if env_name == 'planar' or env_name == 'pendulum':
-            x = x.view(-1, model.x_dim)
-            x_next = x_next.view(-1, model.x_dim)
         x = x.to(device).double()
         u = u.to(device).double()
         x_next = x_next.to(device).double()
@@ -189,7 +186,7 @@ def main(args):
 
     # latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
-        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(env_name, model, data_loader, lam,
+        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam,
                                                                        vae_coeff, determ_coeff, optimizer, armotized, iwae, k)
         scheduler.step()
         print('Epoch %d' % i)
