@@ -41,12 +41,15 @@ python train_pcc.py \
     --lr=0.0005 \
     --decay=0.001 \
     --num_iter=5000 \
-    --iter_save=1000
+    --iter_save=1000 \
+    --save_map=True
 ```
 
 First, data is sampled according to the given data size and noise level, then PCC model will be trained using the specified settings.
 
-You can visualize the training process by running ``tensorboard --logdir={path_to_log_file}``, where ``path_to_log_file`` has the form ``logs/{env}/{log_dir}``. The trained model will be saved at ``result/{env}/{log_dir}``.
+If the argument save_map is set to True, the latent map will be drawn every 10 epoches, then the gif file will be saved at the  same directory as the trained model.
+
+You can also visualize the training process by running ``tensorboard --logdir={path_to_log_file}``, where ``path_to_log_file`` has the form ``logs/{env}/{log_dir}``. The trained model will be saved at ``result/{env}/{log_dir}``.
 
 ## Sampling data
 
