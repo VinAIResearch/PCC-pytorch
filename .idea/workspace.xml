@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c6e8b552-18f1-4081-b7b0-4d658dd0e933" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/draw_latent_map.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/draw_latent_map.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ilqr.py" beforeDir="false" afterPath="$PROJECT_DIR$/ilqr.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train_pcc.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_pcc.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -50,15 +48,6 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/ilqr.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="3" column="11" selection-start-line="3" selection-start-column="11" selection-end-line="3" selection-end-column="11" />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/networks.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -71,11 +60,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_pcc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="781">
-              <caret line="256" column="14" selection-start-line="256" selection-start-column="14" selection-end-line="256" selection-end-column="14" />
+            <state relative-caret-position="277">
+              <caret line="186" lean-forward="true" selection-start-line="186" selection-end-line="186" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
               </folding>
@@ -106,7 +95,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>cuda</find>
       <find>ToTens</find>
       <find>totensor</find>
       <find>cost_duz</find>
@@ -127,7 +115,6 @@
       <find>swing_up</find>
       <find>get_x</find>
       <find>env_name</find>
-      <find>mdp</find>
       <find>forma</find>
       <find>cart</find>
       <find>dataset</find>
@@ -136,6 +123,8 @@
       <find>data</find>
       <find>view</find>
       <find>train</find>
+      <find>mdp</find>
+      <find>mdps</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -171,15 +160,15 @@
         <option value="$PROJECT_DIR$/data/sample_cartpole.py" />
         <option value="$PROJECT_DIR$/latent_map_evolve.py" />
         <option value="$PROJECT_DIR$/datasets.py" />
-        <option value="$PROJECT_DIR$/train_pcc.py" />
         <option value="$PROJECT_DIR$/ilqr.py" />
+        <option value="$PROJECT_DIR$/train_pcc.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="71" />
+    <option name="x" value="428" />
     <option name="y" value="27" />
-    <option name="width" value="907" />
+    <option name="width" value="897" />
     <option name="height" value="1045" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -194,6 +183,11 @@
             <path>
               <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
               <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="PCC-pytorch" type="b2602c69:ProjectViewProjectNode" />
+              <item name="PCC-pytorch" type="462c0819:PsiDirectoryNode" />
+              <item name="mdp" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -389,12 +383,12 @@
       <workItem from="1573490648855" duration="4112000" />
       <workItem from="1573535704633" duration="11850000" />
       <workItem from="1573556984846" duration="1688000" />
-      <workItem from="1573561032924" duration="6251000" />
+      <workItem from="1573561032924" duration="7571000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="405024000" />
+    <option name="totallyTimeSpent" value="406344000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
@@ -414,7 +408,7 @@
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
       <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5017026" side_tool="true" weight="0.32467532" />
-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4982974" weight="0.44708425" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="11" sideWeight="0.4982974" visible="true" weight="0.44708425" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -455,9 +449,6 @@
     </ignored-roots>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/result/cartpole/cartpole_1_5000/loss_2000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/ilqr_config/cartpole.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
@@ -642,9 +633,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/result/planar/3x3_1/loss_5000">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
     <entry file="file://$PROJECT_DIR$/result/planar/3x3_2/loss_5000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -685,16 +673,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/train_pcc.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="781">
-          <caret line="256" column="14" selection-start-line="256" selection-start-column="14" selection-end-line="256" selection-end-column="14" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/pcc_model.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1320">
@@ -725,10 +703,29 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/result/planar/3x3_1/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/result/pendulum/new_dataset_1/loss_5000">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/ilqr.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="3" column="11" selection-start-line="3" selection-start-column="11" selection-end-line="3" selection-end-column="11" />
+        <state relative-caret-position="736">
+          <caret line="156" column="65" lean-forward="true" selection-start-line="156" selection-start-column="65" selection-end-line="156" selection-end-column="65" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_pcc.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="277">
+          <caret line="186" lean-forward="true" selection-start-line="186" selection-end-line="186" />
+          <folding>
+            <element signature="e#0#38#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
