@@ -17,7 +17,7 @@ device = torch.device("cuda")
 datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset, 'cartpole': CartPoleDataset}
 dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1), 'cartpole': ((2, 80, 80), 8, 1)}
 
-def pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+def pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next, z_next, z_q, mu_p_z_next, logvar_p_z_next,
                       mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k):
     """
     :param mu_q_z_next: q(z_t+1 | x_t+1)
@@ -27,23 +27,11 @@ def pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z
     :param k: number of particles
     :return:
     """
-    x = x.expand(k, x.size(0), x.size(1))
-    u = u.expand(k, u.size(0), u.size(1))
-    x_next = x_next.expand(k, x_next.size(0), x_next.size(1))
-    z_next = model.reparam(mu_q_z_next, logvar_q_z_next)
-    z_next = z_next.expand(k, z_next.size(0), z_next.size(1))
-
-    # sample k particles
-    mu_q_z = mu_q_z.expand(k, mu_q_z.size(0), mu_q_z.size(1))
-    logvar_q_z = logvar_q_z.expand(k, logvar_q_z.size(0), logvar_q_z.size(1))
-    z_samples = model.reparam(mu_q_z, logvar_q_z)
-
     # compute w_i
-    log_p_z_x = gaussian(z_samples, mu_p_z, logvar_p_z, iwae=True)
-    mu_z_next_pred, logvar_z_next_pred, _, _ = model.transition(z_samples, u)
-    log_p_z_next_z = gaussian(z_next, mu_z_next_pred, logvar_z_next_pred, iwae=True)
+    log_p_z_x = gaussian(z_q, mu_p_z, logvar_p_z, iwae=True)
+    log_p_z_next_z = gaussian(z_next, mu_p_z_next, logvar_p_z_next, iwae=True)
     log_x_next_z_next = bernoulli(x_next, x_next_recon, iwae=True)
-    log_q_z_particle = gaussian(z_samples, mu_q_z, logvar_q_z)
+    log_q_z_particle = gaussian(z_q, mu_q_z, logvar_q_z, iwae=True)
     log_weight = log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle
     log_weight = log_weight - torch.max(log_weight, dim=0)[0]
     with torch.no_grad():
@@ -62,19 +50,23 @@ def compute_loss(model, armotized, x, x_next,
                 mu_q_z, logvar_q_z, mu_p_z, logvar_p_z,
                 mu_q_z_next, logvar_q_z_next,
                 z_next, mu_p_z_next, logvar_p_z_next,
-                z, u, x_recon, x_next_determ,
+                z, z_q, u, x_recon, x_next_determ,
                 lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3,
                 iwae=False, k=50):
     # prediction loss
-    x = x.view(x.size(0), -1)
-    x_next = x_next.view(x_next.size(0), -1)
+    if iwae:
+        x_dim = (x.size(0), x.size(1), -1)
+    else:
+        x_dim = (x.size(0), -1)
+    x = x.view(x_dim)
+    x_next = x_next.view(x_dim)
     if not iwae:
         pred_loss  = - bernoulli(x_next, x_next_recon) \
                     + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
                     - entropy(mu_q_z_next, logvar_q_z_next) \
                     - gaussian(z_next, mu_p_z_next, logvar_p_z_next)
     else:
-        pred_loss = pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+        pred_loss = pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next, z_next, z_q, mu_p_z_next, logvar_p_z_next,
                                   mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k)
 
     # consistency loss
@@ -108,13 +100,17 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
         x = x.to(device).double()
         u = u.to(device).double()
         x_next = x_next.to(device).double()
+        if iwae:
+            x = x.expand((k, -1, -1))
+            u = u.expand((k, -1, -1))
+            x_next = x_next.expand((k, -1, -1))
         optimizer.zero_grad()
 
         x_next_recon, \
         mu_q_z, logvar_q_z, mu_p_z, logvar_p_z, \
         mu_q_z_next, logvar_q_z_next, \
         z_next, mu_p_z_next, logvar_p_z_next, \
-        z, u, x_recon, x_next_determ = model(x, u, x_next)
+        z, z_q, u, x_recon, x_next_determ = model(x, u, x_next)
 
         pred_loss, consis_loss, cur_loss, loss = compute_loss(
                 model, armotized, x, x_next,
@@ -122,7 +118,7 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
                 mu_q_z, logvar_q_z, mu_p_z, logvar_p_z,
                 mu_q_z_next, logvar_q_z_next,
                 z_next, mu_p_z_next, logvar_p_z_next,
-                z, u, x_recon, x_next_determ,
+                z, z_q, u, x_recon, x_next_determ,
                 lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff,
                 iwae=iwae, k=k)
 
@@ -166,7 +162,7 @@ def main(args):
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=True, drop_last=False, num_workers=4)
 
     x_dim, z_dim, u_dim = dims[env_name]
-    model = PCC(armotized=armotized, x_dim=x_dim, z_dim=z_dim, u_dim=u_dim, env=env_name).to(device)
+    model = PCC(armotized=armotized, x_dim=x_dim, z_dim=z_dim, u_dim=u_dim, env=env_name, iwae=iwae, k=k).to(device)
 
     if env_name == 'planar' and save_map:
         mdp = PlanarObstaclesMDP(noise=noise_level)

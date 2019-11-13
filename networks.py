@@ -74,11 +74,11 @@ class PlanarEncoder(Encoder):
     def __init__(self, x_dim = 1600, z_dim = 2):
         net = nn.Sequential(
             nn.Linear(x_dim, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, z_dim * 2)
@@ -89,11 +89,11 @@ class PlanarDecoder(Decoder):
     def __init__(self, z_dim = 2, x_dim = 1600):
         net = nn.Sequential(
             nn.Linear(z_dim, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, x_dim),
@@ -105,11 +105,11 @@ class PlanarDynamics(Dynamics):
     def __init__(self, armotized, z_dim = 2, u_dim = 2):
         net = nn.Sequential(
             nn.Linear(z_dim + u_dim, 20),
-            nn.BatchNorm1d(20),
+            # nn.BatchNorm1d(20),
             nn.ReLU(),
 
             nn.Linear(20, 20),
-            nn.BatchNorm1d(20),
+            # nn.BatchNorm1d(20),
             nn.ReLU()
         )
         net_z_next = nn.Linear(20, z_dim * 2)

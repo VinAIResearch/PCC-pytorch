@@ -6,7 +6,7 @@ torch.set_default_dtype(torch.float64)
 # torch.manual_seed(0)
 
 class PCC(nn.Module):
-    def __init__(self, armotized, x_dim, z_dim, u_dim, env = 'planar'):
+    def __init__(self, armotized, x_dim, z_dim, u_dim, env = 'planar', iwae=False, k=50):
         super(PCC, self).__init__()
         enc, dec, dyn, back_dyn = load_config(env)
 
@@ -19,6 +19,9 @@ class PCC(nn.Module):
         self.decoder = dec(z_dim, x_dim)
         self.dynamics = dyn(armotized, z_dim, u_dim)
         self.backward_dynamics = back_dyn(z_dim, u_dim, x_dim)
+
+        self.iwae = iwae
+        self.k_iwae = k
 
     def encode(self, x):
         return self.encoder(x)
@@ -34,6 +37,12 @@ class PCC(nn.Module):
 
     def reparam(self, mean, logvar):
         sigma = (logvar / 2).exp()
+        epsilon_size = (sigma.size(-2), sigma.size(-1))
+        epsilon = torch.randn(epsilon_size).cuda()
+        return mean + torch.mul(epsilon.expand_as(sigma), sigma)
+
+    def reparam_iwae(self, mean, logvar):
+        sigma = (logvar / 2).exp()
         epsilon = torch.randn_like(sigma)
         return mean + torch.mul(epsilon, sigma)
 
@@ -48,7 +57,7 @@ class PCC(nn.Module):
         mu_p_z, logvar_p_z = self.encode(x) # P(z_t | x_t)
 
         # 4th term
-        z_q = self.reparam(mu_q_z, logvar_q_z) # samples from Q(z_t | z^_t+1, u_t, x_t)
+        z_q = self.reparam_iwae(mu_q_z, logvar_q_z) # samples from Q(z_t | z^_t+1, u_t, x_t)
         mu_p_z_next, logvar_p_z_next, _, _ = self.transition(z_q, u) # P(z^_t+1 | z_t, u _t)
 
         # additional VAE loss
@@ -59,11 +68,16 @@ class PCC(nn.Module):
         mu_z_next_determ, _, A, B = self.transition(mu_p_z, u)
         x_next_determ = self.decode(mu_z_next_determ)
 
-        return x_next_recon.view(x_next_recon.size(0), -1), \
+        # flatten x
+        if self.iwae:
+            x_dim = (x.size(0), x.size(1), -1)
+        else:
+            x_dim = (x.size(0), -1)
+        return x_next_recon.view(x_dim), \
                 mu_q_z, logvar_q_z, mu_p_z, logvar_p_z, \
                 mu_q_z_next, logvar_q_z_next, \
                 z_next, mu_p_z_next, logvar_p_z_next, \
-                z_p, u, x_recon.view(x_recon.size(0), -1), x_next_determ.view(x_next_determ.size(0), -1)
+                z_p, z_q, u, x_recon.view(x_dim), x_next_determ.view(x_dim)
 
     def predict(self, x, u):
         mu, logvar = self.encoder(x)
