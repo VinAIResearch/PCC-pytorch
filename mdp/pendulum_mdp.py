@@ -70,11 +70,11 @@ class PendulumMDP(PoleBase):
         """Calculates derivatives at a given state."""
         theta = s_augmented[StateIndex.THETA]
         theta_dot = s_augmented[StateIndex.THETA_DOT]
-        action = s_augmented[StateIndex.PEND_ACTION]
+        torque = s_augmented[StateIndex.PEND_ACTION]
 
         # theta is w.r.t the upside vertical position, which is = pi - theta in tedrake's note
         sine = np.sin(np.pi - theta)
-        theta_prime_num = (self.pend_mass * self.earth_gravity * self.length * sine - action)
+        theta_prime_num = (self.pend_mass * self.earth_gravity * self.length * sine - torque)
         theta_prime_denum = 1. / 3. * self.pend_mass * self.length**2 # the moment of inertia
         theta_double_dot = theta_prime_num / theta_prime_denum
 

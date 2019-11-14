@@ -10,7 +10,7 @@ from datasets import *
 from losses import *
 
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-from latent_map_evolve import *
+from latent_map_planar import *
 
 torch.set_default_dtype(torch.float64)
 
@@ -238,7 +238,6 @@ def str2bool(v):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='train pcc model')
 
-    # the default value is used for the planar task
     parser.add_argument('--env', required=True, type=str, help='environment used for training')
     parser.add_argument('--armotized', required=True, type=str2bool, nargs='?',
                         const=True, default=False, help='type of dynamics model')

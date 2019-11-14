@@ -47,7 +47,7 @@ python train_pcc.py \
 
 First, data is sampled according to the given data size and noise level, then PCC model will be trained using the specified settings.
 
-If the argument save_map is set to True, the latent map will be drawn every 10 epoches, then the gif file will be saved at the  same directory as the trained model.
+If the argument save_map is set to True, the latent map will be drawn every 10 epoches (for planar only), then the gif file will be saved at the  same directory as the trained model.
 
 You can also visualize the training process by running ``tensorboard --logdir={path_to_log_file}``, where ``path_to_log_file`` has the form ``logs/{env}/{log_dir}``. The trained model will be saved at ``result/{env}/{log_dir}``.
 
@@ -61,7 +61,7 @@ cd data
 python sample_{env_name}_data.py --sample_size={sample_size} --noise={noise}
 ```
 
-Currently the code supports simulating 3 environments: `planar`, `pendulum` and `cartpole`. The MDP for `pendulum` and `cartpole` is borrowed from Yinlam's code.
+Currently the code supports simulating 3 environments: `planar`, `pendulum` and `cartpole`. The MDP for `pendulum` and `cartpole` is based on Yinlam's code.
 
 The raw data (images) is saved in data/{env_name}/raw\_{noise}\_noise
 <!-- For the planar task, we base on [this](https://github.com/ethanluoyc/e2c-pytorch) implementation and modify for our needs. -->
