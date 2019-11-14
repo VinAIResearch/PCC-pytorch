@@ -2,8 +2,6 @@ from PIL import Image, ImageDraw
 import numpy as np
 from colour import Color
 import torch
-from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-from pcc_model import PCC
 
 blue = Color('blue')
 colors = list(blue.range_to(Color("red"),40))
@@ -92,6 +90,8 @@ def draw_latent_map(model, mdp):
             draw.ellipse((x_scaled-2, y_scaled-2, x_scaled+2, y_scaled+2), fill = img.getpixel((y, x)))
     return img_latent
 
+# from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
+# from pcc_model import PCC
 # mdp = PlanarObstaclesMDP()
 # start = 0
 # end = 39

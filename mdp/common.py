@@ -29,5 +29,5 @@ class StateIndex(object):
     """
     THETA, THETA_DOT = 0, 1
     X, X_DOT = 2, 3
-    FORCE = 4  # i.e., action
-    TORQUE = 2  # for simple pole
+    PEND_ACTION = 2
+    CARTPOLE_ACTION = 4

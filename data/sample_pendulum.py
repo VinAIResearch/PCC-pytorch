@@ -15,15 +15,14 @@ import argparse
 root_path = str(Path(os.path.dirname(os.path.abspath(__file__))).parent)
 os.sys.path.append(root_path)
 
-from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
+from mdp.pendulum_mdp import PendulumMDP
 
 def sample(sample_size=20000, width=48, height=48, frequency=50, noise=0.0):
     """
     return [(x, u, x_next, s, s_next)]
     """
-    mdp = VisualPoleSimpleSwingUp(height=height, width=width,
-                                                  frequency=frequency,
-                                                  noise=noise)
+    mdp = PendulumMDP(height=height, width=width,
+                        frequency=frequency, noise=noise)
 
     # Data buffers to fill.
     x_data = np.zeros((sample_size, width, height, 2), dtype='float32')
@@ -36,13 +35,11 @@ def sample(sample_size=20000, width=48, height=48, frequency=50, noise=0.0):
     for sample in trange(sample_size, desc = 'Sampling data'):
         s0 = mdp.sample_random_state()
         x0 = mdp.render(s0)
-        a0 = np.atleast_1d(
-            np.random.uniform(mdp.avail_force[0], mdp.avail_force[1]))
+        a0 = mdp.sample_random_action()
         s1 = mdp.transition_function(s0, a0)
 
         x1 = mdp.render(s1)
-        a1 = np.atleast_1d(
-            np.random.uniform(mdp.avail_force[0], mdp.avail_force[1]))
+        a1 = mdp.sample_random_action()
         s2 = mdp.transition_function(s1, a1)
         x2 = mdp.render(s2)
         ## Store interaction tuple.
@@ -65,7 +62,7 @@ def write_to_file(sample_size, noise):
     """
     write [(x, u, x_next)] to output dir
     """
-    output_dir = root_path + '/data/pendulum/raw_{:.0f}_noise'.format(noise)
+    output_dir = root_path + '/data/pendulum/raw_{:d}_{:.0f}'.format(sample_size, noise)
     if not path.exists(output_dir):
         os.makedirs(output_dir)
 

@@ -189,23 +189,6 @@ def refresh_actions_trajs(actions_trajs, traj_opt_id, mdp, length, num_uniform, 
             actions_trajs[traj_id] = random_extreme_actions(mdp, length)
     return actions_trajs
 
-# def refresh_actions_trajs(actions_trajs, traj_opt_id, best_z_seq, z_start_horizon, best_k, best_K, dynamics,
-#                           mdp, length, num_uniform, num_extreme):
-#     for traj_id in range(len(actions_trajs)):
-#         if traj_id == traj_opt_id:
-#             actions_trajs[traj_id] = update_seq_act(best_z_seq[1:], z_start_horizon, actions_trajs[traj_id][1:],
-#                                                     best_k[1:], best_K[1:], dynamics)
-#             if len(actions_trajs[traj_id]) < length:
-#                 # Duplicate last action.
-#                 actions_trajs[traj_id] = \
-#                     np.append(actions_trajs[traj_id], actions_trajs[traj_id][-1].reshape(1,-1), axis=0)
-#             continue
-#         if traj_id < num_uniform:
-#             actions_trajs[traj_id] = random_uniform_actions(mdp, length)
-#         else:
-#             actions_trajs[traj_id] = random_extreme_actions(mdp, length)
-#     return actions_trajs
-
 def update_seq_act(z_seq, z_start, u_seq, k, K, dynamics):
     """
     update the trajectory, given k and K

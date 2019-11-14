@@ -1,11 +1,7 @@
 import os
 from os import path
-from PIL import Image
 import numpy as np
-import json
-from torchvision.transforms import ToTensor
 from torch.utils.data import Dataset
-from tqdm import tqdm
 import torch
 
 from data import sample_pendulum
@@ -26,7 +22,7 @@ class PlanarDataset(Dataset):
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         self._process()
-        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:.0f}_noise.pt'.format(self.noise))
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise))
 
     def __len__(self):
         return len(self.data_x)
@@ -38,7 +34,7 @@ class PlanarDataset(Dataset):
         return torch.from_numpy(img.flatten()).unsqueeze(0)
 
     def check_exists(self):
-        return (path.exists(self.data_path + '{:.0f}_noise.pt'.format(self.noise)))
+        return (path.exists(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise)))
 
     def _process(self):
         if self.check_exists():
@@ -60,7 +56,7 @@ class PlanarDataset(Dataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path + '{:.0f}_noise.pt'.format(self.noise), 'wb') as f:
+            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
                 torch.save(data_set, f)
 
 class PendulumDataset(Dataset):
@@ -75,7 +71,7 @@ class PendulumDataset(Dataset):
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         self._process()
-        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:.0f}_noise.pt'.format(self.noise))
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise))
 
     def __len__(self):
         return len(self.data_x)
@@ -88,7 +84,7 @@ class PendulumDataset(Dataset):
         return torch.from_numpy(x).unsqueeze(0)
 
     def check_exists(self):
-        return (path.exists(self.data_path + '{:.0f}_noise.pt'.format(self.noise)))
+        return (path.exists(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise)))
 
     def _process(self):
         if self.check_exists():
@@ -110,7 +106,7 @@ class PendulumDataset(Dataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path + '{:.0f}_noise.pt'.format(self.noise), 'wb') as f:
+            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
                 torch.save(data_set, f)
 
 class CartPoleDataset(Dataset):
@@ -125,7 +121,7 @@ class CartPoleDataset(Dataset):
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         self._process()
-        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:.0f}_noise.pt'.format(self.noise))
+        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise))
 
     def __len__(self):
         return len(self.data_x)
@@ -134,7 +130,7 @@ class CartPoleDataset(Dataset):
         return self.data_x[index], self.data_u[index], self.data_x_next[index]
 
     def check_exists(self):
-        return (path.exists(self.data_path + '{:.0f}_noise.pt'.format(self.noise)))
+        return (path.exists(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise)))
 
     def _process_image(self, img):
         x = torch.zeros(size=(2, self.width, self.width))
@@ -162,9 +158,5 @@ class CartPoleDataset(Dataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path + '{:.0f}_noise.pt'.format(self.noise), 'wb') as f:
+            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
                 torch.save(data_set, f)
-
-# cart = CartPoleDataset('data/cartpole')
-# print (cart[0][0].size())
-# planar_dataset = PlanarDataset(sample_size=5000, noise=0.0)

@@ -64,7 +64,7 @@ def write_to_file(noise, sample_size):
     """
     write [(x, u, x_next)] to output dir
     """
-    output_dir = root_path + '/data/planar/raw_{:.0f}_noise'.format(noise)
+    output_dir = root_path + '/data/planar/raw_{:d}_{:.0f}'.format(sample_size, noise)
     if not path.exists(output_dir):
         os.makedirs(output_dir)
 

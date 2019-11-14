@@ -1,16 +1,15 @@
 import numpy as np
 from colour import Color
 import torch
-from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
-from pcc_model import PCC
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-from PIL import Image
 from torchvision.transforms import ToTensor
+
+from mdp.pendulum_mdp import PendulumMDP
+from pcc_model import PCC
 
 red = Color('red')
 blue = Color('blue')
-mdp = VisualPoleSimpleSwingUp()
+mdp = PendulumMDP()
 
 np.random.seed(0)
 torch.manual_seed(0)
@@ -18,26 +17,15 @@ torch.manual_seed(0)
 def draw_true_map(num_angles):
     colors = list(red.range_to(blue, num_angles))
     colors_rgb = [color.rgb for color in colors]
-    all_angles = np.linspace(start=mdp.angle_limits[0], stop=mdp.angle_limits[1], num=num_angles)
+    all_angles = np.linspace(start=mdp.angle_range[0], stop=mdp.angle_range[1], num=num_angles)
     angle_color_map = dict(zip(all_angles, colors_rgb))
     return angle_color_map, colors_rgb
-
-    # width = num_angles
-    # height = num_angles
-    # img = Image.new("RGB", (width, height), "#FFFFFF")
-    # draw = ImageDraw.Draw(img)
-    # for i, color in enumerate(colors_rgb):
-    #     r1, g1, b1 = color[0] * 255., color[1] * 255., color[2] * 255.
-    #     draw.line((i, 0, i, height), fill=(int(r1), int(g1), int(b1)))
-    #
-    # img_arr = np.array(img)
-    # return angle_color_map, img_arr / 255., img
 
 def assign_latent_color(pcc_model, angel, num_state_each_angle):
     # the same angle corresponds to multiple states -> multiple latent vectors
     # map an angle to multiple latent vectors corresponding to that angle
-    angle_vels = np.linspace(start=mdp.angular_rate_limits[0],
-                             stop=mdp.angular_rate_limits[1], num=num_state_each_angle)
+    angle_vels = np.linspace(start=mdp.angular_velocity_range[0],
+                             stop=mdp.angular_velocity_range[1], num=num_state_each_angle)
     all_z_for_angle = []
     for i in range(num_state_each_angle):
         ang_velocity = angle_vels[i]

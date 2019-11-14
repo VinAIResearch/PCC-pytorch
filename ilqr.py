@@ -1,12 +1,11 @@
 import argparse
-import torch
 import os
 import json
 
 from pcc_model import PCC
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
-from mdp.pole_simple_mdp import VisualPoleSimpleSwingUp
-from mdp.cartpole_mdp import VisualCartPoleBalance
+from mdp.pendulum_mdp import PendulumMDP
+from mdp.cartpole_mdp import CartPoleMDP
 from ilqr_utils import *
 
 np.random.seed(0)
@@ -89,10 +88,10 @@ def main(args):
                 mdp = PlanarObstaclesMDP(goal=s_goal, goal_thres=config['distance_thresh'],
                                          noise=config['noise'])
             elif env_name == 'pendulum':
-                mdp = VisualPoleSimpleSwingUp(frequency=config['frequency'],
+                mdp = PendulumMDP(frequency=config['frequency'],
                                               noise=config['noise'], torque=config['torque'])
             elif env_name == 'cartpole':
-                mdp = VisualCartPoleBalance(frequency=config['frequency'], noise=config['noise'])
+                mdp = CartPoleMDP(frequency=config['frequency'], noise=config['noise'])
             # get z_start and z_goal
             x_start = get_x_data(mdp, s_start, config)
             x_goal = get_x_data(mdp, s_goal, config)
