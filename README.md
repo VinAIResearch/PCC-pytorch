@@ -51,6 +51,16 @@ If the argument save_map is set to True, the latent map will be drawn every 10 e
 
 You can also visualize the training process by running ``tensorboard --logdir={path_to_log_file}``, where ``path_to_log_file`` has the form ``logs/{env}/{log_dir}``. The trained model will be saved at ``result/{env}/{log_dir}``.
 
+### Visualizing latent maps
+
+You can visualize the latent map for both planar and pendulum, to do that simply run:
+
+```
+python latent_map_planar.py --log_path={log_to_trained_model} --epoch={epoch}
+or 
+python latent_map_pendulum.py --log_path={log_to_trained_model} --epoch={epoch}
+```
+
 ## Sampling data
 
 You can generate the training images for visualization by simply running:
