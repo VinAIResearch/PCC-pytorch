@@ -86,8 +86,8 @@ def compute_loss(model, armotized, x, x_next,
                 + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
 
     # curvature loss
-    cur_loss = curvature(model, z, u, delta, armotized)
-    # cur_loss = curvature_variant(model, z, u, delta, armotized)
+    # cur_loss = curvature(model, z, u, delta, armotized)
+    cur_loss = new_curvature(model, z, u, delta, armotized)
 
     # additional vae loss
     vae_loss = vae_bound(x, x_recon, mu_p_z, logvar_p_z)
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', default=128, type=int, help='batch size')
     parser.add_argument('--lam_p', default=1.0, type=float, help='weight of prediction loss')
     parser.add_argument('--lam_c', default=8.0, type=float, help='weight of consistency loss')
-    parser.add_argument('--lam_cur', default=8.0, type=float, help='weight of curvature loss')
+    parser.add_argument('--lam_cur', default=1.0, type=float, help='weight of curvature loss')
     parser.add_argument('--vae_coeff', default=0.01, type=float, help='coefficient of additional vae loss')
     parser.add_argument('--determ_coeff', default=0.3, type=float, help='coefficient of addtional deterministic loss')
     parser.add_argument('--lr', default=0.0005, type=float, help='learning rate')

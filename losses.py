@@ -47,8 +47,6 @@ def curvature(model, z, u, delta, armotized):
     u_alias = u.detach().requires_grad_(True)
     eps_z = torch.normal(mean=torch.zeros_like(z), std=torch.empty_like(z).fill_(delta))
     eps_u = torch.normal(mean=torch.zeros_like(u), std=torch.empty_like(u).fill_(delta))
-    # eps_z = torch.normal(0.0, delta, size=z.size()).cuda()
-    # eps_u = torch.normal(0.0, delta, size=u.size()).cuda()
     z_bar = z_alias + eps_z
     u_bar = u_alias + eps_u
     f_Z = model.dynamics
@@ -67,6 +65,14 @@ def curvature(model, z, u, delta, armotized):
         taylor_error = f_z_bar - (torch.bmm(A_bar, eps_z).squeeze() + torch.bmm(B_bar, eps_u).squeeze()) - f_z
         cur_loss = torch.mean(torch.sum(taylor_error.pow(2), dim = 1))
     return cur_loss
+
+def new_curvature(model, z, u, delta, armotized):
+    z_next, _, _, _ = model.dynamics(z, u)
+    temp_z = z - z.mean(dim=0)
+    temp_z_next = z_next - z_next.mean(dim=0)
+    cov = torch.sum(temp_z * temp_z_next)**2
+    var_prod = torch.sum(temp_z ** 2) * torch.sum(temp_z_next ** 2)
+    return - cov / var_prod
 
 def vae_bound(x, x_recon, mu_z, logvar_z):
     recon_loss = -bernoulli(x, x_recon)
