@@ -70,9 +70,16 @@ def new_curvature(model, z, u, delta, armotized):
     z_next, _, _, _ = model.dynamics(z, u)
     temp_z = z - z.mean(dim=0)
     temp_z_next = z_next - z_next.mean(dim=0)
-    cov = torch.sum(temp_z * temp_z_next)**2
-    var_prod = torch.sum(temp_z ** 2) * torch.sum(temp_z_next ** 2)
-    return - cov / var_prod
+    temp_u = u - u.mean(dim=0)
+
+    cov_z_z_next = torch.sum(temp_z * temp_z_next)**2
+    var_prod_z_z_next = torch.sum(temp_z ** 2) * torch.sum(temp_z_next ** 2)
+
+    cov_u_z_next = torch.sum(temp_u * temp_z_next)**2
+    var_prod_u_z_next = torch.sum(temp_u ** 2) * torch.sum(temp_z_next ** 2)
+    # print ('z next u: ' + str(cov_z_z_next / var_prod_z_z_next))
+    # return - cov_z_z_next / var_prod_z_z_next - cov_u_z_next / var_prod_u_z_next
+    return - cov_z_z_next / var_prod_z_z_next
 
 def vae_bound(x, x_recon, mu_z, logvar_z):
     recon_loss = -bernoulli(x, x_recon)

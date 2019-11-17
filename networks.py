@@ -105,11 +105,11 @@ class PlanarDynamics(Dynamics):
     def __init__(self, armotized, z_dim = 2, u_dim = 2):
         net = nn.Sequential(
             nn.Linear(z_dim + u_dim, 20),
-            nn.BatchNorm1d(20),
+            # nn.BatchNorm1d(20),
             nn.ReLU(),
 
             nn.Linear(20, 20),
-            nn.BatchNorm1d(20),
+            # nn.BatchNorm1d(20),
             nn.ReLU()
         )
         net_z_next = nn.Linear(20, z_dim * 2)
