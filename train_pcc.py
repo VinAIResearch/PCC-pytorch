@@ -30,47 +30,6 @@ def seed_torch(seed):
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
-def pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
-                      mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k):
-    """
-    :param mu_q_z_next: q(z_t+1 | x_t+1)
-    :param logvar_q_z_next: q(z_t+1 | x_t+1)
-    :param mu_q_z: q(z_t | z_t+1, x_t, u_t)
-    :param logvar_q_z: q(z_t | z_t+1, x_t, u_t)
-    :param k: number of particles
-    :return:
-    """
-    u_rep = u.expand((k, u.size(0), u.size(1)))
-    x_next_rep = x_next.expand((k, x_next.size(0), x_next.size(1)))
-    z_next = model.reparam(mu_q_z_next, logvar_q_z_next)
-    z_next_rep = z_next.repeat(k, 1, 1)
-
-    # sample k particles
-    mu_q_z_rep = mu_q_z.repeat(k, 1, 1)
-    logvar_q_z_rep = logvar_q_z.repeat(k, 1, 1)
-    z_samples = model.reparam(mu_q_z_rep, logvar_q_z_rep)
-
-    # compute w_i
-    mu_p_z_rep, logvar_p_z_rep = mu_p_z.repeat(k, 1, 1), logvar_p_z.repeat(k, 1, 1)
-    log_p_z_x = gaussian(z_samples, mu_p_z_rep, logvar_p_z_rep, iwae=True)
-    mu_z_next_pred, logvar_z_next_pred, _, _ = model.transition(z_samples, u_rep)
-    log_p_z_next_z = gaussian(z_next_rep, mu_z_next_pred, logvar_z_next_pred, iwae=True)
-    x_next_recon_rep = x_next_recon.repeat(k, 1, 1)
-    log_x_next_z_next = bernoulli(x_next_rep, x_next_recon_rep, iwae=True)
-    log_q_z_particle = gaussian(z_samples, mu_q_z_rep, logvar_q_z_rep, iwae=True)
-    log_weight = log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle
-    log_weight = log_weight - torch.max(log_weight, dim=0)[0]
-    with torch.no_grad():
-        w = torch.exp(log_weight)
-        w = w / torch.sum(w, dim=0)
-
-    entropy_q_z_next = entropy(mu_q_z_next, logvar_q_z_next)
-    return -torch.mean(torch.sum(w * (log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle), dim=0))\
-           - entropy_q_z_next
-
-def consis_partial_iwae():
-    pass
-
 def compute_loss(model, armotized, x, x_next,
                 x_next_recon,
                 mu_q_z, logvar_q_z, mu_p_z, logvar_p_z,
@@ -87,14 +46,14 @@ def compute_loss(model, armotized, x, x_next,
                     + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
                     - entropy(mu_q_z_next, logvar_q_z_next) \
                     - gaussian(z_next, mu_p_z_next, logvar_p_z_next)
-    else:
-        pred_loss = pred_partial_iwae(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
-                                  mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k)
 
-    # consistency loss
-    consis_loss = - entropy(mu_q_z_next, logvar_q_z_next) \
-                - gaussian(z_next, mu_p_z_next, logvar_p_z_next) \
-                + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
+        consis_loss = - entropy(mu_q_z_next, logvar_q_z_next) \
+                      - gaussian(z_next, mu_p_z_next, logvar_p_z_next) \
+                      + KL(mu_q_z, logvar_q_z, mu_p_z, logvar_p_z) \
+
+    else:
+        pred_loss, consis_loss = partial_iwae_loss(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+                                  mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k)
 
     # curvature loss
     cur_loss = curvature(model, z, u, delta, armotized)
@@ -140,12 +99,17 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
                 lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff,
                 iwae=iwae, k=k)
 
-        avg_pred_loss += pred_loss.item()
-        avg_consis_loss += consis_loss.item()
+        # avg_pred_loss += pred_loss.item()
+        # avg_consis_loss += consis_loss.item()
         avg_cur_loss += cur_loss.item()
         avg_loss += loss.item()
         loss.backward()
         optimizer.step()
+
+        pred_loss_test, consis_loss_test = partial_iwae_test(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+                                  mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k)
+        avg_pred_loss += pred_loss_test.item()
+        avg_consis_loss += consis_loss_test.item()
 
     return avg_pred_loss / num_batches, avg_consis_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
 

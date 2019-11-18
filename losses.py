@@ -86,3 +86,93 @@ def vae_bound(x, x_recon, mu_z, logvar_z):
     regularization_loss = KL(mu_z, logvar_z,
                             torch.zeros_like(mu_z), torch.zeros_like(logvar_z))
     return recon_loss + regularization_loss
+
+def partial_iwae_loss(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+                      mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k):
+    """
+    :param mu_q_z_next: q(z_t+1 | x_t+1)
+    :param logvar_q_z_next: q(z_t+1 | x_t+1)
+    :param mu_q_z: q(z_t | z_t+1, x_t, u_t)
+    :param logvar_q_z: q(z_t | z_t+1, x_t, u_t)
+    :param k: number of particles
+    :return:
+    """
+    u_rep = u.expand((k, u.size(0), u.size(1)))
+    x_next_rep = x_next.expand((k, x_next.size(0), x_next.size(1)))
+    z_next = model.reparam(mu_q_z_next, logvar_q_z_next)
+    z_next_rep = z_next.repeat(k, 1, 1)
+
+    # sample k particles
+    mu_q_z_rep = mu_q_z.repeat(k, 1, 1)
+    logvar_q_z_rep = logvar_q_z.repeat(k, 1, 1)
+    z_samples = model.reparam(mu_q_z_rep, logvar_q_z_rep)
+
+    # compute w_i
+    mu_p_z_rep, logvar_p_z_rep = mu_p_z.repeat(k, 1, 1), logvar_p_z.repeat(k, 1, 1)
+    log_p_z_x = gaussian(z_samples, mu_p_z_rep, logvar_p_z_rep, iwae=True)
+
+    mu_z_next_pred, logvar_z_next_pred, _, _ = model.transition(z_samples, u_rep)
+    log_p_z_next_z = gaussian(z_next_rep, mu_z_next_pred, logvar_z_next_pred, iwae=True)
+
+    x_next_recon_rep = x_next_recon.repeat(k, 1, 1)
+    log_x_next_z_next = bernoulli(x_next_rep, x_next_recon_rep, iwae=True)
+
+    log_q_z_particle = gaussian(z_samples, mu_q_z_rep, logvar_q_z_rep, iwae=True)
+
+    #  normalized w_i * log (w_i)
+    # for predition loss
+    log_weight_pred = log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle
+    log_weight_pred = log_weight_pred - torch.max(log_weight_pred, dim=0)[0]
+    with torch.no_grad():
+        w_pred = torch.exp(log_weight_pred)
+        w_pred = w_pred / torch.sum(w_pred, dim=0)
+
+    # for consistency loss
+    log_weight_consis = log_p_z_x + log_p_z_next_z - log_q_z_particle
+    log_weight_consis = log_weight_consis - torch.max(log_weight_consis, dim=0)[0]
+    with torch.no_grad():
+        w_consis = torch.exp(log_weight_consis)
+        w_consis = w_consis / torch.sum(w_consis, dim=0)
+
+    entropy_q_z_next = entropy(mu_q_z_next, logvar_q_z_next)
+
+    return -torch.mean(torch.sum(w_pred * (log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle), dim=0))\
+           - entropy_q_z_next, \
+            -torch.mean(torch.sum(w_consis * (log_p_z_x + log_p_z_next_z - log_q_z_particle), dim=0)) - entropy_q_z_next
+
+# partial iwae loss for testing
+def partial_iwae_test(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next,
+                      mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k):
+    u_rep = u.expand((k, u.size(0), u.size(1)))
+    x_next_rep = x_next.expand((k, x_next.size(0), x_next.size(1)))
+    z_next = model.reparam(mu_q_z_next, logvar_q_z_next)
+    z_next_rep = z_next.repeat(k, 1, 1)
+
+    # sample k particles
+    mu_q_z_rep = mu_q_z.repeat(k, 1, 1)
+    logvar_q_z_rep = logvar_q_z.repeat(k, 1, 1)
+    z_samples = model.reparam(mu_q_z_rep, logvar_q_z_rep)
+
+    # compute w_i
+    mu_p_z_rep, logvar_p_z_rep = mu_p_z.repeat(k, 1, 1), logvar_p_z.repeat(k, 1, 1)
+    log_p_z_x = gaussian(z_samples, mu_p_z_rep, logvar_p_z_rep, iwae=True)
+
+    mu_z_next_pred, logvar_z_next_pred, _, _ = model.transition(z_samples, u_rep)
+    log_p_z_next_z = gaussian(z_next_rep, mu_z_next_pred, logvar_z_next_pred, iwae=True)
+
+    x_next_recon_rep = x_next_recon.repeat(k, 1, 1)
+    log_x_next_z_next = bernoulli(x_next_rep, x_next_recon_rep, iwae=True)
+
+    log_q_z_particle = gaussian(z_samples, mu_q_z_rep, logvar_q_z_rep, iwae=True)
+
+    entropy_q_z_next = entropy(mu_q_z_next, logvar_q_z_next)
+
+    log_weight_pred_test = log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle
+    weight_pred_test = torch.exp(log_weight_pred_test)
+    pred_loss_test = -torch.mean(torch.log(torch.mean(weight_pred_test, 0))) - entropy_q_z_next
+
+    log_weight_consis_test = log_p_z_x + log_p_z_next_z - log_q_z_particle
+    weight_consis_test = torch.exp(log_weight_consis_test)
+    consis_loss_test = -torch.mean(torch.log(torch.mean(weight_consis_test, 0))) - entropy_q_z_next
+
+    return pred_loss_test, consis_loss_test
