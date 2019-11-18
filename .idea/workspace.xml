@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c6e8b552-18f1-4081-b7b0-4d658dd0e933" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/losses.py" beforeDir="false" afterPath="$PROJECT_DIR$/losses.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/draw_latent_map.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/draw_latent_map.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/train_pcc.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_pcc.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -40,8 +40,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/train_pcc.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="758">
-              <caret line="111" column="50" selection-start-line="111" selection-start-column="50" selection-end-line="111" selection-end-column="50" />
+            <state relative-caret-position="390">
+              <caret line="113" column="112" lean-forward="true" selection-start-line="113" selection-start-column="112" selection-end-line="113" selection-end-column="112" />
               <folding>
                 <element signature="e#0#38#0" expanded="true" />
               </folding>
@@ -50,10 +50,22 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/networks.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="317">
+              <caret line="108" column="22" selection-start-line="108" selection-start-column="22" selection-end-line="108" selection-end-column="22" />
+              <folding>
+                <element signature="e#0#12#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/losses.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1276">
-              <caret line="177" column="43" lean-forward="true" selection-start-line="177" selection-start-column="43" selection-end-line="177" selection-end-column="43" />
+            <state relative-caret-position="517">
+              <caret line="166" selection-start-line="166" selection-end-line="166" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
               </folding>
@@ -149,7 +161,7 @@
     </option>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-140" />
+    <option name="x" value="309" />
     <option name="y" value="27" />
     <option name="width" value="1245" />
     <option name="height" value="789" />
@@ -183,11 +195,11 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/backup" />
       <recent name="$PROJECT_DIR$/cuda10-result/planar-correlation-2" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/aws/result-cuda10" />
       <recent name="$PROJECT_DIR$/aws" />
-      <recent name="$PROJECT_DIR$/saigon/cuda9" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -365,12 +377,12 @@
       <workItem from="1573834474100" duration="8704000" />
       <workItem from="1573872709027" duration="10929000" />
       <workItem from="1573928931192" duration="7126000" />
-      <workItem from="1573971346423" duration="14733000" />
+      <workItem from="1573971346423" duration="17906000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="497450000" />
+    <option name="totallyTimeSpent" value="500623000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
@@ -431,15 +443,6 @@
     </ignored-roots>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/data/sample_planar.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-974">
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/result/planar/correlation_1/loss_1000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -534,7 +537,7 @@
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/aws/result/planar/planar_1/loss_5000" />
-    <entry file="file://$PROJECT_DIR$/cuda9-result/planar/planar_1/loss_5000">
+    <entry file="file://$PROJECT_DIR$/backup/cuda9-result/planar/planar_1/loss_5000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/result/planar/correlation_2/loss_5000">
@@ -542,16 +545,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/result/planar/test_correlation_1/loss_5000">
       <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/networks.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="114" column="45" selection-start-line="114" selection-start-column="45" selection-end-line="114" selection-end-column="45" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/pcc_model.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -563,7 +556,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/cuda9-result/planar/planar_1/loss_1000">
+    <entry file="file://$PROJECT_DIR$/backup/cuda9-result/planar/planar_1/loss_1000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/result/planar/iwae_1/loss_1000">
@@ -572,16 +565,29 @@
     <entry file="file://$PROJECT_DIR$/result/planar/vae_1/loss_1000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cuda10-result/planar/no_armo_1/loss_5000">
+    <entry file="file://$PROJECT_DIR$/backup/cuda10-result/planar/no_armo_1/loss_5000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/cuda10-result/planar/no_armo_2/loss_5000">
+    <entry file="file://$PROJECT_DIR$/backup/cuda10-result/planar/no_armo_2/loss_5000">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/losses.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1276">
-          <caret line="177" column="43" lean-forward="true" selection-start-line="177" selection-start-column="43" selection-end-line="177" selection-end-column="43" />
+        <state relative-caret-position="517">
+          <caret line="166" selection-start-line="166" selection-end-line="166" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/backup/iLQR_saigon_result/planar/result.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/networks.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="317">
+          <caret line="108" column="22" selection-start-line="108" selection-start-column="22" selection-end-line="108" selection-end-column="22" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
           </folding>
@@ -590,8 +596,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/train_pcc.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="758">
-          <caret line="111" column="50" selection-start-line="111" selection-start-column="50" selection-end-line="111" selection-end-column="50" />
+        <state relative-caret-position="390">
+          <caret line="113" column="112" lean-forward="true" selection-start-line="113" selection-start-column="112" selection-end-line="113" selection-end-column="112" />
           <folding>
             <element signature="e#0#38#0" expanded="true" />
           </folding>

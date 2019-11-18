@@ -101,8 +101,8 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
 
         # avg_pred_loss += pred_loss.item()
         # avg_consis_loss += consis_loss.item()
-        avg_cur_loss += cur_loss.item()
-        avg_loss += loss.item()
+        # avg_cur_loss += cur_loss.item()
+        # avg_loss += loss.item()
         loss.backward()
         optimizer.step()
 
@@ -110,6 +110,8 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
                                   mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k)
         avg_pred_loss += pred_loss_test.item()
         avg_consis_loss += consis_loss_test.item()
+        avg_cur_loss += cur_loss.item()
+        avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
 
     return avg_pred_loss / num_batches, avg_consis_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
 
