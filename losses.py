@@ -167,10 +167,12 @@ def partial_iwae_test(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z
 
         log_weight_pred_test = log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle
         weight_pred_test = torch.exp(log_weight_pred_test)
+        # print('weight_pred_test: ' + str(weight_pred_test))
         pred_loss_test = -torch.mean(torch.log(torch.mean(weight_pred_test, 0))) - entropy_q_z_next
 
         log_weight_consis_test = log_p_z_x + log_p_z_next_z - log_q_z_particle
         weight_consis_test = torch.exp(log_weight_consis_test)
+        # print ('weight_consis_test: ' + str(weight_consis_test))
         consis_loss_test = -torch.mean(torch.log(torch.mean(weight_consis_test, 0))) - entropy_q_z_next
 
     return pred_loss_test, consis_loss_test

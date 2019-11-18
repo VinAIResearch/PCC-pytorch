@@ -71,9 +71,9 @@ def compute_loss(model, armotized, x, x_next,
 
 def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k):
     avg_pred_iwae_loss = 0.0
-    avg_pred_elbo_loss = 0.0
+    # avg_pred_elbo_loss = 0.0
     avg_consis_iwae_loss = 0.0
-    avg_consis_elbo_loss = 0.0
+    # avg_consis_elbo_loss = 0.0
     avg_cur_loss = 0.0
     avg_loss = 0.0
     
@@ -114,14 +114,13 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
                                                 mu_q_z_next, logvar_q_z_next, z_next, mu_p_z_next, logvar_p_z_next)
 
         avg_pred_iwae_loss += pred_loss_iwae_test.item()
-        avg_pred_elbo_loss += pred_loss_elbo_test.item()
+        # avg_pred_elbo_loss += pred_loss_elbo_test.item()
         avg_consis_iwae_loss += consis_loss_iwae_test.item()
-        avg_consis_elbo_loss += consis_loss_elbo_test.item()
+        # avg_consis_elbo_loss += consis_loss_elbo_test.item()
         avg_cur_loss += cur_loss.item()
-        # avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
+        avg_loss += lam[0] * pred_loss_iwae_test.item() + lam[1] * consis_loss_iwae_test.item() + lam[2] * cur_loss.item()
 
-    return avg_pred_iwae_loss / num_batches, avg_pred_elbo_loss / num_batches,\
-           avg_consis_iwae_loss / num_batches, avg_consis_elbo_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
+    return avg_pred_iwae_loss / num_batches, avg_consis_iwae_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
 
 def main(args):
     env_name = args.env
@@ -177,39 +176,39 @@ def main(args):
     if env_name == 'planar' and save_map:
         latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
-        avg_pred_iwae_loss, avg_pred_elbo_loss, avg_consis_iwae_loss, avg_consis_elbo_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam,
+        avg_pred_iwae_loss, avg_consis_iwae_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam,
                                                                        vae_coeff, determ_coeff, optimizer, armotized, iwae, k)
         scheduler.step()
         print('Epoch %d' % i)
         print("Prediction IWAE loss: %f" % (avg_pred_iwae_loss))
-        print("Prediction ELBO loss: %f" % (avg_pred_elbo_loss))
+        # print("Prediction ELBO loss: %f" % (avg_pred_elbo_loss))
         print("Consistency IWAE loss: %f" % (avg_consis_iwae_loss))
-        print("Consistency ELBO loss: %f" % (avg_consis_elbo_loss))
+        # print("Consistency ELBO loss: %f" % (avg_consis_elbo_loss))
         print("Curvature loss: %f" % (avg_cur_loss))
-        # print("Training loss: %f" % (avg_loss))
+        print("Training loss: %f" % (avg_loss))
         print ('--------------------------------------')
 
-        # # ...log the running loss
-        # writer.add_scalar('prediction loss', avg_pred_loss, i)
-        # writer.add_scalar('consistency loss', avg_consis_loss, i)
-        # writer.add_scalar('curvature loss', avg_cur_loss, i)
-        # writer.add_scalar('training loss', avg_loss, i)
-        # if env_name == 'planar' and save_map:
-        #     if (i+1) % 10 == 0:
-        #         map_i = draw_latent_map(model, mdp)
-        #         latent_maps.append(map_i)
-        # # save model
-        # if (i + 1) % iter_save == 0:
-        #     print('Saving the model.............')
-        #
-        #     torch.save(model.state_dict(), result_path + '/model_' + str(i + 1))
-        #     with open(result_path + '/loss_' + str(i + 1), 'w') as f:
-        #         f.write('\n'.join([
-        #                         'Prediction loss: ' + str(avg_pred_loss),
-        #                         'Consistency loss: ' + str(avg_consis_loss),
-        #                         'Curvature loss: ' + str(avg_cur_loss),
-        #                         'Training loss: ' + str(avg_loss)
-        #                         ]))
+        # ...log the running loss
+        writer.add_scalar('prediction loss', avg_pred_iwae_loss, i)
+        writer.add_scalar('consistency loss', avg_consis_iwae_loss, i)
+        writer.add_scalar('curvature loss', avg_cur_loss, i)
+        writer.add_scalar('training loss', avg_loss, i)
+        if env_name == 'planar' and save_map:
+            if (i+1) % 10 == 0:
+                map_i = draw_latent_map(model, mdp)
+                latent_maps.append(map_i)
+        # save model
+        if (i + 1) % iter_save == 0:
+            print('Saving the model.............')
+
+            torch.save(model.state_dict(), result_path + '/model_' + str(i + 1))
+            with open(result_path + '/loss_' + str(i + 1), 'w') as f:
+                f.write('\n'.join([
+                                'Prediction loss: ' + str(avg_pred_iwae_loss),
+                                'Consistency loss: ' + str(avg_consis_iwae_loss),
+                                'Curvature loss: ' + str(avg_cur_loss),
+                                'Training loss: ' + str(avg_loss)
+                                ]))
     if env_name == 'planar' and save_map:
         latent_maps[0].save(result_path + '/latent_map.gif', format='GIF', append_images=latent_maps[1:], save_all=True, duration=100, loop=0)
     writer.close()
