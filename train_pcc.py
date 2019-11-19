@@ -110,8 +110,8 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
 
         pred_loss_iwae_test, consis_loss_iwae_test = partial_iwae_test(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z_next, z_next,
                                   mu_p_z, logvar_p_z, mu_q_z, logvar_q_z, k)
-        pred_loss_elbo_test, consis_loss_elbo_test = elbo_test(x_next, x_next_recon, mu_q_z, logvar_q_z, mu_p_z, logvar_p_z,
-                                                mu_q_z_next, logvar_q_z_next, z_next, mu_p_z_next, logvar_p_z_next)
+        # pred_loss_elbo_test, consis_loss_elbo_test = elbo_test(x_next, x_next_recon, mu_q_z, logvar_q_z, mu_p_z, logvar_p_z,
+        #                                         mu_q_z_next, logvar_q_z_next, z_next, mu_p_z_next, logvar_p_z_next)
 
         avg_pred_iwae_loss += pred_loss_iwae_test.item()
         # avg_pred_elbo_loss += pred_loss_elbo_test.item()

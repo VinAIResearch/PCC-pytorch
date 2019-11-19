@@ -1,13 +1,23 @@
 import torch
 from torch import nn
+import numpy as np
 
 torch.set_default_dtype(torch.float64)
+
+def weights_init(m):
+    if type(m) in [nn.Conv2d, nn.Linear, nn.ConvTranspose2d]:
+        # torch.nn.init.orthogonal_(m.weight)
+        # torch.nn.init.xavier_normal_(m.weight)
+        # torch.nn.init.normal_(m.weight)
+        # torch.nn.init.ones_(m.weight)
+        torch.nn.init.kaiming_uniform_(m.weight, a=np.sqrt(5), mode='fan_in', nonlinearity='relu')
 
 class Encoder(nn.Module):
     # P(z_t | x_t) and Q(z^_t+1 | x_t+1)
     def __init__(self, net, x_dim, z_dim):
         super(Encoder, self).__init__()
         self.net = net
+        self.net.apply(weights_init)
         self.x_dim = x_dim
         self.z_dim = z_dim
 
@@ -20,6 +30,7 @@ class Decoder(nn.Module):
     def __init__(self, net, z_dim, x_dim):
         super(Decoder, self).__init__()
         self.net = net
+        self.net.apply(weights_init)
         self.z_dim = z_dim
         self.x_dim = x_dim
 
@@ -31,12 +42,17 @@ class Dynamics(nn.Module):
     def __init__(self, net, net_z_next, net_A, net_B, z_dim, u_dim, armotized):
         super(Dynamics, self).__init__()
         self.net = net
+        self.net.apply(weights_init)
         self.net_z_next = net_z_next
+        self.net_z_next.apply(weights_init)
         self.net_A = net_A
         self.net_B = net_B
         self.z_dim = z_dim
         self.u_dim = u_dim
         self.armotized = armotized
+        if armotized:
+            self.net_B.apply(weights_init)
+            self.net_A.apply(weights_init)
 
     def forward(self, z_t, u_t):
         z_u_t = torch.cat((z_t, u_t), dim = -1)
@@ -54,9 +70,13 @@ class BackwardDynamics(nn.Module):
     def __init__(self, net_z, net_u, net_x, net_joint, z_dim, u_dim, x_dim):
         super(BackwardDynamics, self).__init__()
         self.net_z = net_z
+        self.net_z.apply(weights_init)
         self.net_u = net_u
+        self.net_u.apply(weights_init)
         self.net_x = net_x
+        self.net_x.apply(weights_init)
         self.net_joint = net_joint
+        self.net_joint.apply(weights_init)
 
         self.z_dim = z_dim
         self.u_dim = u_dim
@@ -74,11 +94,11 @@ class PlanarEncoder(Encoder):
     def __init__(self, x_dim = 1600, z_dim = 2):
         net = nn.Sequential(
             nn.Linear(x_dim, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, z_dim * 2)
@@ -89,11 +109,11 @@ class PlanarDecoder(Decoder):
     def __init__(self, z_dim = 2, x_dim = 1600):
         net = nn.Sequential(
             nn.Linear(z_dim, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, 300),
-            nn.BatchNorm1d(300),
+            # nn.BatchNorm1d(300),
             nn.ReLU(),
 
             nn.Linear(300, x_dim),

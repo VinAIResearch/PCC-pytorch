@@ -3,3 +3,8 @@ __pycache__
 .vscode
 iwae_result/
 *.pyc
+result
+logs
+planar
+pendulum
+.ipynb_checkpoints/

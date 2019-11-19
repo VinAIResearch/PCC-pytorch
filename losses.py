@@ -122,7 +122,7 @@ def partial_iwae_loss(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z
     #  normalized w_i * log (w_i)
     # for predition loss
     log_weight_pred = log_p_z_x + log_p_z_next_z + log_x_next_z_next - log_q_z_particle
-    log_weight_pred = log_weight_pred - torch.max(log_weight_pred, dim=0)[0]
+    log_weight_pred = log_weight_pred - torch.mean(log_weight_pred, dim=0)[0]
     with torch.no_grad():
         w_pred = torch.exp(log_weight_pred)
         w_pred = w_pred / torch.sum(w_pred, dim=0)
@@ -130,7 +130,8 @@ def partial_iwae_loss(model, x, u, x_next, x_next_recon, mu_q_z_next, logvar_q_z
 
     # for consistency loss
     log_weight_consis = log_p_z_x + log_p_z_next_z - log_q_z_particle
-    log_weight_consis = log_weight_consis - torch.max(log_weight_consis, dim=0)[0]
+    log_weight_consis = log_weight_consis - torch.mean(log_weight_consis, dim=0)[0]
+    # print ('log_weight_consis: ' + str(log_weight_consis))
     with torch.no_grad():
         w_consis = torch.exp(log_weight_consis)
         w_consis = w_consis / torch.sum(w_consis, dim=0)
