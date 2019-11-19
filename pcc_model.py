@@ -35,38 +35,38 @@ class PCC(nn.Module):
     def back_dynamics(self, z, u, x):
         return self.backward_dynamics(z, u, x)
 
-    def reparam(self, mean, logvar):
-        sigma = (logvar / 2).exp()
-        epsilon = torch.randn_like(sigma)
-        return mean + torch.mul(epsilon, sigma)
+    def reparam(self, mean, std):
+        # sigma = (logvar / 2).exp()
+        epsilon = torch.randn_like(std)
+        return mean + torch.mul(epsilon, std)
 
     def forward(self, x, u, x_next):
         # prediction and consistency loss
         # 1st term and 3rd
-        mu_q_z_next, logvar_q_z_next = self.encode(x_next) # Q(z^_t+1 | x_t+1)
-        z_next = self.reparam(mu_q_z_next, logvar_q_z_next) # sample z^_t+1
-        x_next_recon = self.decode(z_next) # P(x_t+1 | z^t_t+1)
+        q_z_next = self.encode(x_next) # Q(z^_t+1 | x_t+1)
+        z_next = self.reparam(q_z_next.mean, q_z_next.stddev) # sample z^_t+1
+        p_x_next = self.decode(z_next) # P(x_t+1 | z^t_t+1)
         # 2nd term
-        mu_q_z, logvar_q_z = self.back_dynamics(z_next, u, x) # Q(z_t | z^_t+1, u_t, x_t)
-        mu_p_z, logvar_p_z = self.encode(x) # P(z_t | x_t)
+        q_z_backward = self.back_dynamics(z_next, u, x) # Q(z_t | z^_t+1, u_t, x_t)
+        p_z = self.encode(x) # P(z_t | x_t)
 
         # 4th term
-        z_q = self.reparam(mu_q_z, logvar_q_z) # samples from Q(z_t | z^_t+1, u_t, x_t)
-        mu_p_z_next, logvar_p_z_next, _, _ = self.transition(z_q, u) # P(z^_t+1 | z_t, u _t)
+        z_q = self.reparam(q_z_backward.mean, q_z_backward.stddev) # samples from Q(z_t | z^_t+1, u_t, x_t)
+        p_z_next, _, _ = self.transition(z_q, u) # P(z^_t+1 | z_t, u _t)
 
         # additional VAE loss
-        z_p = self.reparam(mu_p_z, logvar_p_z) # samples from P(z_t | x_t)
-        x_recon = self.decode(z_p) # for additional vae loss
+        z_p = self.reparam(p_z_next.mean, p_z_next.stddev) # samples from P(z_t | x_t)
+        p_x = self.decode(z_p) # for additional vae loss
 
         # additional deterministic loss
-        mu_z_next_determ, _, A, B = self.transition(mu_p_z, u)
-        x_next_determ = self.decode(mu_z_next_determ)
+        mu_z_next_determ = self.transition(p_z.mean, u)[0].mean
+        p_x_next_determ = self.decode(mu_z_next_determ)
 
-        return x_next_recon.view(x_next_recon.size(0), -1), \
-                mu_q_z, logvar_q_z, mu_p_z, logvar_p_z, \
-                mu_q_z_next, logvar_q_z_next, \
-                z_next, mu_p_z_next, logvar_p_z_next, \
-                z_p, u, x_recon.view(x_recon.size(0), -1), x_next_determ.view(x_next_determ.size(0), -1)
+        return p_x_next, \
+                q_z_backward, p_z, \
+                q_z_next, \
+                z_next, p_z_next, \
+                z_p, u, p_x, p_x_next_determ
 
     def predict(self, x, u):
         mu, logvar = self.encoder(x)
