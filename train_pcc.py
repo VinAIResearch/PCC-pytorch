@@ -49,36 +49,29 @@ def compute_loss(model, armotized, x, u, x_next,
                     + KL(q_z_backward, p_z) \
                     - entropy(q_z_next) \
                     - gaussian(z_next, p_z_next)
-        # print ('pred loss: ' + str(pred_loss.size()))
 
         consis_loss = - entropy(q_z_next) \
                       - gaussian(z_next, p_z_next) \
                       + KL(q_z_backward, p_z)
-        # print ('consis loss: ' + str(consis_loss.size()))
 
     # curvature loss
     cur_loss = curvature(model, z, u, delta, armotized)
-    # print ('cur loss: ' + str(cur_loss))
     # cur_loss = new_curvature(model, z, u, delta, armotized)
 
     # additional vae loss
     vae_loss = vae_bound(x, p_x, p_z)
-    # print ('vae loss: ' + str(vae_loss.size()))
 
     # additional deterministic loss
     determ_loss = -bernoulli(x_next, p_x_next_determ)
-    # print ('determ loss: ' + str(determ_loss.size()))
-    
+
     lam_p, lam_c, lam_cur = lam
     return cur_loss, lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
     # return pred_loss, consis_loss, cur_loss, \
     #         lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
 def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k):
-    avg_pred_iwae_loss = 0.0
-    # avg_pred_elbo_loss = 0.0
-    avg_consis_iwae_loss = 0.0
-    # avg_consis_elbo_loss = 0.0
+    avg_pred_loss = 0.0
+    avg_consis_loss = 0.0
     avg_cur_loss = 0.0
     avg_loss = 0.0
     
@@ -106,26 +99,20 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
                 lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff,
                 iwae=iwae, k=k)
 
-        # avg_pred_loss += pred_loss.item()
-        # avg_consis_loss += consis_loss.item()
-        # avg_cur_loss += cur_loss.item()
-        # avg_loss += loss.item()
         loss.backward()
         optimizer.step()
 
-        pred_loss_iwae_test, consis_loss_iwae_test = partial_iwae_test(model, x, u, x_next, p_x_next, q_z_next, z_next,
+        pred_loss_test, consis_loss_test = partial_iwae_test(model, x, u, x_next, p_x_next, q_z_next, z_next,
                                                                         p_z, q_z_backward, k)
-        # pred_loss_elbo_test, consis_loss_elbo_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
+        # pred_loss_test, consis_loss_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
         #                                                         q_z_next, z_next, p_z_next)
 
-        avg_pred_iwae_loss += pred_loss_iwae_test.item()
-        # avg_pred_elbo_loss += pred_loss_elbo_test.item()
-        avg_consis_iwae_loss += consis_loss_iwae_test.item()
-        # avg_consis_elbo_loss += consis_loss_elbo_test.item()
+        avg_pred_loss += pred_loss_test.item()
+        avg_consis_loss += consis_loss_test.item()
         avg_cur_loss += cur_loss.item()
-        avg_loss += lam[0] * pred_loss_iwae_test.item() + lam[1] * consis_loss_iwae_test.item() + lam[2] * cur_loss.item()
+        avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
 
-    return avg_pred_iwae_loss / num_batches, avg_consis_iwae_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
+    return avg_pred_loss / num_batches, avg_consis_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
 
 def main(args):
     env_name = args.env

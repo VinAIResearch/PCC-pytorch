@@ -15,11 +15,27 @@ def MultivariateNormalDiag(loc, scale_diag):
 def weights_init(m):
     if type(m) in [nn.Conv2d, nn.Linear, nn.ConvTranspose2d]:
         # torch.nn.init.orthogonal_(m.weight)
-        # torch.nn.init.xavier_normal_(m.weight)
+        torch.nn.init.xavier_normal_(m.weight, gain=torch.nn.init.calculate_gain('relu'))
         # torch.nn.init.normal_(m.weight)
         # torch.nn.init.ones_(m.weight)
         # torch.nn.init.kaiming_uniform_(m.weight, a=np.sqrt(5), mode='fan_in', nonlinearity='relu')
-        torch.nn.init.xavier_uniform_(m.weight, gain=torch.nn.init.calculate_gain('relu'))
+        # torch.nn.init.xavier_uniform_(m.weight, gain=torch.nn.init.calculate_gain('relu'))
+
+class BatchNorm1DIWAE(nn.Module):
+    def __init__(self, out_features):
+        super(BatchNorm1DIWAE, self).__init__()
+        self.out_features = out_features
+        self.batch_norm = nn.BatchNorm1d(out_features)
+
+    def forward(self, x):
+        if len(x.size()) == 2:
+            return self.batch_norm(x)
+        elif len(x.size()) == 3: # IWAE
+            k = x.size(0)
+            x_normalzied = torch.zeros_like(x).cuda()
+            for i in range(k):
+                x_normalzied[i, :, :] = self.batch_norm(x[i, :, :])
+            return x_normalzied
 
 class Encoder(nn.Module):
     # P(z_t | x_t) and Q(z^_t+1 | x_t+1)
@@ -31,9 +47,9 @@ class Encoder(nn.Module):
         self.x_dim = x_dim
         self.z_dim = z_dim
 
-        self.net_hidden.apply(weights_init)
-        self.net_mean.apply(weights_init)
-        self.net_logstd.apply(weights_init)
+        # self.net_hidden.apply(weights_init)
+        # self.net_mean.apply(weights_init)
+        # self.net_logstd.apply(weights_init)
 
     def forward(self, x):
         # mean and variance of p(z|x)
@@ -52,8 +68,8 @@ class Decoder(nn.Module):
         self.z_dim = z_dim
         self.x_dim = x_dim
 
-        self.net_hidden.apply(weights_init)
-        self.net_logits.apply(weights_init)
+        # self.net_hidden.apply(weights_init)
+        # self.net_logits.apply(weights_init)
 
     def forward(self, z):
         hidden_neurons = self.net_hidden(z)
@@ -74,12 +90,12 @@ class Dynamics(nn.Module):
         self.u_dim = u_dim
         self.armotized = armotized
 
-        self.net_hidden.apply(weights_init)
-        self.net_mean.apply(weights_init)
-        self.net_logstd.apply(weights_init)
-        if armotized:
-            self.net_B.apply(weights_init)
-            self.net_A.apply(weights_init)
+        # self.net_hidden.apply(weights_init)
+        # self.net_mean.apply(weights_init)
+        # self.net_logstd.apply(weights_init)
+        # if armotized:
+        #     self.net_B.apply(weights_init)
+        #     self.net_A.apply(weights_init)
 
     def forward(self, z_t, u_t):
         z_u_t = torch.cat((z_t, u_t), dim = -1)
@@ -107,12 +123,12 @@ class BackwardDynamics(nn.Module):
         self.u_dim = u_dim
         self.x_dim = x_dim
 
-        self.net_z.apply(weights_init)
-        self.net_u.apply(weights_init)
-        self.net_x.apply(weights_init)
-        self.net_joint_hidden.apply(weights_init)
-        self.net_joint_mean.apply(weights_init)
-        self.net_joint_logstd.apply(weights_init)
+        # self.net_z.apply(weights_init)
+        # self.net_u.apply(weights_init)
+        # self.net_x.apply(weights_init)
+        # self.net_joint_hidden.apply(weights_init)
+        # self.net_joint_mean.apply(weights_init)
+        # self.net_joint_logstd.apply(weights_init)
 
     def forward(self, z_t, u_t, x_t):
         z_t_out = self.net_z(z_t)
@@ -130,10 +146,12 @@ class PlanarEncoder(Encoder):
         net_hidden = nn.Sequential(
             nn.Linear(x_dim, 300),
             # nn.BatchNorm1d(300),
+            BatchNorm1DIWAE(300),
             nn.ReLU(),
 
             nn.Linear(300, 300),
             # nn.BatchNorm1d(300),
+            BatchNorm1DIWAE(300),
             nn.ReLU(),
         )
         net_mean = nn.Linear(300, z_dim)
@@ -145,10 +163,12 @@ class PlanarDecoder(Decoder):
         net_hidden = nn.Sequential(
             nn.Linear(z_dim, 300),
             # nn.BatchNorm1d(300),
+            BatchNorm1DIWAE(300),
             nn.ReLU(),
 
             nn.Linear(300, 300),
             # nn.BatchNorm1d(300),
+            BatchNorm1DIWAE(300),
             nn.ReLU(),
         )
         net_logits = nn.Linear(300, x_dim)
@@ -159,17 +179,19 @@ class PlanarDynamics(Dynamics):
         net_hidden = nn.Sequential(
             nn.Linear(z_dim + u_dim, 20),
             # nn.BatchNorm1d(20),
+            BatchNorm1DIWAE(20),
             nn.ReLU(),
 
             nn.Linear(20, 20),
             # nn.BatchNorm1d(20),
+            BatchNorm1DIWAE(20),
             nn.ReLU()
         )
         net_mean = nn.Linear(20, z_dim)
         net_logstd = nn.Linear(20, z_dim)
         if armotized:
             net_A = nn.Linear(20, z_dim**2)
-            net_B = nn.Linear(20, u_dim**2)
+            net_B = nn.Linear(20, u_dim*z_dim)
         else:
             net_A, net_B = None, None
         super(PlanarDynamics, self).__init__(net_hidden, net_mean, net_logstd, net_A, net_B, z_dim, u_dim, armotized)
