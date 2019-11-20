@@ -18,7 +18,8 @@ def weights_init(m):
         # torch.nn.init.xavier_normal_(m.weight)
         # torch.nn.init.normal_(m.weight)
         # torch.nn.init.ones_(m.weight)
-        torch.nn.init.kaiming_uniform_(m.weight, a=np.sqrt(5), mode='fan_in', nonlinearity='relu')
+        # torch.nn.init.kaiming_uniform_(m.weight, a=np.sqrt(5), mode='fan_in', nonlinearity='relu')
+        torch.nn.init.xavier_uniform_(m.weight, gain=torch.nn.init.calculate_gain('relu'))
 
 class Encoder(nn.Module):
     # P(z_t | x_t) and Q(z^_t+1 | x_t+1)
@@ -27,11 +28,12 @@ class Encoder(nn.Module):
         self.net_hidden = net_hidden
         self.net_mean = net_mean
         self.net_logstd = net_logstd
+        self.x_dim = x_dim
+        self.z_dim = z_dim
+
         self.net_hidden.apply(weights_init)
         self.net_mean.apply(weights_init)
         self.net_logstd.apply(weights_init)
-        self.x_dim = x_dim
-        self.z_dim = z_dim
 
     def forward(self, x):
         # mean and variance of p(z|x)
@@ -47,10 +49,11 @@ class Decoder(nn.Module):
         super(Decoder, self).__init__()
         self.net_hidden = net_hidden
         self.net_logits = net_logits
-        self.net_hidden.apply(weights_init)
-        self.net_logits.apply(weights_init)
         self.z_dim = z_dim
         self.x_dim = x_dim
+
+        self.net_hidden.apply(weights_init)
+        self.net_logits.apply(weights_init)
 
     def forward(self, z):
         hidden_neurons = self.net_hidden(z)
@@ -63,16 +66,17 @@ class Dynamics(nn.Module):
     def __init__(self, net_hidden, net_mean, net_logstd, net_A, net_B, z_dim, u_dim, armotized):
         super(Dynamics, self).__init__()
         self.net_hidden = net_hidden
-        self.net_hidden.apply(weights_init)
         self.net_mean = net_mean
         self.net_logstd = net_logstd
-        self.net_mean.apply(weights_init)
-        self.net_logstd.apply(weights_init)
         self.net_A = net_A
         self.net_B = net_B
         self.z_dim = z_dim
         self.u_dim = u_dim
         self.armotized = armotized
+
+        self.net_hidden.apply(weights_init)
+        self.net_mean.apply(weights_init)
+        self.net_logstd.apply(weights_init)
         if armotized:
             self.net_B.apply(weights_init)
             self.net_A.apply(weights_init)
@@ -94,21 +98,21 @@ class BackwardDynamics(nn.Module):
     def __init__(self, net_z, net_u, net_x, net_joint_hidden, net_joint_mean, net_joint_logstd, z_dim, u_dim, x_dim):
         super(BackwardDynamics, self).__init__()
         self.net_z = net_z
-        self.net_z.apply(weights_init)
         self.net_u = net_u
-        self.net_u.apply(weights_init)
         self.net_x = net_x
-        self.net_x.apply(weights_init)
         self.net_joint_hidden = net_joint_hidden
         self.net_joint_mean = net_joint_mean
         self.net_joint_logstd = net_joint_logstd
-        self.net_joint_hidden.apply(weights_init)
-        self.net_joint_mean.apply(weights_init)
-        self.net_joint_logstd.apply(weights_init)
-
         self.z_dim = z_dim
         self.u_dim = u_dim
         self.x_dim = x_dim
+
+        self.net_z.apply(weights_init)
+        self.net_u.apply(weights_init)
+        self.net_x.apply(weights_init)
+        self.net_joint_hidden.apply(weights_init)
+        self.net_joint_mean.apply(weights_init)
+        self.net_joint_logstd.apply(weights_init)
 
     def forward(self, z_t, u_t, x_t):
         z_t_out = self.net_z(z_t)
