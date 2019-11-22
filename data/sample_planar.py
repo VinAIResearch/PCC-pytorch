@@ -39,28 +39,10 @@ def sample(sample_size=5000, noise=0.0):
     state_next_data = np.zeros((sample_size, 2), dtype='float32')
 
     # get all possible states (discretized on integer grid)
-    # state_list = get_all_pos(mdp)
-    # state_list = state_list * (sample_size // len(state_list))
-    # print ('Sampling data...')
-    # print ("Creating a list of all possible states (discretized on integer grid).")
-    # for i, s in enumerate(state_list):
-    #     state_data[i] = s
-    #     x_data[i] = mdp.render(s).squeeze()
-    #     u_data[i] = mdp.sample_valid_random_action(s)
-    #     state_next_data[i] = mdp.transition_function(s, u_data[i])
-    #     x_next_data[i] = mdp.render(state_next_data[i])
-
-    # sample remaining data
-    # start_idx = len(state_list)
-    # for j in trange(sample_size - len(state_list), desc = 'Sampling remaining data'):
-    #     state_data[j + start_idx] = mdp.sample_random_state()
-    #     x_data[j + start_idx] = mdp.render(state_data[j + start_idx])
-    #     u_data[j + start_idx] = mdp.sample_valid_random_action(state_data[j + start_idx])
-    #     state_next_data[j + start_idx] = mdp.transition_function(state_data[j + start_idx], u_data[j + start_idx])
-    #     x_next_data[j + start_idx] = mdp.render(state_next_data[j + start_idx])
+    state_list = get_all_pos(mdp)
 
     for j in trange(sample_size, desc = 'Sampling remaining data'):
-        state_data[j] = mdp.sample_random_state()
+        state_data[j] = state_list[j % len(state_list)]
         x_data[j] = mdp.render(state_data[j])
         u_data[j] = mdp.sample_valid_random_action(state_data[j])
         state_next_data[j] = mdp.transition_function(state_data[j], u_data[j])
