@@ -20,6 +20,7 @@ from mdp.cartpole_mdp import CartPoleMDP
 
 widths = {'pendulum': 48, 'cartpole': 80}
 heights = {'pendulum': 48, 'cartpole': 80}
+state_dims = {'pendulum': 2, 'cartpole': 4}
 frequencies = {'pendulum': 50, 'cartpole': 50}
 mdps = {'pendulum': PendulumMDP, 'cartpole': CartPoleMDP}
 
@@ -28,14 +29,15 @@ def sample(env_name, sample_size, noise):
     return [(x, u, x_next, s, s_next)]
     """
     width, height, frequency = widths[env_name], heights[env_name], frequencies[env_name]
+    s_dim = state_dims[env_name]
     mdp = mdps[env_name](width=width, height=height, frequency=frequency, noise=noise)
 
     # Data buffers to fill.
     x_data = np.zeros((sample_size, width, height, 2), dtype='float32')
     u_data = np.zeros((sample_size, mdp.action_dim), dtype='float32')
     x_next_data = np.zeros((sample_size, width, height, 2), dtype='float32')
-    state_data = np.zeros((sample_size, 2, 2), dtype='float32')
-    state_next_data = np.zeros((sample_size, 2, 2), dtype='float32')
+    state_data = np.zeros((sample_size, s_dim, 2), dtype='float32')
+    state_next_data = np.zeros((sample_size, s_dim, 2), dtype='float32')
 
     # Generate interaction tuples (random states and actions).
     for sample in trange(sample_size, desc = 'Sampling ' +  env_name + ' data'):

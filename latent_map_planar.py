@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from pcc_model import PCC
-# mdp = PlanarObstaclesMDP()
 
 blue = Color('blue')
 colors = list(blue.range_to(Color("red"), 40))
@@ -27,7 +26,7 @@ def get_invalid_state(mdp):
                 invalid_pos.append(s)
     return invalid_pos
 
-def color_gradient(invalid_pos):
+def color_gradient():
     img = Image.new("RGB", (width, height), "#FFFFFF")
     draw = ImageDraw.Draw(img)
     
@@ -39,7 +38,7 @@ def color_gradient(invalid_pos):
 
 def get_true_map(mdp):
     invalid_pos = get_invalid_state(mdp)
-    color_gradient_img = color_gradient(invalid_pos)
+    color_gradient_img = color_gradient()
     img_scaled = Image.new("RGB", (width * 10, height*10), "#FFFFFF")
     draw = ImageDraw.Draw(img_scaled)
     for y in range(start, end):
@@ -54,7 +53,7 @@ def get_true_map(mdp):
 
 def draw_latent_map(model, mdp):
     invalid_pos = get_invalid_state(mdp)
-    img = color_gradient(invalid_pos)
+    img = color_gradient()
     # compute latent z
     all_z = []
     for x in range(start, end):
@@ -65,8 +64,8 @@ def draw_latent_map(model, mdp):
             else:
                 with torch.no_grad():
                     obs = torch.Tensor(mdp.render(s)).unsqueeze(0).view(-1,1600).double()
-                    mu, sigma = model.encode(obs)
-                z = mu.squeeze().numpy()
+                    mu = model.encode(obs).mean
+                z = mu.squeeze().cpu().numpy()
                 all_z.append(np.copy(z))
     all_z = np.array(all_z)
 

@@ -39,8 +39,6 @@ def compute_loss(model, armotized, x, u, x_next,
                 lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3,
                 iwae=False, k=50):
     # prediction and consistency loss
-    x = x.view(x.size(0), -1)
-    x_next = x_next.view(x_next.size(0), -1)
     if iwae:
         pred_loss, consis_loss = partial_iwae_loss(model, x, u, x_next, p_x_next, q_z_next, z_next,
                                   p_z, q_z_backward, k)
@@ -66,14 +64,13 @@ def compute_loss(model, armotized, x, u, x_next,
 
     lam_p, lam_c, lam_cur = lam
     return cur_loss, lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
-    # return pred_loss, consis_loss, cur_loss, \
-    #         lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
-def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k):
+def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k, epoch):
     avg_pred_loss = 0.0
     avg_consis_loss = 0.0
     avg_cur_loss = 0.0
     avg_loss = 0.0
+    vae_loss = 0.0
     
     num_batches = len(train_loader)
     model.train()
@@ -89,28 +86,36 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
         z_next, p_z_next, \
         z_p, u, p_x, p_x_next_determ = model(x, u, x_next)
 
-        cur_loss, loss = compute_loss(
-                model, armotized, x, u, x_next,
-                p_x_next,
-                q_z_backward, p_z,
-                q_z_next,
-                z_next, p_z_next,
-                z_p, p_x, p_x_next_determ,
-                lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff,
+        x = x.view(x.size(0), -1)
+        x_next = x_next.view(x_next.size(0), -1)
+
+        if epoch < 100:
+            cur_loss, loss = torch.Tensor([0]), ae_loss(x, p_x)
+            vae_loss += loss.item()
+        else:
+            cur_loss, loss = compute_loss(
+                    model, armotized, x, u, x_next,
+                    p_x_next,
+                    q_z_backward, p_z,
+                    q_z_next,
+                    z_next, p_z_next,
+                    z_p, p_x, p_x_next_determ,
+                    lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff,
                 iwae=iwae, k=k)
 
         loss.backward()
         optimizer.step()
 
-        pred_loss_test, consis_loss_test = partial_iwae_test(model, x, u, x_next, p_x_next, q_z_next, z_next,
-                                                                        p_z, q_z_backward, k)
-        # pred_loss_test, consis_loss_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
-        #                                                         q_z_next, z_next, p_z_next)
+        # pred_loss_test, consis_loss_test = partial_iwae_test(model, x, u, x_next, p_x_next, q_z_next, z_next,
+        #                                                                 p_z, q_z_backward, k)
+        pred_loss_test, consis_loss_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
+                                                                q_z_next, z_next, p_z_next)
 
         avg_pred_loss += pred_loss_test.item()
         avg_consis_loss += consis_loss_test.item()
         avg_cur_loss += cur_loss.item()
         avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
+    print ('VAE loss: ' + str(vae_loss / num_batches))
 
     return avg_pred_loss / num_batches, avg_consis_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
 
@@ -168,21 +173,19 @@ def main(args):
     if env_name == 'planar' and save_map:
         latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
-        avg_pred_iwae_loss, avg_consis_iwae_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam,
-                                                                       vae_coeff, determ_coeff, optimizer, armotized, iwae, k)
-        scheduler.step()
+        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam,
+                                                                       vae_coeff, determ_coeff, optimizer, armotized, iwae, k, i)
+        # scheduler.step()
         print('Epoch %d' % i)
-        print("Prediction IWAE loss: %f" % (avg_pred_iwae_loss))
-        # print("Prediction ELBO loss: %f" % (avg_pred_elbo_loss))
-        print("Consistency IWAE loss: %f" % (avg_consis_iwae_loss))
-        # print("Consistency ELBO loss: %f" % (avg_consis_elbo_loss))
+        print("Prediction IWAE loss: %f" % (avg_pred_loss))
+        print("Consistency IWAE loss: %f" % (avg_consis_loss))
         print("Curvature loss: %f" % (avg_cur_loss))
         print("Training loss: %f" % (avg_loss))
         print ('--------------------------------------')
 
         # ...log the running loss
-        writer.add_scalar('prediction loss', avg_pred_iwae_loss, i)
-        writer.add_scalar('consistency loss', avg_consis_iwae_loss, i)
+        writer.add_scalar('prediction loss', avg_pred_loss, i)
+        writer.add_scalar('consistency loss', avg_consis_loss, i)
         writer.add_scalar('curvature loss', avg_cur_loss, i)
         writer.add_scalar('training loss', avg_loss, i)
         if env_name == 'planar' and save_map:
@@ -196,8 +199,8 @@ def main(args):
             torch.save(model.state_dict(), result_path + '/model_' + str(i + 1))
             with open(result_path + '/loss_' + str(i + 1), 'w') as f:
                 f.write('\n'.join([
-                                'Prediction loss: ' + str(avg_pred_iwae_loss),
-                                'Consistency loss: ' + str(avg_consis_iwae_loss),
+                                'Prediction loss: ' + str(avg_pred_loss),
+                                'Consistency loss: ' + str(avg_consis_loss),
                                 'Curvature loss: ' + str(avg_cur_loss),
                                 'Training loss: ' + str(avg_loss)
                                 ]))

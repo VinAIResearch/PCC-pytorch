@@ -37,6 +37,10 @@ def vae_bound(x, p_x, p_z):
                                                          torch.ones_like(p_z.stddev)))
     return recon_loss + regularization_loss
 
+def ae_loss(x, p_x):
+    recon_loss = -bernoulli(x, p_x)
+    return recon_loss
+
 def curvature(model, z, u, delta, armotized):
     z_alias = z.detach().requires_grad_(True)
     u_alias = u.detach().requires_grad_(True)

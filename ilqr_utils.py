@@ -107,8 +107,8 @@ def forward(z_seq, u_seq, k, K, dynamics, alpha):
         u_new = u_seq[i] + alpha * k[i] + np.matmul(K[i], z_seq_new[i] - z_seq[i])
         u_seq_new.append(u_new)
         with torch.no_grad():
-            z_new, _, _, _ = dynamics(torch.from_numpy(z_seq_new[i]).unsqueeze(0),
-                                      torch.from_numpy(u_new).unsqueeze(0))
+            z_new = dynamics(torch.from_numpy(z_seq_new[i]).unsqueeze(0),
+                                      torch.from_numpy(u_new).unsqueeze(0))[0].mean
         z_seq_new.append(z_new.squeeze().numpy())
     return np.array(z_seq_new), np.array(u_seq_new)
 
@@ -198,8 +198,8 @@ def update_seq_act(z_seq, z_start, u_seq, k, K, dynamics):
     for i in range(0, len(u_seq)):
         u_new = u_seq[i] + k[i] + np.matmul(K[i], (z_new - z_seq[i]))
         with torch.no_grad():
-            z_new, _, _, _ = dynamics(torch.from_numpy(z_new).view(1, -1),
-                                      torch.from_numpy(u_new).view(1, -1))
+            z_new = dynamics(torch.from_numpy(z_new).view(1, -1),
+                                      torch.from_numpy(u_new).view(1, -1))[0].mean
             z_new = z_new.squeeze().numpy()
         u_seq_new.append(u_new)
     return np.array(u_seq_new)
@@ -222,7 +222,7 @@ def compute_latent_traj(z_start, u_seq, dynamics):
         z = torch.from_numpy(z_seq[i]).view(1, -1).double()
         u = torch.from_numpy(u_seq[i]).view(1, -1).double()
         with torch.no_grad():
-            z_next, _, _, _ = dynamics(z, u)
+            z_next = dynamics(z, u)[0].mean
         z_seq.append(z_next.squeeze().numpy())
     return z_seq
 
@@ -246,12 +246,12 @@ def jacobian(dynamics, z, u):
     z_tensor = torch.from_numpy(z).view(1,-1).double()
     u_tensor = torch.from_numpy(u).view(1,-1).double()
     if dynamics.armotized:
-        z_next, _, A, B = dynamics(z_tensor, u_tensor)
+        _, A, B = dynamics(z_tensor, u_tensor)
         return A.squeeze().view(z_dim, z_dim).numpy(), B.squeeze().view(z_dim, u_dim).numpy()
     z_tensor, u_tensor = z_tensor.squeeze().repeat(z_dim, 1), u_tensor.squeeze().repeat(z_dim, 1)
     z_tensor = z_tensor.detach().requires_grad_(True)
     u_tensor = u_tensor.detach().requires_grad_(True)
-    z_next, _, _, _ = dynamics(z_tensor, u_tensor)
+    z_next = dynamics(z_tensor, u_tensor)[0].mean
     grad_inp = torch.eye(z_dim)
     A, B = torch.autograd.grad(z_next, [z_tensor, u_tensor], [grad_inp, grad_inp])
     return A.numpy(), B.numpy()

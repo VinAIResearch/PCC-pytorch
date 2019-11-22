@@ -43,7 +43,7 @@ def assign_latent_color(model, angel, mdp):
         x_with_history = np.vstack((x_next, x))
         x_with_history = ToTensor()(x_with_history).double()
         with torch.no_grad():
-            z, _ = model.encode(x_with_history.view(-1, x_with_history.shape[-1] * x_with_history.shape[-2]))
+            z = model.encode(x_with_history.view(-1, x_with_history.shape[-1] * x_with_history.shape[-2])).mean
         all_z_for_angle.append(z.detach().squeeze().numpy())
     return all_z_for_angle
 

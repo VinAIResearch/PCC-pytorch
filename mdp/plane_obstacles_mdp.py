@@ -4,10 +4,10 @@ from PIL import Image, ImageDraw
 class PlanarObstaclesMDP(object):
     width = 40
     height = 40
-    obstacles = np.array([[20.5, 5.5], [20.5, 13.5], [20.5, 27.5], [20.5, 35.5], [10.5, 20.5], [30.5, 20.5]])
-    obstacles_r = 2.5 # radius of the obstacles when rendered
+    obstacles = np.array([[20, 5], [20, 13], [20, 27], [20, 35], [10, 20], [30, 20]])
+    obstacles_r = 2.5 # radius of the obstacles when rendering
     half_agent_size = 1.5 # robot half-width
-    rw_rendered = 1 # robot half-width when rendered
+    rw_rendered = 1 # robot half-width when rendering
     max_step = 3
     action_dim = 2
 
@@ -19,13 +19,10 @@ class PlanarObstaclesMDP(object):
         super(PlanarObstaclesMDP, self).__init__()
 
     def is_valid_state(self, s):
-        if np.any(s < self.half_agent_size) or np.any(s > self.width - self.half_agent_size):
+        if np.any([s - self.half_agent_size < 0, s + self.half_agent_size > self.height]):
             return False
-        # check if the agent crosses any obstacle (the obstacle is inside the agent)
-        top, bot = s[0] - self.half_agent_size, s[0] + self.half_agent_size
-        left, right = s[1] - self.half_agent_size, s[1] + self.half_agent_size
         for obs in self.obstacles:
-            if top < obs[0] <= bot and left < obs[1] <= right:
+            if np.abs(obs[0] - s[0]) <= self.half_agent_size and np.abs(obs[1] - s[1]) <= self.half_agent_size:
                 return False
         return True
 
@@ -36,7 +33,6 @@ class PlanarObstaclesMDP(object):
         top_next, bottom_next, left_next, right_next = self.get_pixel_location(s_next)
         x_diff = np.array([top_next - top, left_next - left], dtype=np.float)
         return (not np.sqrt(np.sum((x_diff - u)**2)) > epsilon)
-        # return True
 
     def is_valid_action(self, s, u):
         if self.is_sampling:

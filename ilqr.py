@@ -96,8 +96,8 @@ def main(args):
             x_start = get_x_data(mdp, s_start, config)
             x_goal = get_x_data(mdp, s_goal, config)
             with torch.no_grad():
-                z_start, _ = encoder(x_start)
-                z_goal, _ = encoder(x_goal)
+                z_start = encoder(x_start).mean
+                z_goal = encoder(x_goal).mean
             z_start = z_start.squeeze().numpy()
             z_goal = z_goal.squeeze().numpy()
 
