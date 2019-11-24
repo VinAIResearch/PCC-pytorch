@@ -4,13 +4,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-
-
-def bound(x, low, high):
-    """Truncates data between low and high boundaries."""
-    return min(max(x, low), high)
-
-
 def wrap(x, low, high):
     """Wraps data between low and high boundaries."""
     diff = high - low

@@ -147,7 +147,7 @@ def update_horizon_start(mdp, s, u, encoder, config):
         x_next[1, :, :] = torch.from_numpy(obs_next)
         x_next = x_next.unsqueeze(0)
     with torch.no_grad():
-        z_next, _ = encoder(x_next)
+        z_next = encoder(x_next).mean
     return s_next, z_next.squeeze().numpy()
 
 def random_uniform_actions(mdp, plan_len):

@@ -65,7 +65,7 @@ def compute_loss(model, armotized, x, u, x_next,
     lam_p, lam_c, lam_cur = lam
     return cur_loss, lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
-def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k, epoch):
+def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k, epoch):
     avg_pred_loss = 0.0
     avg_consis_loss = 0.0
     avg_cur_loss = 0.0
@@ -89,7 +89,7 @@ def train(model, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotize
         x = x.view(x.size(0), -1)
         x_next = x_next.view(x_next.size(0), -1)
 
-        if epoch < 100:
+        if env_name == 'planar' and epoch < 100: # warm up using autoencoder
             cur_loss, loss = torch.Tensor([0]), ae_loss(x, p_x)
             vae_loss += loss.item()
         else:
@@ -173,9 +173,9 @@ def main(args):
     if env_name == 'planar' and save_map:
         latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
-        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, data_loader, lam,
+        avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, env_name, data_loader, lam,
                                                                        vae_coeff, determ_coeff, optimizer, armotized, iwae, k, i)
-        # scheduler.step()
+        scheduler.step()
         print('Epoch %d' % i)
         print("Prediction IWAE loss: %f" % (avg_pred_loss))
         print("Consistency IWAE loss: %f" % (avg_consis_loss))

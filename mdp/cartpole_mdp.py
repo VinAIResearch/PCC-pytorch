@@ -9,23 +9,20 @@ root_path = str(Path(os.path.dirname(os.path.abspath(__file__))).parent)
 os.sys.path.append(root_path)
 
 from mdp.pole_base import PoleBase
-from mdp.common import bound
 from mdp.common import StateIndex
 from mdp.common import wrap
 
 
 class CartPoleMDP(PoleBase):
-    """VisualCartPoleBalance."""
-    # MDP goal boundaries.
     goal_range = [-np.pi/10, np.pi/10]
 
-    # MDP boundaries.
+    # state range
     angle_range = [-np.pi, np.pi]
     angular_velocity_range = [-2 * np.pi, 2 * np.pi]
     position_range = [-2.4, 2.4]
     velocity_range = [-6.0, 6.0]
 
-    # Sampling boundaries.
+    # sampling range
     angle_samp_range = 2 * goal_range
 
     # action range
@@ -39,8 +36,8 @@ class CartPoleMDP(PoleBase):
           width: width of the rendered image.
           height: height of the rendered image.
           frequency: the simulator frequency, i.e., the number of steps in 1 second.
-          noise: noise magnitude added to the transition
-          render_width: width of the pendulum in the rendered image.
+          noise: noise level
+          render_width: width of the pole in the rendered image.
         """
         self.width = width
         self.height = height
@@ -54,32 +51,30 @@ class CartPoleMDP(PoleBase):
         super(CartPoleMDP, self).__init__()
 
     def take_step(self, s, u):
-        """Computes the next state from the current state and the action."""
-        # Clip the action to valid values.
+        # clip the action
         u = np.clip(u, self.action_range[0], self.action_range[1])
 
-        # Add the action to the state so it can be passed to ds_dt.
+        # concatenate s and u to pass through ds_dt
         s_aug = np.append(s, u)
 
-        ## Compute next state.
+        # solve the differientable equation to compute next state
         s_next = solve_ivp(self.ds_dt, (0., self.time_interval), s_aug).y[0:4, -1] # last index is the action applied
 
-        # Project variables to valid space.
+        # project state to the valid space.
         s_next[StateIndex.THETA] = wrap(s_next[StateIndex.THETA], self.angle_range[0],
                      self.angle_range[1])
-        s_next[StateIndex.THETA_DOT] = bound(s_next[StateIndex.THETA_DOT],
-                                         self.angular_velocity_range[0],
-                                         self.angular_velocity_range[1])
-        s_next[StateIndex.X_DOT] = bound(s_next[StateIndex.X_DOT], self.velocity_range[0],
-                                     self.velocity_range[1])
+        s_next[StateIndex.THETA_DOT] = np.clip(s_next[StateIndex.THETA_DOT],
+                                               self.angular_velocity_range[0],
+                                               self.angular_velocity_range[1])
+        s_next[StateIndex.X_DOT] = np.clip(s_next[StateIndex.X_DOT],
+                                            self.velocity_range[0],
+                                            self.velocity_range[1])
 
         return s_next
 
     def ds_dt(self, t, s_augmented):
-        """Calculates derivatives at a given state."""
         mass_combined = self.cart_mass + self.pend_mass
 
-        # Extracting current state and action.
         theta = s_augmented[StateIndex.THETA]
         theta_dot = s_augmented[StateIndex.THETA_DOT]
         x_dot = s_augmented[StateIndex.X_DOT]
@@ -89,48 +84,45 @@ class CartPoleMDP(PoleBase):
         cos_theta = np.cos(theta)
         calc_help = force + self.pend_mass * self.length * theta_dot**2 * sin_theta
 
-        # Theta double-dot.
+        # derivative of theta_dot
         theta_double_dot_num = (mass_combined * self.earth_gravity * sin_theta
                                 - cos_theta * calc_help)
         theta_double_dot_denum = (4. / 3 * mass_combined * self.length
                                   - self.pend_mass * self.length * cos_theta**2)
         theta_double_dot = theta_double_dot_num / theta_double_dot_denum
 
-        # X double-dot.
+        # derivative of x_dot
         x_double_dot_num = (calc_help - self.pend_mass * self.length
                             * theta_double_dot * cos_theta)
         x_double_dot = x_double_dot_num / mass_combined
 
-        # Derivatives.
         return np.array([theta_dot, theta_double_dot, x_dot, x_double_dot, 0.0])
 
     def render(self, s):
-        """Renders the image."""
-        # Draw background.
+        # black background.
         im = Image.new('L', (self.width, self.height))
         draw = ImageDraw.Draw(im)
 
         draw.rectangle((0, 0, self.width, self.height), fill=0)
 
-        # Cart location.
-        base_x = im.size[0] / 2.0
-        base_y = im.size[1] - 2 * self.cart_render_size[1] - 2
-        cart_x = base_x + (s[StateIndex.X] / self.position_range[1]) * (
+        # cart location.
+        x_center_image = im.size[0] / 2.0
+        y_center_cart = im.size[1] - 2 * self.cart_render_size[1] - 2
+        x_center_cart = x_center_image + (s[StateIndex.X] / self.position_range[1]) * (
                 self.width / 2. - 1. * self.cart_render_size[0])
 
-        # Pole location.
-        end_x = cart_x + np.sin([s[StateIndex.THETA]]) * self.render_length
-        end_y = base_y - np.cos([s[StateIndex.THETA]]) * self.render_length
+        # pole location.
+        x_pole_end = x_center_cart + np.sin([s[StateIndex.THETA]]) * self.render_length
+        y_pole_end = y_center_cart - np.cos([s[StateIndex.THETA]]) * self.render_length
 
-        # Draw cart.
+        # draw cart.
         draw.rectangle(
-            (cart_x - self.cart_render_size[0], base_y - self.cart_render_size[1],
-             cart_x + self.cart_render_size[0], base_y + self.cart_render_size[1]),
+            (x_center_cart - self.cart_render_size[0], y_center_cart - self.cart_render_size[1],
+             x_center_cart + self.cart_render_size[0], y_center_cart + self.cart_render_size[1]),
             fill=255)
 
-        # Draw pole.
-        draw.line(
-            (cart_x, base_y, end_x, end_y), width=self.render_width, fill=255)
+        # draw pole.
+        draw.line((x_center_cart, y_center_cart, x_pole_end, y_pole_end), width=self.render_width, fill=255)
 
         return np.expand_dims(np.asarray(im) / 255.0, axis=-1)
 
@@ -142,7 +134,6 @@ class CartPoleMDP(PoleBase):
                 and (self.position_range[0] < position < self.position_range[1]))
 
     def sample_random_state(self):
-        """Sample a random state."""
         angle = np.random.uniform(self.angle_samp_range[0],
                                   self.angle_samp_range[1])
         angle_rate = np.random.uniform(self.angular_velocity_range[0],
