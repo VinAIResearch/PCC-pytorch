@@ -107,6 +107,11 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
         loss.backward()
         optimizer.step()
 
+        avg_pred_loss += pred_loss.item()
+        avg_consis_loss += consis_loss.item()
+        avg_cur_loss += cur_loss.item()
+        avg_loss += loss
+
         # pred_loss_test, consis_loss_test = partial_iwae_test(model, x, u, x_next, p_x_next, q_z_next, z_next,
         #                                                                 p_z, q_z_backward, k)
         # pred_loss_test, consis_loss_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
@@ -117,14 +122,14 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
         # avg_cur_loss += cur_loss.item()
         # avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
 
-        avg_pred_loss += pred_loss.item()
-        avg_consis_loss += consis_loss.item()
-        avg_cur_loss += cur_loss.item()
-        avg_loss += loss
+    avg_pred_loss /= num_batches
+    avg_consis_loss /= num_batches
+    avg_cur_loss /= num_batches
+    avg_loss /= num_batches
 
     if (epoch + 1) % 10 == 0:
         if env_name == 'planar' and epoch < 100:
-            print('AE loss epoch %d: %f' % (epoch+1, avg_ae_loss / num_batches))
+            print('AE loss epoch %d: %f' % (epoch+1, avg_ae_loss))
             print('---------------------------')
         else:
             print('Epoch %d' % (epoch+1))
