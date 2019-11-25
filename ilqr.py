@@ -1,6 +1,7 @@
 import argparse
 import os
 import json
+import random
 
 from pcc_model import PCC
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
@@ -8,8 +9,15 @@ from mdp.pendulum_mdp import PendulumMDP
 from mdp.cartpole_mdp import CartPoleMDP
 from ilqr_utils import *
 
-np.random.seed(0)
-torch.manual_seed(0)
+seed = 0
+random.seed(seed)
+os.environ['PYTHONHASHSEED'] = str(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed) # if you are using multi-GPU.
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.deterministic = True
 torch.set_default_dtype(torch.float64)
 
 config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
@@ -26,6 +34,7 @@ def main(args):
 
     # the folder where all trained models are saved
     folder = 'result/' + env_name
+    # folder = 'hanoi/pendulum_vae'
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
     log_folders.sort()
 

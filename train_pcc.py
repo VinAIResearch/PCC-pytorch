@@ -63,14 +63,14 @@ def compute_loss(model, armotized, x, u, x_next,
     determ_loss = -bernoulli(x_next, p_x_next_determ)
 
     lam_p, lam_c, lam_cur = lam
-    return cur_loss, lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
+    return pred_loss, consis_loss, cur_loss, lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
 def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k, epoch):
     avg_pred_loss = 0.0
     avg_consis_loss = 0.0
     avg_cur_loss = 0.0
     avg_loss = 0.0
-    vae_loss = 0.0
+    avg_ae_loss = 0.0
     
     num_batches = len(train_loader)
     model.train()
@@ -90,10 +90,11 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
         x_next = x_next.view(x_next.size(0), -1)
 
         if env_name == 'planar' and epoch < 100: # warm up using autoencoder
-            cur_loss, loss = torch.Tensor([0]), ae_loss(x, p_x)
-            vae_loss += loss.item()
+            pred_loss, consis_loss, cur_loss = torch.zeros(1), torch.zeros(1), torch.zeros(1)
+            loss = ae_loss(x, p_x)
+            avg_ae_loss += loss.item()
         else:
-            cur_loss, loss = compute_loss(
+            pred_loss, consis_loss, cur_loss, loss = compute_loss(
                     model, armotized, x, u, x_next,
                     p_x_next,
                     q_z_backward, p_z,
@@ -108,16 +109,32 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
 
         # pred_loss_test, consis_loss_test = partial_iwae_test(model, x, u, x_next, p_x_next, q_z_next, z_next,
         #                                                                 p_z, q_z_backward, k)
-        pred_loss_test, consis_loss_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
-                                                                q_z_next, z_next, p_z_next)
+        # pred_loss_test, consis_loss_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
+        #                                                         q_z_next, z_next, p_z_next)
+        #
+        # avg_pred_loss += pred_loss_test.item()
+        # avg_consis_loss += consis_loss_test.item()
+        # avg_cur_loss += cur_loss.item()
+        # avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
 
-        avg_pred_loss += pred_loss_test.item()
-        avg_consis_loss += consis_loss_test.item()
+        avg_pred_loss += pred_loss.item()
+        avg_consis_loss += consis_loss.item()
         avg_cur_loss += cur_loss.item()
-        avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
-    print ('VAE loss: ' + str(vae_loss / num_batches))
+        avg_loss += loss
 
-    return avg_pred_loss / num_batches, avg_consis_loss / num_batches, avg_cur_loss / num_batches, avg_loss / num_batches
+    if (epoch + 1) % 10 == 0:
+        if env_name == 'planar' and epoch < 100:
+            print('AE loss epoch %d: %f' % (epoch+1, avg_ae_loss / num_batches))
+            print('---------------------------')
+        else:
+            print('Epoch %d' % (epoch+1))
+            print("Prediction IWAE loss: %f" % (avg_pred_loss))
+            print("Consistency IWAE loss: %f" % (avg_consis_loss))
+            print("Curvature loss: %f" % (avg_cur_loss))
+            print("Training loss: %f" % (avg_loss))
+            print('--------------------------------------')
+
+    return avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss
 
 def main(args):
     env_name = args.env
@@ -176,12 +193,6 @@ def main(args):
         avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, env_name, data_loader, lam,
                                                                        vae_coeff, determ_coeff, optimizer, armotized, iwae, k, i)
         scheduler.step()
-        print('Epoch %d' % i)
-        print("Prediction IWAE loss: %f" % (avg_pred_loss))
-        print("Consistency IWAE loss: %f" % (avg_consis_loss))
-        print("Curvature loss: %f" % (avg_cur_loss))
-        print("Training loss: %f" % (avg_loss))
-        print ('--------------------------------------')
 
         # ...log the running loss
         writer.add_scalar('prediction loss', avg_pred_loss, i)
