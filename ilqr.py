@@ -22,7 +22,7 @@ torch.set_default_dtype(torch.float64)
 
 config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
 env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': 'cartpole'}
-env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1)}
+env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 10, 1), 'cartpole': ((2,80,80), 8, 1)}
 
 def main(args):
     env_name = args.env

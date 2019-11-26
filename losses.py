@@ -46,6 +46,7 @@ def curvature(model, z, u, delta, armotized):
     u_alias = u.detach().requires_grad_(True)
     eps_z = torch.normal(mean=torch.zeros_like(z), std=torch.empty_like(z).fill_(delta))
     eps_u = torch.normal(mean=torch.zeros_like(u), std=torch.empty_like(u).fill_(delta))
+    # print ('eps u ' + str(eps_u.size()))
     z_bar = z_alias + eps_z
     u_bar = u_alias + eps_u
 
@@ -53,6 +54,7 @@ def curvature(model, z, u, delta, armotized):
     f_z_bar = f_z_bar.mean
     f_z, A, B = model.transition(z_alias, u_alias)
     f_z = f_z.mean
+    # print ('f_z ' + str(f_z.size()))
     if not armotized:
         grad_z, grad_u = torch.autograd.grad(f_z, [z_alias, u_alias], grad_outputs=[eps_z, eps_u], retain_graph=True, create_graph=True)
         taylor_error = f_z_bar - (grad_z + grad_u) - f_z

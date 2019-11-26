@@ -12,12 +12,12 @@
   "start_max": [2.9845130209103035, 0],
   "goal": [[0, 0]],
 
-  "q_weight": 50,
+  "q_weight": 10,
   "r_weight": 1,
 
   "frequency": 50,
   "noise": 0.0,
-  "torque": 0.5,
+  "torque": 1.0,
   "epoch": "5000",
 
   "ilqr_iters": 4,

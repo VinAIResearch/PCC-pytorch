@@ -133,8 +133,8 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
             print('---------------------------')
         else:
             print('Epoch %d' % (epoch+1))
-            print("Prediction IWAE loss: %f" % (avg_pred_loss))
-            print("Consistency IWAE loss: %f" % (avg_consis_loss))
+            print("Prediction loss: %f" % (avg_pred_loss))
+            print("Consistency loss: %f" % (avg_consis_loss))
             print("Curvature loss: %f" % (avg_cur_loss))
             print("Training loss: %f" % (avg_loss))
             print('--------------------------------------')
