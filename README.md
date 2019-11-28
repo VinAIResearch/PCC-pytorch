@@ -1,6 +1,6 @@
 ## Prediction, Consistency and Curvature
 
-This is a pytorch implementation of the paper "[Prediction, Consistency, Curvature: Representation Learning for Locally-Linear Control](https://arxiv.org/abs/1909.01506)". The work was done during the residency at [VinAI Research](vinai.io), Hanoi, Vietnam.
+This is a pytorch implementation of the paper "[Prediction, Consistency, Curvature: Representation Learning for Locally-Linear Control](https://arxiv.org/abs/1909.01506)". The work was done during the residency at [VinAI Research](https://vinai.io), Hanoi, Vietnam.
 
 ## Installing
 
