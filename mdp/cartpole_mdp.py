@@ -130,7 +130,7 @@ class CartPoleMDP(PoleBase):
         """check if the current state is failed"""
         angle = s[StateIndex.THETA]
         position = s[StateIndex.X]
-        return ((self.goal_range[0] < angle < self.goal_range[1])
+        return not ((self.goal_range[0] < angle < self.goal_range[1])
                 and (self.position_range[0] < position < self.position_range[1]))
 
     def sample_random_state(self):

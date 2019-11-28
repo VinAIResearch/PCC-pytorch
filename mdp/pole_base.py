@@ -52,6 +52,9 @@ class PoleBase(object):
         angle = s[StateIndex.THETA]
         return self.goal_range[0] <= angle <= self.goal_range[1]
 
+    def is_fail(self, s):
+        pass
+
     def reward_function(self, s):
         """Reward function."""
         return int(self.is_goal(s)) * self.goal_reward

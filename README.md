@@ -1,8 +1,6 @@
 ## Prediction, Consistency and Curvature
 
-This is a pytorch implementation of the paper "[Prediction, Consistency, Curvature: Representation Learning for Locally-Linear Control](https://arxiv.org/abs/1909.01506)".
-
-**Note: This is not the official implementation.**
+This is a pytorch implementation of the paper "[Prediction, Consistency, Curvature: Representation Learning for Locally-Linear Control](https://arxiv.org/abs/1909.01506)". The work was done during the residency at [VinAI Research](vinai.io), Hanoi, Vietnam.
 
 ## Installing
 
@@ -74,11 +72,10 @@ python sample_{env_name}_data.py --sample_size={sample_size} --noise={noise}
 Currently the code supports simulating 3 environments: `planar`, `pendulum` and `cartpole`. The MDP for `pendulum` and `cartpole` is based on Yinlam's code.
 
 The raw data (images) is saved in data/{env_name}/raw\_{noise}\_noise
-<!-- For the planar task, we base on [this](https://github.com/ethanluoyc/e2c-pytorch) implementation and modify for our needs. -->
 
 ## Running iLQR on latent space
 
-The configuration file for running iLQR for each task is in ``ilqr_config`` folder, you can modify with your own settings. Run ``python ilqr.py --task={task}``, where ``task`` is in ``{plane, swing, balance}``.
+The configuration file for running iLQR for each task is in ``ilqr_config`` folder, you can modify with your own settings. Run ``python ilqr.py --task={task}``, where ``task`` is in ``{plane, swing, balance, cartpole}``.
 
 The code will run iLQR for all models trained for that specific task and compute some statistics. The result is saved in ``iLQR/result``.
 
@@ -104,17 +101,16 @@ We got around 51% on average and around 86.4% for the best model. Below are 2 sa
 ![Sample inverted pendulum trajectory 1](sample_results/pendulum_1.gif)
 
 ![Sample inverted pendulum trajectory 2](sample_results/pendulum_2.gif)
+### Cartpole
+
+![Sample cartpole trajectory 1](sample_results/cartpole_1.gif)
+
+![Sample cartpole trajectory 2](sample_results/cartpole_2.gif)
+
 ### Acknowledgment
-Many thanks to Nir Levine for answering my questions about the paper, and Yinlam Chow for the MDP and iLQR implementation.
+
+Many thanks to Nir Levine and Yinlam Chow for their help in answering the questions related to the PCC paper.
 
 ### Citation
 
-If you find PCC useful in your research, please consider citing:
-
-```
-@techreport{48535,
-title	= {Prediction, Consistency, Curvature: Representation Learning for Locally-Linear Control},
-author	= {Nir Levine and Yinlam Chow and Rui Shu and Ang Li and Mohammad Ghavamzadeh and Hung Bui},
-year	= {2019}
-}
-```
+If you find this implementation useful for your work, please consider starring this repository.

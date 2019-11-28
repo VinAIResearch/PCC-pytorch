@@ -99,6 +99,9 @@ class PlanarObstaclesMDP(object):
     def is_goal(self, s):
         return np.sqrt(np.sum(s - self.goal) ** 2) <= self.goal_thres
 
+    def is_fail(self, s):
+        return False
+
     def reward_function(self, s):
         if self.is_goal(s):
             reward = 1

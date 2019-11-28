@@ -9,7 +9,7 @@ from mdp.pendulum_mdp import PendulumMDP
 from mdp.cartpole_mdp import CartPoleMDP
 from ilqr_utils import *
 
-seed = 0
+seed = 2
 random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
@@ -21,20 +21,21 @@ torch.backends.cudnn.deterministic = True
 torch.set_default_dtype(torch.float64)
 
 config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
-env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': 'cartpole'}
-env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 10, 1), 'cartpole': ((2,80,80), 8, 1)}
+env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': ['cartpole']}
+env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1)}
 
 def main(args):
     env_name = args.env
     assert env_name in ['planar', 'pendulum', 'cartpole']
     possible_tasks = env_task[env_name]
+    # each trained model will perform 10 random tasks
+    random_task_id = np.random.choice(len(possible_tasks), size=10)
     x_dim, z_dim, u_dim = env_data_dim[env_name]
     if env_name in ['planar', 'pendulum']:
         x_dim = np.prod(x_dim)
 
     # the folder where all trained models are saved
     folder = 'result/' + env_name
-    # folder = 'hanoi/pendulum_vae'
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
     log_folders.sort()
 
@@ -63,8 +64,7 @@ def main(args):
         avg_percent = 0.0
         for task_counter in range(10):
             # pick a random task
-            random_task_id = np.random.choice(len(possible_tasks))
-            random_task = possible_tasks[random_task_id]
+            random_task = possible_tasks[random_task_id[task_counter]]
             with open(config_path[random_task]) as f:
                 config = json.load(f)
             print('Performing task: ' + str(random_task))

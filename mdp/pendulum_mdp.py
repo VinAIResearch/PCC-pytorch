@@ -93,6 +93,9 @@ class PendulumMDP(PoleBase):
 
         return np.expand_dims(np.asarray(im) / 255.0, axis=-1)
 
+    def is_fail(self, s):
+        return False
+
     def sample_random_state(self):
         angle = np.random.uniform(self.angle_range[0], self.angle_range[1])
         angle_rate = np.random.uniform(self.angular_velocity_range[0],
