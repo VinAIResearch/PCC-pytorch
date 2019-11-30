@@ -7,7 +7,7 @@ This is a pytorch implementation of the paper "[Prediction, Consistency, Curvatu
 First, clone the repository:
 
 ```
-git clone https://github.com/tungnd1705/PCC-pytorch.git
+https://github.com/VinAIResearch/PCC-pytorch.git
 ```
 
 Then install the dependencies as listed in `pcc.yml` and activate the environment:
