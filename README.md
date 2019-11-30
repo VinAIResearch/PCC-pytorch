@@ -96,7 +96,16 @@ We got around 41% on average and around 76% for the best model. Below are 2 samp
 ![Sample planar trajectory 2](sample_results/planar_2.gif)
 
 ### Inverted pendulum
-We got around 51% on average and around 86.4% for the best model. Below are 2 sample trajectories of the inverted pendulum.
+
+#### Latent map
+
+Below is a random latent map PCC produces.
+
+![Latent space learned by PCC](sample_results/latent_map_pend.png)
+
+#### Control result
+
+We got around 60.7% on average and around 80.65% for the best model. Below are 2 sample trajectories of the inverted pendulum.
 
 ![Sample inverted pendulum trajectory 1](sample_results/pendulum_1.gif)
 
