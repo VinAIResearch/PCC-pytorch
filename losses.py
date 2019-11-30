@@ -70,7 +70,8 @@ def curvature(model, z, u, delta, armotized):
     return cur_loss
 
 def new_curvature(model, z, u, delta, armotized):
-    z_next, _, _, _ = model.dynamics(z, u)
+    z_next, _, _, = model.dynamics(z, u)
+    z_next = z_next.mean
     temp_z = z - z.mean(dim=0)
     temp_z_next = z_next - z_next.mean(dim=0)
     temp_u = u - u.mean(dim=0)
