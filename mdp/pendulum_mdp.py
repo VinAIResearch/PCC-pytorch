@@ -12,7 +12,6 @@ from mdp.pole_base import PoleBase
 from mdp.common import StateIndex
 from mdp.common import wrap
 
-
 class PendulumMDP(PoleBase):
     # goal range
     goal_range = [-np.pi / 6, np.pi / 6]

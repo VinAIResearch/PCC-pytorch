@@ -6,6 +6,7 @@ import torch
 
 from data import sample_planar
 from data import sample_pole
+from data import sample_pend_gym
 
 torch.set_default_dtype(torch.float64)
 
@@ -88,6 +89,42 @@ class PendulumDataset(BaseDataset):
         else:
             x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
                 sample_pole.sample(env_name='pendulum', sample_size=self.sample_size, noise=self.noise)
+            data_len = len(x_numpy_data)
+
+            # place holder for data
+            data_x = torch.zeros(data_len, self.width * self.height)
+            data_u = torch.zeros(data_len, self.action_dim)
+            data_x_next = torch.zeros(data_len, self.width * self.height)
+
+            for i in range(data_len):
+                data_x[i] = self._process_image(x_numpy_data[i])
+                data_u[i] = torch.from_numpy(u_numpy_data[i])
+                data_x_next[i] = self._process_image(x_next_numpy_data[i])
+
+            data_set = (data_x, data_u, data_x_next)
+
+            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
+                torch.save(data_set, f)
+
+class PendulumGymDataset(BaseDataset):
+    width = 48
+    height = 48 * 2
+    action_dim = 1
+
+    def __init__(self, sample_size, noise):
+        data_path = 'data/pendulum_gym/'
+        super(PendulumGymDataset, self).__init__(data_path, sample_size, noise)
+
+    def _process_image(self, img):
+        x = np.vstack((img[:, :, 0], img[:, :, 1])).flatten()
+        return torch.from_numpy(x).unsqueeze(0)
+
+    def _process(self):
+        if self.check_exists():
+            return
+        else:
+            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
+                sample_pend_gym.sample(sample_size=self.sample_size, noise=self.noise)
             data_len = len(x_numpy_data)
 
             # place holder for data

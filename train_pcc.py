@@ -17,8 +17,8 @@ from latent_map_planar import *
 torch.set_default_dtype(torch.float64)
 
 device = torch.device("cuda")
-datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset, 'cartpole': CartPoleDataset}
-dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 3, 1), 'cartpole': ((2, 80, 80), 8, 1)}
+datasets = {'planar': PlanarDataset, 'pendulum': PendulumDataset, 'cartpole': CartPoleDataset, 'pendulum_gym': PendulumGymDataset}
+dims = {'planar': (1600, 2, 2), 'pendulum': (4608, 15, 1), 'cartpole': ((2, 80, 80), 8, 1), 'pendulum_gym': (4608, 15, 1)}
 
 def seed_torch(seed):
     random.seed(seed)
@@ -143,7 +143,7 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
 
 def main(args):
     env_name = args.env
-    assert env_name in ['planar', 'pendulum', 'cartpole']
+    assert env_name in ['planar', 'pendulum', 'cartpole', 'pendulum_gym']
     armotized = args.armotized
     log_dir = args.log_dir
     seed = args.seed
@@ -246,8 +246,8 @@ if __name__ == "__main__":
     parser.add_argument('--noise', default=0, type=int, help='the level of noise')
     parser.add_argument('--batch_size', default=128, type=int, help='batch size')
     parser.add_argument('--lam_p', default=1.0, type=float, help='weight of prediction loss')
-    parser.add_argument('--lam_c', default=8.0, type=float, help='weight of consistency loss')
-    parser.add_argument('--lam_cur', default=8.0, type=float, help='weight of curvature loss')
+    parser.add_argument('--lam_c', default=10.0, type=float, help='weight of consistency loss')
+    parser.add_argument('--lam_cur', default=500.0, type=float, help='weight of curvature loss')
     parser.add_argument('--vae_coeff', default=0.01, type=float, help='coefficient of additional vae loss')
     parser.add_argument('--determ_coeff', default=0.3, type=float, help='coefficient of addtional deterministic loss')
     parser.add_argument('--lr', default=0.0005, type=float, help='learning rate')

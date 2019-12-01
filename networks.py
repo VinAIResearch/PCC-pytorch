@@ -311,7 +311,8 @@ class CartPoleBackwardDynamics(BackwardDynamics):
 CONFIG = {
     'planar': (PlanarEncoder, PlanarDecoder, PlanarDynamics, PlanarBackwardDynamics),
     'pendulum': (PendulumEncoder, PendulumDecoder, PendulumDynamics, PendulumBackwardDynamics),
-    'cartpole': (CartPoleEncoder, CartPoleDecoder, CartPoleDynamics, CartPoleBackwardDynamics)
+    'cartpole': (CartPoleEncoder, CartPoleDecoder, CartPoleDynamics, CartPoleBackwardDynamics),
+    'pendulum_gym': (PendulumEncoder, PendulumDecoder, PendulumDynamics, PendulumBackwardDynamics)
 }
 
 def load_config(name):
