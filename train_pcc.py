@@ -36,7 +36,7 @@ def compute_loss(model, armotized, x, u, x_next,
                 q_z_next,
                 z_next, p_z_next,
                 z, p_x, p_x_next_determ,
-                lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3,
+                lam, delta=0.1, vae_coeff=0.01, determ_coeff=0.3,
                 iwae=False, k=50):
     # prediction and consistency loss
     if iwae:
@@ -94,6 +94,8 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
             loss = ae_loss(x, p_x)
             avg_ae_loss += loss.item()
         else:
+            if epoch < 1000:
+                lam[1] = 0 # no consistency
             pred_loss, consis_loss, cur_loss, loss = compute_loss(
                     model, armotized, x, u, x_next,
                     p_x_next,
@@ -153,7 +155,7 @@ def main(args):
     lam_p = args.lam_p
     lam_c = args.lam_c
     lam_cur = args.lam_cur
-    lam = (lam_p, lam_c, lam_cur)
+    lam = [lam_p, lam_c, lam_cur]
     vae_coeff = args.vae_coeff
     determ_coeff = args.determ_coeff
     lr = args.lr
