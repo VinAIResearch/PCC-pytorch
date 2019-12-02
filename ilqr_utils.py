@@ -295,12 +295,12 @@ def save_traj(images, image_goal, gif_path, task):
             fig, updatemat2, frames=40, interval=200, blit=True, repeat=True)
         Writer = writers['imagemagick']  # animation.writers.avail
         writer = Writer(fps=4, metadata=dict(artist='Me'), bitrate=1800)
-    elif task == 'swing':
+    elif task in ['swing', 'swing_gym']:
         anim = FuncAnimation(
             fig, updatemat2, frames=400, interval=200, blit=True, repeat=True)
         Writer = writers['imagemagick']  # animation.writers.avail
         writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
-    elif task in ['balance', 'cartpole']:
+    elif task in ['balance', 'cartpole', 'balance_gym']:
         anim = FuncAnimation(
             fig, updatemat2, frames=200, interval=200, blit=True, repeat=True)
         Writer = writers['imagemagick']  # animation.writers.avail

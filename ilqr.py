@@ -7,6 +7,7 @@ from pcc_model import PCC
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from mdp.pendulum_mdp import PendulumMDP
 from mdp.cartpole_mdp import CartPoleMDP
+from mdp.pendulum_gym import PendulumGymMDP
 from ilqr_utils import *
 
 seed = 2
@@ -20,18 +21,20 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 torch.set_default_dtype(torch.float64)
 
-config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
-env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': ['cartpole']}
-env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 15, 1), 'cartpole': ((2,80,80), 8, 1)}
+config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json',
+               'swing_gym': 'ilqr_config/swing_gym.json', 'balance_gym': 'ilqr_config/balance_gym.json'}
+env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': ['cartpole'],
+            'pendulum_gym': ['swing_gym', 'balance_gym']}
+env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 15, 1), 'cartpole': ((2,80,80), 8, 1), 'pendulum_gym': ((2,48,48), 15, 1)}
 
 def main(args):
     env_name = args.env
-    assert env_name in ['planar', 'pendulum', 'cartpole']
+    assert env_name in ['planar', 'pendulum', 'cartpole', 'pendulum_gym']
     possible_tasks = env_task[env_name]
     # each trained model will perform 10 random tasks
     random_task_id = np.random.choice(len(possible_tasks), size=10)
     x_dim, z_dim, u_dim = env_data_dim[env_name]
-    if env_name in ['planar', 'pendulum']:
+    if env_name in ['planar', 'pendulum', 'pendulum_gym']:
         x_dim = np.prod(x_dim)
 
     # the folder where all trained models are saved
@@ -99,6 +102,8 @@ def main(args):
             elif env_name == 'pendulum':
                 mdp = PendulumMDP(frequency=config['frequency'],
                                               noise=config['noise'], torque=config['torque'])
+            elif env_name == 'pendulum_gym':
+                mdp = PendulumGymMDP(noise=config['noise'])
             elif env_name == 'cartpole':
                 mdp = CartPoleMDP(frequency=config['frequency'], noise=config['noise'])
             # get z_start and z_goal
