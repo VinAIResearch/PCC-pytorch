@@ -118,7 +118,7 @@ def get_x_data(mdp, state, config):
     if config['task'] == 'plane':
         x_dim = np.prod(x_dim)
         x_data = torch.from_numpy(image_data).double().view(x_dim).unsqueeze(0)
-    elif config['task'] in ['swing', 'balance']:
+    elif config['task'] in ['swing', 'balance', 'swing_gym', 'balance_gym']:
         x_dim = np.prod(x_dim)
         x_data = np.vstack((image_data, image_data))
         x_data = torch.from_numpy(x_data).double().view(x_dim).unsqueeze(0)
@@ -133,7 +133,7 @@ def update_horizon_start(mdp, s, u, encoder, config):
     s_next = mdp.transition_function(s, u)
     if config['task'] == 'plane':
         x_next = get_x_data(mdp, s_next, config)
-    elif config['task'] in ['swing', 'balance']:
+    elif config['task'] in ['swing', 'balance', 'swing_gym', 'balance_gym']:
         obs = mdp.render(s).squeeze()
         obs_next = mdp.render(s_next).squeeze()
         obs_stacked = np.vstack((obs, obs_next))

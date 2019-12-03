@@ -1,5 +1,5 @@
 {
-  "task": "swing",
+  "task": "swing_gym",
 
   "pinv_init": 1e-5,
   "pinv_mult": 2.0,
@@ -12,7 +12,7 @@
   "start_max": [2.9845130209103035, 0],
   "goal": [[0, 0]],
 
-  "q_weight": 200,
+  "q_weight": 50,
   "r_weight": 1,
 
   "noise": 0.0,

@@ -17,7 +17,7 @@ class PendulumGymMDP(object):
     goal_range = [-np.pi / 6, np.pi / 6]
     action_dim = 1
     goal_reward = 1
-    def __init__(self, width=48, height=48, noise=0.0, render_width=4, g=10.0):
+    def __init__(self, width=48, height=48, noise=0.0, render_width=4):
         """
         Args:
           width: width of the rendered image.
@@ -28,9 +28,9 @@ class PendulumGymMDP(object):
         self.max_speed = 8
         self.max_torque = 2.
         self.dt = .05
-        self.g = g
+        self.g = 9.81
         self.m = 1.
-        self.l = 1.
+        self.l = 0.5
         self.viewer = None
 
         self.width = width
