@@ -69,7 +69,7 @@ cd data
 python sample_{env_name}_data.py --sample_size={sample_size} --noise={noise}
 ```
 
-Currently the code supports simulating 3 environments: `planar`, `pendulum` and `cartpole`. The MDP for `pendulum` and `cartpole` is based on Yinlam's code.
+Currently the code supports simulating 3 environments: `planar`, `pendulum` and `cartpole`.
 
 The raw data (images) is saved in data/{env_name}/raw\_{noise}\_noise
 
