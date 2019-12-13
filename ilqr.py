@@ -163,6 +163,7 @@ def main(args):
                         latent_cost_list[i] = np.inf
                 traj_opt_id = np.argmin(latent_cost_list)
                 action_chosen = all_actions_trajs[traj_opt_id][0]
+                # action_chosen = np.clip(action_chosen, mdp.action_range[0], mdp.action_range[1])
                 actions_final.append(action_chosen)
                 s_start_horizon, z_start_horizon = update_horizon_start(mdp, s_start_horizon,
                                                                         action_chosen, encoder, config)

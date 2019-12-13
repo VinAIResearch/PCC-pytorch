@@ -89,7 +89,7 @@ Below is a random latent map PCC produces. You can watch a video clip comparing 
 ![Latent space learned by PCC](sample_results/latent_map_sample.png)
 
 #### Control result
-We got around 41% on average and around 76% for the best model. Below are 2 sample trajectories of the agent.
+We got around 48% on average and around 76% for the best model. Below are 2 sample trajectories of the agent.
 
 ![Sample planar trajectory 1](sample_results/planar_1.gif)
 

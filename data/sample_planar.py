@@ -29,7 +29,7 @@ def sample(sample_size=5000, noise=0.0):
     """
     return [(s, u, s_next)]
     """
-    mdp = PlanarObstaclesMDP(noise=noise, sampling=True)
+    mdp = PlanarObstaclesMDP(noise=noise)
 
     # place holder for data
     x_data = np.zeros((sample_size, mdp.width, mdp.height), dtype='float32')

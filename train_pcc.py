@@ -36,25 +36,19 @@ def compute_loss(model, armotized, x, u, x_next,
                 q_z_next,
                 z_next, p_z_next,
                 z, p_x, p_x_next_determ,
-                lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3,
-                iwae=False, k=50):
+                lam=(1.0,8.0,8.0), delta=0.1, vae_coeff=0.01, determ_coeff=0.3):
     # prediction and consistency loss
-    if iwae:
-        pred_loss, consis_loss = partial_iwae_loss(model, x, u, x_next, p_x_next, q_z_next, z_next,
-                                  p_z, q_z_backward, k)
-    else:
-        pred_loss  = - bernoulli(x_next, p_x_next) \
-                    + KL(q_z_backward, p_z) \
-                    - entropy(q_z_next) \
-                    - gaussian(z_next, p_z_next)
+    pred_loss  = - bernoulli(x_next, p_x_next) \
+                + KL(q_z_backward, p_z) \
+                - entropy(q_z_next) \
+                - gaussian(z_next, p_z_next)
 
-        consis_loss = - entropy(q_z_next) \
-                      - gaussian(z_next, p_z_next) \
-                      + KL(q_z_backward, p_z)
+    consis_loss = - entropy(q_z_next) \
+                  - gaussian(z_next, p_z_next) \
+                  + KL(q_z_backward, p_z)
 
     # curvature loss
     cur_loss = curvature(model, z, u, delta, armotized)
-    # cur_loss = new_curvature(model, z, u, delta, armotized)
 
     # additional vae loss
     vae_loss = vae_bound(x, p_x, p_z)
@@ -65,7 +59,7 @@ def compute_loss(model, armotized, x, u, x_next,
     lam_p, lam_c, lam_cur = lam
     return pred_loss, consis_loss, cur_loss, lam_p * pred_loss + lam_c * consis_loss + lam_cur * cur_loss + vae_coeff * vae_loss + determ_coeff * determ_loss
 
-def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, iwae, k, epoch):
+def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer, armotized, epoch):
     avg_pred_loss = 0.0
     avg_consis_loss = 0.0
     avg_cur_loss = 0.0
@@ -101,8 +95,7 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
                     q_z_next,
                     z_next, p_z_next,
                     z_p, p_x, p_x_next_determ,
-                    lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff,
-                iwae=iwae, k=k)
+                    lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff)
 
         loss.backward()
         optimizer.step()
@@ -111,16 +104,6 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
         avg_consis_loss += consis_loss.item()
         avg_cur_loss += cur_loss.item()
         avg_loss += loss
-
-        # pred_loss_test, consis_loss_test = partial_iwae_test(model, x, u, x_next, p_x_next, q_z_next, z_next,
-        #                                                                 p_z, q_z_backward, k)
-        # pred_loss_test, consis_loss_test = elbo_test(x_next, p_x_next, q_z_backward, p_z,
-        #                                                         q_z_next, z_next, p_z_next)
-        #
-        # avg_pred_loss += pred_loss_test.item()
-        # avg_consis_loss += consis_loss_test.item()
-        # avg_cur_loss += cur_loss.item()
-        # avg_loss += lam[0] * pred_loss_test.item() + lam[1] * consis_loss_test.item() + lam[2] * cur_loss.item()
 
     avg_pred_loss /= num_batches
     avg_consis_loss /= num_batches
@@ -161,8 +144,6 @@ def main(args):
     epoches = args.num_iter
     iter_save = args.iter_save
     save_map = args.save_map
-    iwae = args.iwae
-    k = args.k
 
     seed_torch(seed)
     def _init_fn(worker_id):
@@ -196,7 +177,7 @@ def main(args):
         latent_maps = [draw_latent_map(model, mdp)]
     for i in range(epoches):
         avg_pred_loss, avg_consis_loss, avg_cur_loss, avg_loss = train(model, env_name, data_loader, lam,
-                                                                       vae_coeff, determ_coeff, optimizer, armotized, iwae, k, i)
+                                                                       vae_coeff, determ_coeff, optimizer, armotized, i)
         scheduler.step()
 
         # ...log the running loss
@@ -255,9 +236,6 @@ if __name__ == "__main__":
     parser.add_argument('--num_iter', default=5000, type=int, help='number of epoches')
     parser.add_argument('--iter_save', default=1000, type=int, help='save model and result after this number of iterations')
     parser.add_argument('--save_map', default=False, type=str2bool, help='save the latent map during training or not')
-    parser.add_argument('--iwae', default=False, type=str2bool, nargs='?',
-                        const=True, help='use iwae or not')
-    parser.add_argument('--k', default=50, type=int, help='the number of particles')
     args = parser.parse_args()
 
     main(args)

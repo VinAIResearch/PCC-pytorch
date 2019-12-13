@@ -14,18 +14,19 @@ class PlanarObstaclesMDP(object):
     action_dim = 2
 
     def __init__(self, rw_rendered=1, max_step=3,
-                 goal=[37,37], goal_thres=2, noise = 0, sampling = False):
+                 goal=[37,37], goal_thres=2, noise = 0):
         self.rw_rendered = rw_rendered
         self.action_range = np.array([-max_step, max_step])
         self.goal = goal
         self.goal_thres = goal_thres
-        self.is_sampling = sampling
         self.noise = noise
         super(PlanarObstaclesMDP, self).__init__()
 
     def is_valid_state(self, s):
+        # check if the agent runs out of map
         if np.any(s < self.position_range[0]) or np.any(s > self.position_range[1]):
             return False
+
         # check if the agent crosses any obstacle (the obstacle is inside the agent)
         top, bot = s[0] - self.half_agent_size, s[0] + self.half_agent_size
         left, right = s[1] - self.half_agent_size, s[1] + self.half_agent_size
@@ -34,36 +35,20 @@ class PlanarObstaclesMDP(object):
                 return False
         return True
 
-    def is_low_error(self, s, u, epsilon = 0.1):
-        s_next = s + u
-        # if the difference between the action and the actual distance between x and x_next are in range(0,epsilon)
-        top, bottom, left, right = self.get_pixel_location(s)
-        top_next, bottom_next, left_next, right_next = self.get_pixel_location(s_next)
-        x_diff = np.array([top_next - top, left_next - left], dtype=np.float)
-        return (not np.sqrt(np.sum((x_diff - u)**2)) > epsilon)
-
-    def is_valid_action(self, s, u):
-        if self.is_sampling:
-            if not self.is_low_error(s, u):
-                return False
-        s_next = s + u + self.noise * np.random.randn()
-        if not self.is_valid_state(s_next):
-            return False
-        return True
-
     def take_step(self, s, u): # compute the next state given the current state and action
         u = np.clip(u, self.action_range[0], self.action_range[1])
-        if not self.is_valid_action(s, u):
-            return s
         s_next = s + u # the true dynamics
-        s_next = np.clip(s_next, self.position_range[0], self.position_range[1])
+        if not self.is_valid_state(s_next):
+            return s
         return s_next
 
     def transition_function(self, s, u): # compute next state and add noise
         s_next = self.take_step(s, u)
-        s_next = s_next + u + self.noise * np.random.randn()
-        s_next = np.clip(s_next, self.position_range[0], self.position_range[1])
-        return s_next
+        # sample noise until get a valid next state
+        while True:
+            sample_noise = self.noise * np.random.rand()
+            if self.is_valid_state(s_next + sample_noise):
+                return s_next + sample_noise
 
     def render(self, s):
         top, bottom, left, right = self.get_pixel_location(s)
@@ -114,6 +99,14 @@ class PlanarObstaclesMDP(object):
             s = np.random.uniform(self.half_agent_size, self.width - self.half_agent_size, size = 2)
             if self.is_valid_state(s):
                 return s
+
+    def is_low_error(self, u, epsilon = 0.1):
+        rounded_u = np.round(u)
+        diff = np.abs(u - rounded_u)
+        return np.all(diff <= epsilon)
+
+    def is_valid_action(self, s, u):
+        return self.is_low_error(u) and self.is_valid_state(s + u)
 
     def sample_valid_random_action(self, s):
         while True:

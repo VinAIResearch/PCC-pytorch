@@ -6,7 +6,7 @@ torch.set_default_dtype(torch.float64)
 # torch.manual_seed(0)
 
 class PCC(nn.Module):
-    def __init__(self, armotized, x_dim, z_dim, u_dim, env = 'planar', iwae=False, k=50):
+    def __init__(self, armotized, x_dim, z_dim, u_dim, env = 'planar'):
         super(PCC, self).__init__()
         enc, dec, dyn, back_dyn = load_config(env)
 
@@ -19,9 +19,6 @@ class PCC(nn.Module):
         self.decoder = dec(z_dim, x_dim)
         self.dynamics = dyn(armotized, z_dim, u_dim)
         self.backward_dynamics = back_dyn(z_dim, u_dim, x_dim)
-
-        self.iwae = iwae
-        self.k_iwae = k
 
     def encode(self, x):
         return self.encoder(x)
