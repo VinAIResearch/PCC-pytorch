@@ -64,6 +64,8 @@ def draw_latent_map(model, mdp):
             else:
                 with torch.no_grad():
                     obs = torch.Tensor(mdp.render(s)).unsqueeze(0).view(-1,1600).double()
+                    if next(model.parameters()).is_cuda:
+                        obs = obs.cuda()
                     mu = model.encode(obs).mean
                 z = mu.squeeze().cpu().numpy()
                 all_z.append(np.copy(z))
