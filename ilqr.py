@@ -22,7 +22,7 @@ torch.set_default_dtype(torch.float64)
 
 config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
 env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': ['cartpole']}
-env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 15, 1), 'cartpole': ((2,80,80), 8, 1)}
+env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1)}
 
 def main(args):
     env_name = args.env
@@ -55,7 +55,7 @@ def main(args):
 
         # load the trained model
         model = PCC(armotized, x_dim, z_dim, u_dim, env_name)
-        model.load_state_dict(torch.load(log + '/model_5000', map_location='cpu'))
+        model.load_state_dict(torch.load(log + '/model_1000', map_location='cpu'))
         model.eval()
         dynamics = model.dynamics
         encoder = model.encoder
