@@ -230,7 +230,7 @@ if __name__ == "__main__":
     parser.add_argument('--determ_coeff', default=0.3, type=float, help='coefficient of addtional deterministic loss')
     parser.add_argument('--lr', default=0.0005, type=float, help='learning rate')
     parser.add_argument('--decay', default=0.001, type=float, help='L2 regularization')
-    parser.add_argument('--num_iter', default=1000, type=int, help='number of epoches')
+    parser.add_argument('--num_iter', default=2000, type=int, help='number of epoches')
     parser.add_argument('--iter_save', default=1000, type=int, help='save model and result after this number of iterations')
     parser.add_argument('--save_map', default=False, type=str2bool, help='save the latent map during training or not')
     args = parser.parse_args()
