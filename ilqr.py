@@ -6,8 +6,8 @@ import random
 from pcc_model import PCC
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from mdp.pendulum_mdp import PendulumMDP
-from mdp.cartpole_mdp import CartPoleMDP
 from mdp.pendulum_gym import PendulumGymMDP
+from mdp.cartpole_mdp import CartPoleMDP
 from ilqr_utils import *
 
 seed = 2
@@ -27,10 +27,19 @@ env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': [
             'pendulum_gym': ['swing_gym', 'balance_gym']}
 env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1), 'pendulum_gym': ((2,48,48), 3, 1)}
 
+
 def main(args):
     env_name = args.env
-    assert env_name in ['planar', 'pendulum', 'cartpole', 'pendulum_gym']
+    assert env_name in ['planar', 'pendulum', 'pendulum_gym', 'cartpole']
     possible_tasks = env_task[env_name]
+    epoch = args.epoch
+
+    ilqr_result_path = 'iLQR_result/' + env_name
+    if not os.path.exists(ilqr_result_path):
+            os.makedirs(ilqr_result_path)
+    with open(ilqr_result_path + '/settings', 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
+
     # each trained model will perform 10 random tasks
     random_task_id = np.random.choice(len(possible_tasks), size=10)
     x_dim, z_dim, u_dim = env_data_dim[env_name]
@@ -51,14 +60,14 @@ def main(args):
             armotized = settings['armotized']
 
         log_base = os.path.basename(os.path.normpath(log))
-        model_path = 'iLQR_result/' + env_name + '/' + log_base
+        model_path = ilqr_result_path + '/' + log_base
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         print('iLQR for ' + log_base)
 
         # load the trained model
         model = PCC(armotized, x_dim, z_dim, u_dim, env_name)
-        model.load_state_dict(torch.load(log + '/model_5000', map_location='cpu'))
+        model.load_state_dict(torch.load(log + '/model_' + str(epoch), map_location='cpu'))
         model.eval()
         dynamics = model.dynamics
         encoder = model.encoder
@@ -203,6 +212,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='run iLQR')
     parser.add_argument('--env', required=True, type=str, help='environment to perform')
+    parser.add_argument('--epoch', required=True, type=str, help='number of epochs to load model')
     args = parser.parse_args()
 
     main(args)
