@@ -12,7 +12,7 @@
   "start_max": [0, 0],
   "goal": [[0, 0]],
 
-  "q_weight": 50,
+  "q_weight": 100,
   "r_weight": 1,
 
   "noise": 0.0,

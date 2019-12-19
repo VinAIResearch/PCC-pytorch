@@ -13,11 +13,21 @@ def angle_normalize(x):
     return (((x+np.pi) % (2*np.pi)) - np.pi)
 
 class PendulumGymMDP(object):
+    dt = .05
+    g = 9.81
+    m = 1.
+    l = 1.
+
     # goal range
     goal_range = [-np.pi / 6, np.pi / 6]
+
+    # state range
+    angle_range = [-np.pi, np.pi]
+    angular_velocity_range = [-8., 8.]
+
     action_dim = 1
     goal_reward = 1
-    def __init__(self, width=48, height=48, noise=0.0, render_width=4):
+    def __init__(self, width=48, height=48, noise=0.0, render_width=4, torque=2.):
         """
         Args:
           width: width of the rendered image.
@@ -25,12 +35,7 @@ class PendulumGymMDP(object):
           noise: noise level
           render_width: width of the pendulum in the rendered image.
         """
-        self.max_speed = 8
-        self.max_torque = 2.
-        self.dt = .05
-        self.g = 9.81
-        self.m = 1.
-        self.l = 0.5
+        self.action_range = np.array([-torque, torque])
         self.viewer = None
 
         self.width = width
@@ -52,11 +57,11 @@ class PendulumGymMDP(object):
         l = self.l
         dt = self.dt
 
-        u = np.clip(u, -self.max_torque, self.max_torque)
+        u = np.clip(u, self.action_range[0], self.action_range[1])
 
         newthdot = thdot + (-3 * g / (2 * l) * np.sin(th + np.pi) + 3. / (m * l ** 2) * u) * dt
         newth = th + newthdot * dt
-        newthdot = np.clip(newthdot, -self.max_speed, self.max_speed)
+        newthdot = np.clip(newthdot, self.angular_velocity_range[0], self.angular_velocity_range[1])
 
         s_next = np.array([newth, newthdot])
         return s_next
@@ -89,7 +94,7 @@ class PendulumGymMDP(object):
 
     def is_goal(self, s):
         """Check if the pendulum is in goal region"""
-        angle = s[StateIndex.THETA]
+        angle = angle_normalize(s[StateIndex.THETA])
         return self.goal_range[0] <= angle <= self.goal_range[1]
 
     def reward_function(self, s):
@@ -97,16 +102,18 @@ class PendulumGymMDP(object):
         return int(self.is_goal(s)) * self.goal_reward
 
     def sample_random_state(self):
-        high = np.array([np.pi, 1])
-        state = np.random.uniform(low=-high, high=high)
-        return state
+        angle = np.random.uniform(self.angle_range[0], self.angle_range[1])
+        angle_rate = np.random.uniform(self.angular_velocity_range[0],
+                                       self.angular_velocity_range[1])
+        true_state = np.array([angle, angle_rate])
+        return true_state
 
     def sample_random_action(self):
         """Sample a random action from action range."""
         return np.array(
-            [np.random.uniform(-self.max_torque, self.max_torque)])
+            [np.random.uniform(self.action_range[0], self.action_range[1])])
 
     def sample_extreme_action(self):
         """Sample a random extreme action from action range."""
         return np.array(
-            [np.random.choice([-self.max_torque, self.max_torque])])
+            [np.random.choice([self.action_range[0], self.action_range[1]])])

@@ -25,7 +25,7 @@ config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.js
                'swing_gym': 'ilqr_config/swing_gym.json', 'balance_gym': 'ilqr_config/balance_gym.json'}
 env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': ['cartpole'],
             'pendulum_gym': ['swing_gym', 'balance_gym']}
-env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 15, 1), 'cartpole': ((2,80,80), 8, 1), 'pendulum_gym': ((2,48,48), 15, 1)}
+env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1), 'pendulum_gym': ((2,48,48), 3, 1)}
 
 def main(args):
     env_name = args.env
