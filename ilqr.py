@@ -46,6 +46,7 @@ def main(args):
     folder = 'result/' + env_name
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
     log_folders.sort()
+    num_models = len(log_folders)
 
     # statistics on all trained models
     avg_model_percent = 0.0
@@ -175,6 +176,9 @@ def main(args):
                 actions_final.append(action_chosen)
                 s_start_horizon, z_start_horizon = update_horizon_start(mdp, s_start_horizon,
                                                                         action_chosen, encoder, config)
+                # check if task fails
+                if mdp.is_fail(s_start_horizon):
+                    break
                 all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, mdp,
                                                           np.min([plan_len, horizon - plan_iter]),
                                                           num_uniform, num_extreme)
@@ -190,7 +194,7 @@ def main(args):
             gif_path = model_path + '/task_{:01d}.gif'.format(task_counter + 1)
             save_traj(obs_traj, mdp.render(s_goal).squeeze(), gif_path, random_task)
 
-        avg_percent = avg_percent / 10
+        avg_percent = avg_percent / num_models
         avg_model_percent += avg_percent
         if avg_percent > best_model_percent:
             best_model = log_base

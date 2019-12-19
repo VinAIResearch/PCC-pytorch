@@ -262,20 +262,15 @@ def save_traj(images, image_goal, gif_path, task):
         m2.set_data(image_goal)
         return m1, m2
 
+    frames = len(images)
     if task == 'plane':
-        anim = FuncAnimation(
-            fig, updatemat2, frames=40, interval=200, blit=True, repeat=True)
-        Writer = writers['imagemagick']  # animation.writers.avail
-        writer = Writer(fps=2, metadata=dict(artist='Me'), bitrate=1800)
-    elif task == 'swing':
-        anim = FuncAnimation(
-            fig, updatemat2, frames=400, interval=200, blit=True, repeat=True)
-        Writer = writers['imagemagick']  # animation.writers.avail
-        writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
-    elif task in ['balance', 'cartpole']:
-        anim = FuncAnimation(
-            fig, updatemat2, frames=200, interval=200, blit=True, repeat=True)
-        Writer = writers['imagemagick']  # animation.writers.avail
-        writer = Writer(fps=20, metadata=dict(artist='Me'), bitrate=1800)
+        fps = 2
+    else:
+        fps = 20
+
+    anim = FuncAnimation(
+        fig, updatemat2, frames=frames, interval=200, blit=True, repeat=True)
+    Writer = writers['imagemagick']  # animation.writers.avail
+    writer = Writer(fps=fps, metadata=dict(artist='Me'), bitrate=1800)
 
     anim.save(gif_path, writer=writer)
