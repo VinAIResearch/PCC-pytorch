@@ -6,9 +6,16 @@ from networks import MultivariateNormalDiag
 torch.set_default_dtype(torch.float64)
 
 def bernoulli(x, p):
-    log_p_x = torch.sum(p.log_prob(x), dim=-1)
+    p = p.probs
+    log_p_x = torch.sum(x * torch.log(1e-10 + p)
+                                + (1 - x) * torch.log(1e-10 + 1 - p), dim=-1)
     log_p_x = torch.mean(log_p_x)
     return log_p_x
+
+#def bernoulli(x, p):
+    #log_p_x = p.log_prob(x)
+    #log_p_x = torch.mean(log_p_x)
+    #return log_p_x
 
 def KL(normal_1, normal_2):
     kl = kl_divergence(normal_1, normal_2)
