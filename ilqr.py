@@ -46,7 +46,6 @@ def main(args):
     folder = 'result/' + env_name
     log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
     log_folders.sort()
-    num_models = len(log_folders)
 
     # statistics on all trained models
     avg_model_percent = 0.0
@@ -194,7 +193,7 @@ def main(args):
             gif_path = model_path + '/task_{:01d}.gif'.format(task_counter + 1)
             save_traj(obs_traj, mdp.render(s_goal).squeeze(), gif_path, random_task)
 
-        avg_percent = avg_percent / num_models
+        avg_percent = avg_percent / 10
         avg_model_percent += avg_percent
         if avg_percent > best_model_percent:
             best_model = log_base
