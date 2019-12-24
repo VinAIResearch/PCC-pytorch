@@ -31,7 +31,7 @@ class PlanarObstaclesMDP(object):
         top, bot = s[0] - self.half_agent_size, s[0] + self.half_agent_size
         left, right = s[1] - self.half_agent_size, s[1] + self.half_agent_size
         for obs in self.obstacles:
-            if top < obs[0] <= bot and left < obs[1] <= right:
+            if top <= obs[0] <= bot and left <= obs[1] <= right:
                 return False
         return True
 
