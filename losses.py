@@ -7,8 +7,8 @@ torch.set_default_dtype(torch.float64)
 
 def bernoulli(x, p):
     p = p.probs
-    log_p_x = torch.sum(x * torch.log(1e-10 + p)
-                                + (1 - x) * torch.log(1e-10 + 1 - p), dim=-1)
+    log_p_x = torch.sum(x * torch.log(1e-15 + p)
+                                + (1 - x) * torch.log(1e-15 + 1 - p), dim=-1)
     log_p_x = torch.mean(log_p_x)
     return log_p_x
 
