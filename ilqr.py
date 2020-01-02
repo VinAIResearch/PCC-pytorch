@@ -126,11 +126,9 @@ def main(args):
             s_start_horizon = np.copy(s_start)  # s_start and z_start is changed at each horizon
             z_start_horizon = np.copy(z_start)
             for plan_iter in range(1, horizon + 1):
-                print('Planning for horizon ' + str(plan_iter))
                 latent_cost_list = [None] * len(all_actions_trajs)
                 # iterate over all trajectories
                 for traj_id in range(len(all_actions_trajs)):
-                    print('Running iLQR for trajectory ' + str(traj_id + 1))
                     # initialize the inverse regulator
                     inv_regulator = inv_regulator_init
                     for iter in range(1, ilqr_iters + 1):
@@ -152,7 +150,6 @@ def main(args):
                                 accept = True
                                 all_actions_trajs[traj_id] = u_seq_cand
                                 latent_cost_list[traj_id] = cost_cand
-                                print('Found a better action sequence. New latent cost: ' + str(cost_cand.item()))
                                 break
                             else:
                                 alpha *= alpha_mult
@@ -161,10 +158,7 @@ def main(args):
                         else:
                             inv_regulator *= inv_regulator_multi
                         if inv_regulator > inv_regulator_max:
-                            print('Can not improve. Stop iLQR.')
                             break
-
-                    print('===================================================================')
 
                 for i in range(len(latent_cost_list)):
                     if latent_cost_list[i] == None:
@@ -176,8 +170,8 @@ def main(args):
                 s_start_horizon, z_start_horizon = update_horizon_start(mdp, s_start_horizon,
                                                                         action_chosen, encoder, config)
                 # check if task fails
-                if mdp.is_fail(s_start_horizon):
-                    break
+                # if mdp.is_fail(s_start_horizon):
+                #     break
                 all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, mdp,
                                                           np.min([plan_len, horizon - plan_iter]),
                                                           num_uniform, num_extreme)
@@ -185,6 +179,7 @@ def main(args):
             obs_traj, goal_counter = traj_opt_actions(s_start, actions_final, mdp)
             # compute the percentage close to goal
             percent = goal_counter / horizon
+            print('Success rate: %.2f' % (percent))
             avg_percent += percent
             with open(model_path + '/result.txt', 'a+') as f:
                 f.write(random_task + ': ' + str(percent) + '\n')
@@ -194,6 +189,8 @@ def main(args):
             save_traj(obs_traj, mdp.render(s_goal).squeeze(), gif_path, random_task)
 
         avg_percent = avg_percent / 10
+        print('Average success rate: ' + str(avg_percent))
+        print("====================================")
         avg_model_percent += avg_percent
         if avg_percent > best_model_percent:
             best_model = log_base
