@@ -16,6 +16,7 @@ class PlanarObstaclesMDP(object):
     def __init__(self, rw_rendered=1, max_step=3,
                  goal=[37,37], goal_thres=2, noise = 0):
         self.rw_rendered = rw_rendered
+        self.max_step = max_step
         self.action_range = np.array([-max_step, max_step])
         self.goal = goal
         self.goal_thres = goal_thres
@@ -35,9 +36,10 @@ class PlanarObstaclesMDP(object):
                 return False
         return True
 
-    def take_step(self, s, u): # compute the next state given the current state and action
+    def take_step(self, s, u, anneal_ratio=0.9): # compute the next state given the current state and action
         u = np.clip(u, self.action_range[0], self.action_range[1])
-        s_next = s + u # the true dynamics
+
+        s_next = np.clip(s + u, self.position_range[0], self.position_range[1])
         if not self.is_valid_state(s_next):
             return s
         return s_next

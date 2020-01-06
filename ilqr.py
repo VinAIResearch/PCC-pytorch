@@ -9,7 +9,7 @@ from mdp.pendulum_mdp import PendulumMDP
 from mdp.cartpole_mdp import CartPoleMDP
 from ilqr_utils import *
 
-seed = 2
+seed = 2020
 random.seed(seed)
 os.environ['PYTHONHASHSEED'] = str(seed)
 np.random.seed(seed)
@@ -21,14 +21,16 @@ torch.backends.cudnn.deterministic = True
 torch.set_default_dtype(torch.float64)
 
 config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
-env_task = {'planar': ['plane'], 'pendulum': ['swing', 'balance'], 'cartpole': ['cartpole']}
+env_task = {'planar': ['plane'], 'pendulum': ['balance', 'swing'], 'cartpole': ['cartpole']}
 env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1)}
+
 
 def main(args):
     env_name = args.env
     assert env_name in ['planar', 'pendulum', 'cartpole']
     possible_tasks = env_task[env_name]
     epoch = args.epoch
+    x_dim, z_dim, u_dim = env_data_dim[env_name]
 
     ilqr_result_path = 'iLQR_result/' + env_name
     if not os.path.exists(ilqr_result_path):
@@ -38,9 +40,23 @@ def main(args):
 
     # each trained model will perform 10 random tasks
     random_task_id = np.random.choice(len(possible_tasks), size=10)
-    x_dim, z_dim, u_dim = env_data_dim[env_name]
+    all_task_configs = []
     if env_name in ['planar', 'pendulum']:
         x_dim = np.prod(x_dim)
+    for task_counter in range(len(random_task_id)):
+        # pick a random task
+        random_task = possible_tasks[random_task_id[task_counter]]
+        # config for this task
+        with open(config_path[random_task]) as f:
+            config = json.load(f)
+
+        # sample random start and goal state
+        s_start_min, s_start_max = config['start_min'], config['start_max']
+        config['s_start'] = np.random.uniform(low=s_start_min, high=s_start_max)
+        s_goal = config['goal'][np.random.choice(len(config['goal']))]
+        config['s_goal'] = np.array(s_goal)
+
+        all_task_configs.append(config)
 
     # the folder where all trained models are saved
     folder = 'result/' + env_name
@@ -70,12 +86,9 @@ def main(args):
 
         # run the task with 10 different start and goal states for a particular model
         avg_percent = 0.0
-        for task_counter in range(10):
-            # pick a random task
-            random_task = possible_tasks[random_task_id[task_counter]]
-            with open(config_path[random_task]) as f:
-                config = json.load(f)
-            print('Performing task: ' + str(random_task))
+        for task_counter, config in enumerate(all_task_configs):
+
+            print('Performing task %d: ' %(task_counter) + str(config['task']))
 
             # environment specification
             horizon = config['horizon_prob']
@@ -94,11 +107,8 @@ def main(args):
             alpha_mult = config['alpha_mult']
             alpha_min = config['alpha_min']
 
-            # sample random start and goal state
-            s_start_min, s_start_max = config['start_min'], config['start_max']
-            s_start = np.random.uniform(low=s_start_min, high=s_start_max)
-            s_goal = config['goal'][np.random.choice(len(config['goal']))]
-            s_goal = np.array(s_goal)
+            s_start = config['s_start']
+            s_goal = config['s_goal']
 
             # mdp
             if env_name == 'planar':
@@ -107,8 +117,6 @@ def main(args):
             elif env_name == 'pendulum':
                 mdp = PendulumMDP(frequency=config['frequency'],
                                               noise=config['noise'], torque=config['torque'])
-            elif env_name == 'cartpole':
-                mdp = CartPoleMDP(frequency=config['frequency'], noise=config['noise'])
             # get z_start and z_goal
             x_start = get_x_data(mdp, s_start, config)
             x_goal = get_x_data(mdp, s_goal, config)
@@ -145,6 +153,9 @@ def main(args):
                         accept = False  # if any alpha is accepted
                         while alpha > alpha_min:
                             z_seq_cand, u_seq_cand = forward(z_seq, all_actions_trajs[traj_id], k_small, K_big, dynamics, alpha)
+                            # u_seq_cand = forward(all_actions_trajs[traj_id], k_small, K_big, A_seq, B_seq, alpha)
+                            # z_seq_cand = compute_latent_traj(z_start_horizon, u_seq_cand, dynamics)
+                            # cost_cand = latent_cost(R_z, R_u, z_seq_cand, z_goal, u_seq_cand)
                             cost_cand = latent_cost(R_z, R_u, z_seq_cand, z_goal, u_seq_cand)
                             if cost_cand < current_cost:  # accept the trajectory candidate
                                 accept = True
@@ -165,11 +176,9 @@ def main(args):
                         latent_cost_list[i] = np.inf
                 traj_opt_id = np.argmin(latent_cost_list)
                 action_chosen = all_actions_trajs[traj_opt_id][0]
-                # action_chosen = np.clip(action_chosen, mdp.action_range[0], mdp.action_range[1])
                 actions_final.append(action_chosen)
                 s_start_horizon, z_start_horizon = update_horizon_start(mdp, s_start_horizon,
                                                                         action_chosen, encoder, config)
-                # check if task fails
                 # if mdp.is_fail(s_start_horizon):
                 #     break
                 all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, mdp,
@@ -178,19 +187,20 @@ def main(args):
 
             obs_traj, goal_counter = traj_opt_actions(s_start, actions_final, mdp)
             # compute the percentage close to goal
-            percent = goal_counter / horizon
-            print('Success rate: %.2f' % (percent))
-            avg_percent += percent
+            success_rate = goal_counter / horizon
+            print ('Success rate: %.2f' % (success_rate))
+            percent = success_rate
+            avg_percent += success_rate
             with open(model_path + '/result.txt', 'a+') as f:
-                f.write(random_task + ': ' + str(percent) + '\n')
+                f.write(config['task'] + ': ' + str(percent) + '\n')
 
             # save trajectory as gif file
             gif_path = model_path + '/task_{:01d}.gif'.format(task_counter + 1)
-            save_traj(obs_traj, mdp.render(s_goal).squeeze(), gif_path, random_task)
+            save_traj(obs_traj, mdp.render(s_goal).squeeze(), gif_path, config['task'])
 
         avg_percent = avg_percent / 10
-        print('Average success rate: ' + str(avg_percent))
-        print("====================================")
+        print ('Average success rate: ' + str(avg_percent))
+        print ("====================================")
         avg_model_percent += avg_percent
         if avg_percent > best_model_percent:
             best_model = log_base
@@ -202,7 +212,6 @@ def main(args):
     with open('iLQR_result/' + env_name + '/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='run iLQR')

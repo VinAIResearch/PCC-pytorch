@@ -22,8 +22,8 @@
   "ilqr_iters": 4,
   "horizon_prob": 40,
   "plan_len": 10,
-  "uniform_trajs": 1,
-  "extreme_trajs": 0,
+  "uniform_trajs": 3,
+  "extreme_trajs": 3,
 
   "obs_shape": [40, 40],
   "action_dim": 2,

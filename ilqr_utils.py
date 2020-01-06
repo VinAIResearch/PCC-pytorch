@@ -95,6 +95,23 @@ def forward(z_seq, u_seq, k, K, dynamics, alpha):
         z_seq_new.append(z_new.squeeze().numpy())
     return np.array(z_seq_new), np.array(u_seq_new)
 
+# def forward(u_seq, k_seq, K_seq, A_seq, B_seq, alpha):
+#     """
+#     update the trajectory, given k and K
+#     !!!! update using the linearization matricies (A and B), not the learned dynamics
+#     """
+#     u_new_seq = []
+#     plan_len = len(u_seq)
+#     z_dim = K_seq[0].shape[1]
+#     for i in range(0, plan_len):
+#         if i == 0:
+#             z_delta = np.zeros(z_dim)
+#         else:
+#             z_delta = np.matmul(A_seq[i-1], z_delta) + np.matmul(B_seq[i-1], u_delta)
+#         u_delta = alpha * (k_seq[i] + np.matmul(K_seq[i], z_delta))
+#         u_new_seq.append(u_seq[i] + u_delta)
+#     return np.array(u_new_seq)
+
 def get_x_data(mdp, state, config):
     image_data = mdp.render(state).squeeze()
     x_dim = config['obs_shape']
