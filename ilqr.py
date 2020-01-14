@@ -117,6 +117,8 @@ def main(args):
             elif env_name == 'pendulum':
                 mdp = PendulumMDP(frequency=config['frequency'],
                                               noise=config['noise'], torque=config['torque'])
+            elif env_name == 'cartpole':
+                mdp = CartPoleMDP(frequency=config['frequency'], noise=config['noise'])
             # get z_start and z_goal
             x_start = get_x_data(mdp, s_start, config)
             x_goal = get_x_data(mdp, s_goal, config)

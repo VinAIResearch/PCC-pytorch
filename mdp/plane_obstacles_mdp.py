@@ -48,7 +48,7 @@ class PlanarObstaclesMDP(object):
         s_next = self.take_step(s, u)
         # sample noise until get a valid next state
         while True:
-            sample_noise = self.noise * np.random.rand()
+            sample_noise = self.noise * np.random.rand(*s_next.shape)
             if self.is_valid_state(s_next + sample_noise):
                 return s_next + sample_noise
 
