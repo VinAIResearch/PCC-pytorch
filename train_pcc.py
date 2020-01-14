@@ -221,7 +221,7 @@ if __name__ == "__main__":
     parser.add_argument('--log_dir', required=True, type=str, help='directory to save training log')
     parser.add_argument('--seed', required=True, type=int, help='seed number')
     parser.add_argument('--data_size', required=True, type=int, help='the bumber of data points used for training')
-    parser.add_argument('--noise', default=0, type=int, help='the level of noise')
+    parser.add_argument('--noise', default=0, type=float, help='the level of noise')
     parser.add_argument('--batch_size', default=128, type=int, help='batch size')
     parser.add_argument('--lam_p', default=1.0, type=float, help='weight of prediction loss')
     parser.add_argument('--lam_c', default=8.0, type=float, help='weight of consistency loss')
