@@ -41,7 +41,7 @@ class PoleBase(object):
     def transition_function(self, s, u): # compute next state and add noise
         s_next = self.take_step(s, u)
         # add noise
-        s_next += self.noise * np.random.rand(*s_next.shape)
+        s_next += self.noise * np.random.randn(*s_next.shape)
         return s_next
 
     def render(self, s):
