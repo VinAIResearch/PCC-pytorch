@@ -16,7 +16,7 @@
   "q_weight": 10,
   "r_weight": 1,
 
-  "noise": 1.0,
+  "noise": 0.0,
   "epoch": "5000",
 
   "ilqr_iters": 4,

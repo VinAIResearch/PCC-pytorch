@@ -29,6 +29,7 @@ def main(args):
     env_name = args.env
     assert env_name in ['planar', 'pendulum', 'cartpole']
     possible_tasks = env_task[env_name]
+    noise = args.noise
     epoch = args.epoch
     x_dim, z_dim, u_dim = env_data_dim[env_name]
 
@@ -113,12 +114,12 @@ def main(args):
             # mdp
             if env_name == 'planar':
                 mdp = PlanarObstaclesMDP(goal=s_goal, goal_thres=config['distance_thresh'],
-                                         noise=config['noise'])
+                                         noise=noise)
             elif env_name == 'pendulum':
                 mdp = PendulumMDP(frequency=config['frequency'],
-                                              noise=config['noise'], torque=config['torque'])
+                                              noise=noise, torque=config['torque'])
             elif env_name == 'cartpole':
-                mdp = CartPoleMDP(frequency=config['frequency'], noise=config['noise'])
+                mdp = CartPoleMDP(frequency=config['frequency'], noise=noise)
             # get z_start and z_goal
             x_start = get_x_data(mdp, s_start, config)
             x_goal = get_x_data(mdp, s_goal, config)
@@ -218,6 +219,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='run iLQR')
     parser.add_argument('--env', required=True, type=str, help='environment to perform')
+    parser.add_argument('--noise', required=True, type=float, default=0.0, help='noise level for mdp')
     parser.add_argument('--epoch', required=True, type=str, help='number of epochs to load model')
     args = parser.parse_args()
 
