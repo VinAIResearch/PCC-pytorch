@@ -47,7 +47,7 @@ class PlanarObstaclesMDP(object):
     def transition_function(self, s, u): # compute next state and add noise
         s_next = self.take_step(s, u)
         # sample noise until get a valid next state
-        sample_noise = self.noise * np.random.rand(*s_next.shape)
+        sample_noise = self.noise * np.random.randn(*s_next.shape)
         return np.clip(s_next + sample_noise, self.position_range[0], self.position_range[1])
 
     def render(self, s):

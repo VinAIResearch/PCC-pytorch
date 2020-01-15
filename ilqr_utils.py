@@ -215,17 +215,6 @@ def compute_latent_traj(z_start, u_seq, dynamics):
         z_seq.append(z_next.squeeze().numpy())
     return z_seq
 
-def traj_opt_actions(s_start, actions_final, mdp):
-    goal_counter = 0.0
-    s = s_start
-    obs_traj = [mdp.render(s_start).squeeze()]
-    for i, u in enumerate(actions_final):
-        u = u.squeeze()
-        s = mdp.transition_function(s, u)
-        obs_traj.append(mdp.render(s).squeeze())
-        goal_counter += mdp.reward_function(s)
-    return obs_traj, goal_counter
-
 def jacobian(dynamics, z, u):
     """
     compute the jacobian of F(z,u) w.r.t z, u

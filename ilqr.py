@@ -131,11 +131,12 @@ def main(args):
 
             # initialize actions trajectories
             all_actions_trajs = random_actions_trajs(mdp, num_uniform, num_extreme, plan_len)
-            actions_final = []
 
             # perform reciding horizon iLQR
             s_start_horizon = np.copy(s_start)  # s_start and z_start is changed at each horizon
             z_start_horizon = np.copy(z_start)
+            obs_traj = [mdp.render(s_start).squeeze()]
+            goal_counter = 0.0
             for plan_iter in range(1, horizon + 1):
                 latent_cost_list = [None] * len(all_actions_trajs)
                 # iterate over all trajectories
@@ -156,9 +157,6 @@ def main(args):
                         accept = False  # if any alpha is accepted
                         while alpha > alpha_min:
                             z_seq_cand, u_seq_cand = forward(z_seq, all_actions_trajs[traj_id], k_small, K_big, dynamics, alpha)
-                            # u_seq_cand = forward(all_actions_trajs[traj_id], k_small, K_big, A_seq, B_seq, alpha)
-                            # z_seq_cand = compute_latent_traj(z_start_horizon, u_seq_cand, dynamics)
-                            # cost_cand = latent_cost(R_z, R_u, z_seq_cand, z_goal, u_seq_cand)
                             cost_cand = latent_cost(R_z, R_u, z_seq_cand, z_goal, u_seq_cand)
                             if cost_cand < current_cost:  # accept the trajectory candidate
                                 accept = True
@@ -179,16 +177,16 @@ def main(args):
                         latent_cost_list[i] = np.inf
                 traj_opt_id = np.argmin(latent_cost_list)
                 action_chosen = all_actions_trajs[traj_opt_id][0]
-                actions_final.append(action_chosen)
                 s_start_horizon, z_start_horizon = update_horizon_start(mdp, s_start_horizon,
                                                                         action_chosen, encoder, config)
-                # if mdp.is_fail(s_start_horizon):
-                #     break
+
+                obs_traj.append(mdp.render(s_start_horizon).squeeze())
+                goal_counter += mdp.reward_function(s_start_horizon)
+
                 all_actions_trajs = refresh_actions_trajs(all_actions_trajs, traj_opt_id, mdp,
                                                           np.min([plan_len, horizon - plan_iter]),
                                                           num_uniform, num_extreme)
 
-            obs_traj, goal_counter = traj_opt_actions(s_start, actions_final, mdp)
             # compute the percentage close to goal
             success_rate = goal_counter / horizon
             print ('Success rate: %.2f' % (success_rate))
