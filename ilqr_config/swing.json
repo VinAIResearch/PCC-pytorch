@@ -16,7 +16,7 @@
   "r_weight": 1,
 
   "frequency": 50,
-  "noise": 0.0,
+  "noise": 1.0,
   "torque": 0.5,
   "epoch": "5000",
 

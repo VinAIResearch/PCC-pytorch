@@ -47,10 +47,8 @@ class PlanarObstaclesMDP(object):
     def transition_function(self, s, u): # compute next state and add noise
         s_next = self.take_step(s, u)
         # sample noise until get a valid next state
-        while True:
-            sample_noise = self.noise * np.random.rand(*s_next.shape)
-            if self.is_valid_state(s_next + sample_noise):
-                return s_next + sample_noise
+        sample_noise = self.noise * np.random.rand(*s_next.shape)
+        return np.clip(s_next + sample_noise, self.position_range[0], self.position_range[1])
 
     def render(self, s):
         top, bottom, left, right = self.get_pixel_location(s)
@@ -84,7 +82,7 @@ class PlanarObstaclesMDP(object):
         return img_arr
 
     def is_goal(self, s):
-        return np.sqrt(np.sum(s - self.goal) ** 2) <= self.goal_thres
+        return np.sqrt(np.sum((s - self.goal)**2)) <= self.goal_thres
 
     def is_fail(self, s):
         return False
