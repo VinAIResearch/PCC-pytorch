@@ -42,6 +42,7 @@ def ae_loss(x, p_x):
     recon_loss = -bernoulli(x, p_x)
     return recon_loss
 
+
 def curvature(model, z, u, delta, armotized):
     z_alias = z.detach().requires_grad_(True)
     u_alias = u.detach().requires_grad_(True)
@@ -66,8 +67,9 @@ def curvature(model, z, u, delta, armotized):
     eps_z = eps_z.view(-1, z_dim, 1)
     eps_u = eps_u.view(-1, u_dim, 1)
     taylor_error = f_z_bar - (torch.bmm(A, eps_z).squeeze() + torch.bmm(B, eps_u).squeeze()) - f_z
-    cur_loss = torch.mean(torch.sum(taylor_error.pow(2), dim = 1))
+    cur_loss = torch.mean(torch.sum(taylor_error.pow(2), dim=1))
     return cur_loss
+
 
 def new_curvature(model, z, u):
     z_next, _, _, = model.dynamics(z, u)
@@ -76,7 +78,7 @@ def new_curvature(model, z, u):
     temp_z_next = z_next - z_next.mean(dim=0)
     temp_u = u - u.mean(dim=0)
 
-    cov_z_z_next = torch.sum(temp_z * temp_z_next)**2
+    cov_z_z_next = torch.sum(temp_z * temp_z_next) ** 2
     var_prod_z_z_next = torch.sum(temp_z ** 2) * torch.sum(temp_z_next ** 2)
 
     # cov_u_z_next = torch.sum(temp_u * temp_z_next)**2
@@ -85,6 +87,7 @@ def new_curvature(model, z, u):
     # return - cov_z_z_next / var_prod_z_z_next - cov_u_z_next / var_prod_u_z_next
     return - cov_z_z_next / var_prod_z_z_next
 
+
 def jacobian(dynamics, batched_z, batched_u):
     """
     compute the jacobian of F(z,u) w.r.t z, u
@@ -92,15 +95,10 @@ def jacobian(dynamics, batched_z, batched_u):
     batch_size = batched_z.size(0)
     z_dim = batched_z.size(-1)
     u_dim = batched_u.size(-1)
-    all_A, all_B = torch.empty(size=(batch_size, z_dim, z_dim)).cuda(),\
-                    torch.empty(size=(batch_size, z_dim, u_dim)).cuda()
-    for i in range(batch_size):
-        z = batched_z[i].view(1,-1)
-        u = batched_u[i].view(1,-1)
-        
-        z, u = z.squeeze().repeat(z_dim, 1), u.squeeze().repeat(z_dim, 1)
-        z_next = dynamics(z, u)[0].mean
-        grad_inp = torch.eye(z_dim).cuda()
-        A, B = torch.autograd.grad(z_next, [z, u], [grad_inp, grad_inp], create_graph=True, retain_graph=True)
-        all_A[i,:,:], all_B[i,:,:] = A, B
+
+    z, u = batched_z.unsqueeze(1), batched_u.unsqueeze(1)  # batch_size, 1, input_dim
+    z, u = z.repeat(1, z_dim, 1), u.repeat(1, z_dim, 1)  # batch_size, output_dim, input_dim
+    z_next = dynamics(z, u)[0].mean
+    grad_inp = torch.eye(z_dim).reshape(1, z_dim, z_dim).repeat(batch_size, 1, 1).cuda()
+    all_A, all_B = torch.autograd.grad(z_next, [z, u], [grad_inp, grad_inp], create_graph=True, retain_graph=True)
     return all_A, all_B
