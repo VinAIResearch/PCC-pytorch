@@ -29,11 +29,13 @@ def main(args):
     env_name = args.env
     assert env_name in ['planar', 'pendulum', 'cartpole']
     possible_tasks = env_task[env_name]
+    setting_path = args.setting_path
+    setting = os.path.basename(os.path.normpath(setting_path))
     noise = args.noise
     epoch = args.epoch
     x_dim, z_dim, u_dim = env_data_dim[env_name]
 
-    ilqr_result_path = 'iLQR_result/' + env_name
+    ilqr_result_path = 'iLQR_result/' + '_'.join([env_name, str(setting), str(noise), str(epoch)])
     if not os.path.exists(ilqr_result_path):
             os.makedirs(ilqr_result_path)
     with open(ilqr_result_path + '/settings', 'w') as f:
@@ -60,8 +62,7 @@ def main(args):
         all_task_configs.append(config)
 
     # the folder where all trained models are saved
-    folder = 'result/' + env_name
-    log_folders = [os.path.join(folder, dI) for dI in os.listdir(folder) if os.path.isdir(os.path.join(folder, dI))]
+    log_folders = [os.path.join(setting_path, dI) for dI in os.listdir(setting_path) if os.path.isdir(os.path.join(setting_path, dI))]
     log_folders.sort()
 
     # statistics on all trained models
@@ -210,13 +211,14 @@ def main(args):
             f.write('Average percentage: ' + str(avg_percent))
 
     avg_model_percent = avg_model_percent / len(log_folders)
-    with open('iLQR_result/' + env_name + '/result.txt', 'w') as f:
+    with open(ilqr_result_path + '/result.txt', 'w') as f:
         f.write('Average percentage of all models: ' + str(avg_model_percent) + '\n')
         f.write('Best model: ' + best_model + ', best percentage: ' + str(best_model_percent))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='run iLQR')
     parser.add_argument('--env', required=True, type=str, help='environment to perform')
+    parser.add_argument('--setting_path', required=True, type=str, help='path to load trained models')
     parser.add_argument('--noise', required=True, type=float, default=0.0, help='noise level for mdp')
     parser.add_argument('--epoch', required=True, type=str, help='number of epochs to load model')
     args = parser.parse_args()
