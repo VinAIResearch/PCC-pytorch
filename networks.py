@@ -308,10 +308,101 @@ class CartPoleBackwardDynamics(BackwardDynamics):
         net_joint_logstd = nn.Linear(300, z_dim)
         super(CartPoleBackwardDynamics, self).__init__(net_z, net_u, net_x, net_joint_hidden, net_joint_mean, net_joint_logstd, z_dim, u_dim, x_dim)
 
+class ThreePoleEncoder(Encoder):
+    def __init__(self, x_dim=(2, 80, 80), z_dim=8):
+        x_channels = x_dim[0]
+        net_hidden = nn.Sequential(
+            nn.Conv2d(in_channels=x_channels, out_channels=32, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=5, stride=2, padding=2),
+            nn.ReLU(),
+
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=5, stride=2, padding=2),
+            nn.ReLU(),
+
+            nn.Conv2d(in_channels=32, out_channels=10, kernel_size=5, stride=2, padding=2),
+            nn.ReLU(),
+
+            Flatten(),
+
+            nn.Linear(10*10*10, 200),
+            nn.ReLU(),
+        )
+        net_mean = nn.Linear(200, z_dim)
+        net_logstd = nn.Linear(200, z_dim)
+        super(ThreePoleEncoder, self).__init__(net_hidden, net_mean, net_logstd, x_dim, z_dim)
+
+class ThreePoleDecoder(Decoder):
+    def __init__(self, z_dim=8, x_dim=(2, 80, 80)):
+        x_channels = x_dim[0]
+        net_hidden = nn.Sequential(
+            nn.Linear(z_dim, 200),
+            nn.ReLU(),
+
+            nn.Linear(200, 1000),
+            nn.ReLU(),
+
+            View((-1, 10, 10, 10)),
+
+            nn.ConvTranspose2d(in_channels=10, out_channels=32, kernel_size=5, stride=1, padding=2),
+            nn.Upsample(scale_factor=2),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=5, stride=1, padding=2),
+            nn.Upsample(scale_factor=2),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(in_channels=32, out_channels=32, kernel_size=5, stride=1, padding=2),
+            nn.Upsample(scale_factor=2),
+            nn.ReLU(),
+        )
+        net_logits = nn.Sequential(
+            nn.ConvTranspose2d(in_channels=32, out_channels=x_channels, kernel_size=5, stride=1, padding=2),
+            Flatten(),
+        )
+        super(ThreePoleDecoder, self).__init__(net_hidden, net_logits, z_dim, x_dim)
+
+class ThreePoleDynamics(Dynamics):
+    def __init__(self, armotized, z_dim=8, u_dim=1):
+        net_hidden = nn.Sequential(
+            nn.Linear(z_dim + u_dim, 40),
+            nn.ReLU(),
+
+            nn.Linear(40, 40),
+            nn.ReLU()
+        )
+        net_mean = nn.Linear(40, z_dim)
+        net_logstd = nn.Linear(40, z_dim)
+        if armotized:
+            net_A = nn.Linear(40, z_dim * z_dim)
+            net_B = nn.Linear(40, u_dim * z_dim)
+        else:
+            net_A, net_B = None, None
+        super(ThreePoleDynamics, self).__init__(net_hidden, net_mean, net_logstd, net_A, net_B, z_dim, u_dim, armotized)
+
+class ThreePoleBackwardDynamics(BackwardDynamics):
+    def __init__(self, z_dim=8, u_dim=1, x_dim=(2, 80, 80)):
+        net_z = nn.Linear(z_dim, 10)
+        net_u = nn.Linear(u_dim, 10)
+        net_x = nn.Sequential(
+            Flatten(),
+            nn.Linear(x_dim[0] * x_dim[1] * x_dim[2], 300)
+        )
+
+        net_joint_hidden = nn.Sequential(
+            nn.Linear(10 + 10 + 300, 300),
+            nn.ReLU(),
+        )
+        net_joint_mean = nn.Linear(300, z_dim)
+        net_joint_logstd = nn.Linear(300, z_dim)
+        super(ThreePoleBackwardDynamics, self).__init__(net_z, net_u, net_x, net_joint_hidden, net_joint_mean, net_joint_logstd, z_dim, u_dim, x_dim)
+
 CONFIG = {
     'planar': (PlanarEncoder, PlanarDecoder, PlanarDynamics, PlanarBackwardDynamics),
     'pendulum': (PendulumEncoder, PendulumDecoder, PendulumDynamics, PendulumBackwardDynamics),
-    'cartpole': (CartPoleEncoder, CartPoleDecoder, CartPoleDynamics, CartPoleBackwardDynamics)
+    'cartpole': (CartPoleEncoder, CartPoleDecoder, CartPoleDynamics, CartPoleBackwardDynamics),
+    'threepole': (ThreePoleEncoder, ThreePoleDecoder, ThreePoleDynamics, ThreePoleBackwardDynamics)
 }
 
 def load_config(name):

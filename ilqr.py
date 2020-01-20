@@ -7,6 +7,7 @@ from pcc_model import PCC
 from mdp.plane_obstacles_mdp import PlanarObstaclesMDP
 from mdp.pendulum_mdp import PendulumMDP
 from mdp.cartpole_mdp import CartPoleMDP
+from mdp.three_pole_mdp import ThreePoleMDP
 from ilqr_utils import *
 
 seed = 2020
@@ -20,14 +21,15 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 torch.set_default_dtype(torch.float64)
 
-config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json', 'balance': 'ilqr_config/balance.json', 'cartpole': 'ilqr_config/cartpole.json'}
-env_task = {'planar': ['plane'], 'pendulum': ['balance', 'swing'], 'cartpole': ['cartpole']}
-env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1)}
+config_path = {'plane': 'ilqr_config/plane.json', 'swing': 'ilqr_config/swing.json','balance': 'ilqr_config/balance.json',
+               'cartpole': 'ilqr_config/cartpole.json', 'threepole': 'ilqr_config/threepole.json'}
+env_task = {'planar': ['plane'], 'pendulum': ['balance', 'swing'], 'cartpole': ['cartpole'], 'threepole': 'threepole'}
+env_data_dim = {'planar': (1600, 2, 2), 'pendulum': ((2,48,48), 3, 1), 'cartpole': ((2,80,80), 8, 1), 'threepole': ((2,80,80), 8, 3)}
 
 
 def main(args):
     env_name = args.env
-    assert env_name in ['planar', 'pendulum', 'cartpole']
+    assert env_name in ['planar', 'pendulum', 'cartpole', 'threepole']
     possible_tasks = env_task[env_name]
     setting_path = args.setting_path
     setting = os.path.basename(os.path.normpath(setting_path))
@@ -121,6 +123,8 @@ def main(args):
                                               noise=noise, torque=config['torque'])
             elif env_name == 'cartpole':
                 mdp = CartPoleMDP(frequency=config['frequency'], noise=noise)
+            elif env_name == 'threepole':
+                mdp = ThreePoleMDP(frequency=config['frequency'], noise=noise, torque=config['torque'])
             # get z_start and z_goal
             x_start = get_x_data(mdp, s_start, config)
             x_goal = get_x_data(mdp, s_goal, config)

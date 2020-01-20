@@ -142,3 +142,41 @@ class CartPoleDataset(BaseDataset):
 
             with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
                 torch.save(data_set, f)
+
+class ThreePoleDataset(BaseDataset):
+    width = 80
+    height = 80 * 2
+    action_dim = 3
+
+    def __init__(self, sample_size, noise):
+        data_path = 'data/threepole/'
+        super(ThreePoleDataset, self).__init__(data_path, sample_size, noise)
+
+    def _process_image(self, img):
+        x = torch.zeros(size=(2, self.width, self.width))
+        x[0, :, :] = torch.from_numpy(img[:, :, 0])
+        x[1, :, :] = torch.from_numpy(img[:, :, 1])
+        return x.unsqueeze(0)
+
+    def _process(self):
+        if self.check_exists():
+            return
+        else:
+            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
+                sample_pole.sample(env_name='threepole', sample_size=self.sample_size, noise=self.noise)
+            data_len = len(x_numpy_data)
+
+            # place holder for data
+            data_x = torch.zeros(data_len, 2, self.width, self.width)
+            data_u = torch.zeros(data_len, self.action_dim)
+            data_x_next = torch.zeros(data_len, 2, self.width, self.width)
+
+            for i in range(data_len):
+                data_x[i] = self._process_image(x_numpy_data[i])
+                data_u[i] = torch.from_numpy(u_numpy_data[i])
+                data_x_next[i] = self._process_image(x_next_numpy_data[i])
+
+            data_set = (data_x, data_u, data_x_next)
+
+            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
+                torch.save(data_set, f)

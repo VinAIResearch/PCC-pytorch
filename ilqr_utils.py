@@ -122,7 +122,7 @@ def get_x_data(mdp, state, config):
         x_dim = np.prod(x_dim)
         x_data = np.vstack((image_data, image_data))
         x_data = torch.from_numpy(x_data).double().view(x_dim).unsqueeze(0)
-    elif config['task'] == 'cartpole':
+    elif config['task'] in ['cartpole', 'threepole']:
         x_data = torch.zeros(size=(2,80,80))
         x_data[0, :, :] = torch.from_numpy(image_data)
         x_data[1, :, :] = torch.from_numpy(image_data)
@@ -139,7 +139,7 @@ def update_horizon_start(mdp, s, u, encoder, config):
         obs_stacked = np.vstack((obs, obs_next))
         x_dim = np.prod(config['obs_shape'])
         x_next = torch.from_numpy(obs_stacked).view(x_dim).unsqueeze(0).double()
-    elif config['task'] == 'cartpole':
+    elif config['task'] in ['cartpole', 'threepole']:
         obs = mdp.render(s).squeeze()
         obs_next = mdp.render(s_next).squeeze()
         x_next = torch.zeros(size=config['obs_shape'])
