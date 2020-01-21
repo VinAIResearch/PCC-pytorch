@@ -17,12 +17,13 @@ os.sys.path.append(root_path)
 
 from mdp.pendulum_mdp import PendulumMDP
 from mdp.cartpole_mdp import CartPoleMDP
+from mdp.three_pole_mdp import ThreePoleMDP
 
-widths = {'pendulum': 48, 'cartpole': 80}
-heights = {'pendulum': 48, 'cartpole': 80}
-state_dims = {'pendulum': 2, 'cartpole': 4}
-frequencies = {'pendulum': 50, 'cartpole': 50}
-mdps = {'pendulum': PendulumMDP, 'cartpole': CartPoleMDP}
+widths = {'pendulum': 48, 'cartpole': 80, 'threepole': 80}
+heights = {'pendulum': 48, 'cartpole': 80, 'threepole': 80}
+state_dims = {'pendulum': 2, 'cartpole': 4, 'threepole': 6}
+frequencies = {'pendulum': 50, 'cartpole': 50, 'threepole': 50}
+mdps = {'pendulum': PendulumMDP, 'cartpole': CartPoleMDP, 'threepole': ThreePoleMDP}
 
 def sample(env_name, sample_size, noise):
     """
@@ -117,7 +118,7 @@ def main(args):
     sample_size = args.sample_size
     noise = args.noise
     env_name = args.env
-    assert env_name in ['pendulum', 'cartpole']
+    assert env_name in ['pendulum', 'cartpole', 'threepole']
     write_to_file(env_name, sample_size, noise)
 
 if __name__ == "__main__":
@@ -125,7 +126,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--sample_size', required=True, type=int, help='the number of samples')
     parser.add_argument('--noise', default=0, type=int, help='level of noise')
-    parser.add_argument('--env', required=True, type=str, help='pendulum or cartpole')
+    parser.add_argument('--env', required=True, type=str, help='pendulum or cartpole or threepole')
 
     args = parser.parse_args()
 

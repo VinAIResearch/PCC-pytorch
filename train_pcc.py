@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 import random
 import argparse
 import json
+import time
 
 from pcc_model import PCC
 from datasets import *
@@ -67,6 +68,8 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
     
     num_batches = len(train_loader)
     model.train()
+
+    start = time.time()
     for x, u, x_next in train_loader:
         x = x.to(device).double()
         u = u.to(device).double()
@@ -109,7 +112,10 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
     avg_cur_loss /= num_batches
     avg_loss /= num_batches
 
-    if (epoch + 1) % 10 == 0:
+    end = time.time()
+    print ('Training time: %f' %(end - start))
+
+    if (epoch + 1) % 1 == 0:
         if env_name == 'planar' and epoch < 100:
             print('AE loss epoch %d: %f' % (epoch+1, avg_ae_loss))
             print('---------------------------')

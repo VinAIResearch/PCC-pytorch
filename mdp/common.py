@@ -24,3 +24,7 @@ class StateIndex(object):
     X, X_DOT = 2, 3
     PEND_ACTION = 2
     CARTPOLE_ACTION = 4
+
+    THETA_1, THETA_2, THETA_3 = 0, 2, 4
+    THETA_1_DOT, THETA_2_DOT, THETA_3_DOT = 1, 3, 5
+    TORQUE_3_1, TORQUE_3_2, TORQUE_3_3 = 6, 7, 8

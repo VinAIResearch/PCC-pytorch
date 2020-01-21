@@ -277,9 +277,9 @@ class ThreePoleMDP(PoleBase):
 
     def is_goal(self, s):
         """Inidicates whether the state achieves the goal."""
-        angle_1 = s[0][StateIndex.THETA_1]
-        angle_2 = s[0][StateIndex.THETA_2]
-        angle_3 = s[0][StateIndex.THETA_3]
+        angle_1 = s[StateIndex.THETA_1]
+        angle_2 = s[StateIndex.THETA_2]
+        angle_3 = s[StateIndex.THETA_3]
         if self.goal_range[0] < angle_1 < self.goal_range[1] and self.goal_range[
             0] < angle_1 + angle_2 < self.goal_range[1] and self.goal_range[
             0] < angle_1 + angle_2 + angle_3 < self.goal_range[1]:
