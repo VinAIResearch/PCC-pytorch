@@ -2,6 +2,7 @@ from tensorboardX import SummaryWriter
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from torch.nn.utils import clip_grad_norm_
 import random
 import argparse
 import json
@@ -100,6 +101,7 @@ def train(model, env_name, train_loader, lam, vae_coeff, determ_coeff, optimizer
                     lam=lam, vae_coeff=vae_coeff, determ_coeff=determ_coeff)
 
         loss.backward()
+        clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
 
         avg_pred_loss += pred_loss.item()
