@@ -17,7 +17,7 @@
 
   "frequency": 50,
   "noise": 0.0,
-  "torque": 1.25,
+  "torque": 1.0,
 
   "ilqr_iters": 4,
   "horizon_prob": 400,
