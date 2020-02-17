@@ -21,7 +21,7 @@
   "epoch": "5000",
 
   "ilqr_iters": 4,
-  "horizon_prob": 200,
+  "horizon_prob": 100,
   "plan_len": 10,
   "uniform_trajs": 3,
   "extreme_trajs": 3,

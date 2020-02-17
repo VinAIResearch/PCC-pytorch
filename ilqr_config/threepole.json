@@ -20,7 +20,7 @@
   "torque": 1.0,
 
   "ilqr_iters": 4,
-  "horizon_prob": 400,
+  "horizon_prob": 200,
   "plan_len": 20,
   "uniform_trajs": 3,
   "extreme_trajs": 3,
