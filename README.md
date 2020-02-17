@@ -20,7 +20,7 @@ conda activate pcc
 
 ## Training
 
-The code currently supports training for ``planar`` and ``pendulum`` environment. Run the ``train_pcc.py`` with your own settings. For example:
+The code currently supports training for ``planar``, ``pendulum``, ``cartpole`` and ``threepole`` environment. Run the ``train_pcc.py`` with your own settings. For example:
 
 ```
 python train_pcc.py \
