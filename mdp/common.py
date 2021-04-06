@@ -1,8 +1,7 @@
 """Common functions for the MDP package."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
+
 
 def wrap(x, low, high):
     """Wraps data between low and high boundaries."""
@@ -20,6 +19,7 @@ class StateIndex(object):
     This class enumerates the different indices used when indexing the state.
     e.g. ``s[StateIndex.THETA]`` is guaranteed to return the angle state.
     """
+
     THETA, THETA_DOT = 0, 1
     X, X_DOT = 2, 3
     PEND_ACTION = 2

@@ -1,22 +1,23 @@
-import numpy as np
-from colour import Color
-import torch
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from torchvision.transforms import ToTensor
-import json
 import argparse
+import json
 
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from colour import Color
 from mdp.pendulum_mdp import PendulumMDP
 from pcc_model import PCC
+from torchvision.transforms import ToTensor
 
-red = Color('red')
-blue = Color('blue')
+
+red = Color("red")
+blue = Color("blue")
 num_angles = 100
 num_each_angle = 20
 
 np.random.seed(0)
 torch.manual_seed(0)
+
 
 def map_angle_color(num_angles, mdp):
     colors = list(red.range_to(blue, num_angles))
@@ -25,11 +26,13 @@ def map_angle_color(num_angles, mdp):
     angle_color_map = dict(zip(all_angles, colors_rgb))
     return angle_color_map, colors_rgb
 
+
 def assign_latent_color(model, angel, mdp):
     # the same angle corresponds to multiple states -> multiple latent vectors
     # map an angle to multiple latent vectors corresponding to that angle
-    angle_vels = np.linspace(start=mdp.angular_velocity_range[0],
-                             stop=mdp.angular_velocity_range[1], num=num_each_angle)
+    angle_vels = np.linspace(
+        start=mdp.angular_velocity_range[0], stop=mdp.angular_velocity_range[1], num=num_each_angle
+    )
     all_z_for_angle = []
     for i in range(num_each_angle):
         ang_velocity = angle_vels[i]
@@ -46,6 +49,7 @@ def assign_latent_color(model, angel, mdp):
             z = model.encode(x_with_history.view(-1, x_with_history.shape[-1] * x_with_history.shape[-2])).mean
         all_z_for_angle.append(z.detach().squeeze().numpy())
     return all_z_for_angle
+
 
 def show_latent_map(model, mdp):
     angle_color_map, colors_rgb = map_angle_color(num_angles, mdp)
@@ -65,7 +69,7 @@ def show_latent_map(model, mdp):
     all_z = 2 * (all_z - z_min) / (z_max - z_min) - 1.0
     all_z = all_z * 35
 
-    ax = plt.axes(projection='3d')
+    ax = plt.axes(projection="3d")
     ax.set_xlim([-100, 100])
     ax.set_ylim([-100, 100])
     ax.set_zlim([-100, 100])
@@ -73,8 +77,9 @@ def show_latent_map(model, mdp):
     ydata = all_z[:, 1]
     zdata = all_z[:, 2]
 
-    ax.scatter(xdata, ydata, zdata, c=colors_list, marker='o', s=10)
+    ax.scatter(xdata, ydata, zdata, c=colors_list, marker="o", s=10)
     plt.show()
+
 
 def main(args):
     log_path = args.log_path
@@ -83,20 +88,21 @@ def main(args):
     mdp = PendulumMDP()
 
     # load the specified model
-    with open(log_path + '/settings', 'r') as f:
+    with open(log_path + "/settings", "r") as f:
         settings = json.load(f)
-    armotized = settings['armotized']
-    model = PCC(armotized=armotized, x_dim=4608, z_dim=3, u_dim=1, env='pendulum')
-    model.load_state_dict(torch.load(log_path + '/model_' + str(epoch), map_location='cpu'))
+    armotized = settings["armotized"]
+    model = PCC(armotized=armotized, x_dim=4608, z_dim=3, u_dim=1, env="pendulum")
+    model.load_state_dict(torch.load(log_path + "/model_" + str(epoch), map_location="cpu"))
     model.eval()
 
     show_latent_map(model, mdp)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='train pcc model')
 
-    parser.add_argument('--log_path', required=True, type=str, help='path to trained model')
-    parser.add_argument('--epoch', required=True, type=int, help='load model corresponding to this epoch')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="train pcc model")
+
+    parser.add_argument("--log_path", required=True, type=str, help="path to trained model")
+    parser.add_argument("--epoch", required=True, type=int, help="load model corresponding to this epoch")
     args = parser.parse_args()
 
     main(args)

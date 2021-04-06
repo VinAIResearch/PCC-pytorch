@@ -1,13 +1,14 @@
 import os
 from os import path
-import numpy as np
-from torch.utils.data import Dataset
-import torch
 
-from data import sample_planar
-from data import sample_pole
+import numpy as np
+import torch
+from data import sample_planar, sample_pole
+from torch.utils.data import Dataset
+
 
 torch.set_default_dtype(torch.float64)
+
 
 class BaseDataset(Dataset):
     def __init__(self, data_path, sample_size, noise):
@@ -17,7 +18,9 @@ class BaseDataset(Dataset):
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
         self._process()
-        self.data_x, self.data_u, self.data_x_next = torch.load(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise))
+        self.data_x, self.data_u, self.data_x_next = torch.load(
+            self.data_path + "{:d}_{:.0f}.pt".format(self.sample_size, self.noise)
+        )
 
     def __len__(self):
         return len(self.data_x)
@@ -29,10 +32,11 @@ class BaseDataset(Dataset):
         pass
 
     def check_exists(self):
-        return (path.exists(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise)))
+        return path.exists(self.data_path + "{:d}_{:.0f}.pt".format(self.sample_size, self.noise))
 
     def _process(self):
         pass
+
 
 class PlanarDataset(BaseDataset):
     width = 40
@@ -40,7 +44,7 @@ class PlanarDataset(BaseDataset):
     action_dim = 2
 
     def __init__(self, sample_size, noise):
-        data_path = 'data/planar/'
+        data_path = "data/planar/"
         super(PlanarDataset, self).__init__(data_path, sample_size, noise)
 
     def _process_image(self, img):
@@ -50,8 +54,13 @@ class PlanarDataset(BaseDataset):
         if self.check_exists():
             return
         else:
-            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
-                                sample_planar.sample(sample_size=self.sample_size, noise=self.noise)
+            (
+                x_numpy_data,
+                u_numpy_data,
+                x_next_numpy_data,
+                state_numpy_data,
+                state_next_numpy_data,
+            ) = sample_planar.sample(sample_size=self.sample_size, noise=self.noise)
             data_len = len(x_numpy_data)
 
             # place holder for data
@@ -66,8 +75,9 @@ class PlanarDataset(BaseDataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
+            with open(self.data_path + "{:d}_{:.0f}.pt".format(self.sample_size, self.noise), "wb") as f:
                 torch.save(data_set, f)
+
 
 class PendulumDataset(BaseDataset):
     width = 48
@@ -75,7 +85,7 @@ class PendulumDataset(BaseDataset):
     action_dim = 1
 
     def __init__(self, sample_size, noise):
-        data_path = 'data/pendulum/'
+        data_path = "data/pendulum/"
         super(PendulumDataset, self).__init__(data_path, sample_size, noise)
 
     def _process_image(self, img):
@@ -86,8 +96,13 @@ class PendulumDataset(BaseDataset):
         if self.check_exists():
             return
         else:
-            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
-                sample_pole.sample(env_name='pendulum', sample_size=self.sample_size, noise=self.noise)
+            (
+                x_numpy_data,
+                u_numpy_data,
+                x_next_numpy_data,
+                state_numpy_data,
+                state_next_numpy_data,
+            ) = sample_pole.sample(env_name="pendulum", sample_size=self.sample_size, noise=self.noise)
             data_len = len(x_numpy_data)
 
             # place holder for data
@@ -102,8 +117,9 @@ class PendulumDataset(BaseDataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
+            with open(self.data_path + "{:d}_{:.0f}.pt".format(self.sample_size, self.noise), "wb") as f:
                 torch.save(data_set, f)
+
 
 class CartPoleDataset(BaseDataset):
     width = 80
@@ -111,7 +127,7 @@ class CartPoleDataset(BaseDataset):
     action_dim = 1
 
     def __init__(self, sample_size, noise):
-        data_path = 'data/cartpole/'
+        data_path = "data/cartpole/"
         super(CartPoleDataset, self).__init__(data_path, sample_size, noise)
 
     def _process_image(self, img):
@@ -124,8 +140,13 @@ class CartPoleDataset(BaseDataset):
         if self.check_exists():
             return
         else:
-            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
-                sample_pole.sample(env_name='cartpole', sample_size=self.sample_size, noise=self.noise)
+            (
+                x_numpy_data,
+                u_numpy_data,
+                x_next_numpy_data,
+                state_numpy_data,
+                state_next_numpy_data,
+            ) = sample_pole.sample(env_name="cartpole", sample_size=self.sample_size, noise=self.noise)
             data_len = len(x_numpy_data)
 
             # place holder for data
@@ -140,8 +161,9 @@ class CartPoleDataset(BaseDataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
+            with open(self.data_path + "{:d}_{:.0f}.pt".format(self.sample_size, self.noise), "wb") as f:
                 torch.save(data_set, f)
+
 
 class ThreePoleDataset(BaseDataset):
     width = 80
@@ -149,7 +171,7 @@ class ThreePoleDataset(BaseDataset):
     action_dim = 3
 
     def __init__(self, sample_size, noise):
-        data_path = 'data/threepole/'
+        data_path = "data/threepole/"
         super(ThreePoleDataset, self).__init__(data_path, sample_size, noise)
 
     def _process_image(self, img):
@@ -162,8 +184,13 @@ class ThreePoleDataset(BaseDataset):
         if self.check_exists():
             return
         else:
-            x_numpy_data, u_numpy_data, x_next_numpy_data, state_numpy_data, state_next_numpy_data = \
-                sample_pole.sample(env_name='threepole', sample_size=self.sample_size, noise=self.noise)
+            (
+                x_numpy_data,
+                u_numpy_data,
+                x_next_numpy_data,
+                state_numpy_data,
+                state_next_numpy_data,
+            ) = sample_pole.sample(env_name="threepole", sample_size=self.sample_size, noise=self.noise)
             data_len = len(x_numpy_data)
 
             # place holder for data
@@ -178,5 +205,5 @@ class ThreePoleDataset(BaseDataset):
 
             data_set = (data_x, data_u, data_x_next)
 
-            with open(self.data_path + '{:d}_{:.0f}.pt'.format(self.sample_size, self.noise), 'wb') as f:
+            with open(self.data_path + "{:d}_{:.0f}.pt".format(self.sample_size, self.noise), "wb") as f:
                 torch.save(data_set, f)

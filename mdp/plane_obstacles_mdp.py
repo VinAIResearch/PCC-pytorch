@@ -1,20 +1,20 @@
 import numpy as np
 from PIL import Image, ImageDraw
 
+
 class PlanarObstaclesMDP(object):
     width = 40
     height = 40
 
     obstacles = np.array([[20.5, 5.5], [20.5, 13.5], [20.5, 27.5], [20.5, 35.5], [10.5, 20.5], [30.5, 20.5]])
-    obstacles_r = 2.5 # radius of the obstacles when rendering
-    half_agent_size = 1.5 # robot half-width
+    obstacles_r = 2.5  # radius of the obstacles when rendering
+    half_agent_size = 1.5  # robot half-width
 
     position_range = np.array([half_agent_size, width - half_agent_size])
 
     action_dim = 2
 
-    def __init__(self, rw_rendered=1, max_step=3,
-                 goal=[37,37], goal_thres=2, noise = 0):
+    def __init__(self, rw_rendered=1, max_step=3, goal=[37, 37], goal_thres=2, noise=0):
         self.rw_rendered = rw_rendered
         self.max_step = max_step
         self.action_range = np.array([-max_step, max_step])
@@ -36,7 +36,7 @@ class PlanarObstaclesMDP(object):
                 return False
         return True
 
-    def take_step(self, s, u, anneal_ratio=0.9): # compute the next state given the current state and action
+    def take_step(self, s, u, anneal_ratio=0.9):  # compute the next state given the current state and action
         u = np.clip(u, self.action_range[0], self.action_range[1])
 
         s_next = np.clip(s + u, self.position_range[0], self.position_range[1])
@@ -44,7 +44,7 @@ class PlanarObstaclesMDP(object):
             return s
         return s_next
 
-    def transition_function(self, s, u): # compute next state and add noise
+    def transition_function(self, s, u):  # compute next state and add noise
         s_next = self.take_step(s, u)
         # sample noise until get a valid next state
         sample_noise = self.noise * np.random.randn(*s_next.shape)
@@ -53,7 +53,7 @@ class PlanarObstaclesMDP(object):
     def render(self, s):
         top, bottom, left, right = self.get_pixel_location(s)
         x = self.generate_env()
-        x[top:bottom, left:right] = 1.  # robot is white on black background
+        x[top:bottom, left:right] = 1.0  # robot is white on black background
         return x
 
     def get_pixel_location(self, s):
@@ -74,15 +74,22 @@ class PlanarObstaclesMDP(object):
         img_env = Image.fromarray(img_arr)
         draw = ImageDraw.Draw(img_env)
         for y, x in self.obstacles:
-            draw.ellipse((int(x)-int(self.obstacles_r), int(y)-int(self.obstacles_r),
-                        int(x)+int(self.obstacles_r), int(y)+int(self.obstacles_r)), fill=255)
-        img_env = img_env.convert('L')
+            draw.ellipse(
+                (
+                    int(x) - int(self.obstacles_r),
+                    int(y) - int(self.obstacles_r),
+                    int(x) + int(self.obstacles_r),
+                    int(y) + int(self.obstacles_r),
+                ),
+                fill=255,
+            )
+        img_env = img_env.convert("L")
 
-        img_arr = np.array(img_env) / 255.
+        img_arr = np.array(img_env) / 255.0
         return img_arr
 
     def is_goal(self, s):
-        return np.sqrt(np.sum((s - self.goal)**2)) <= self.goal_thres
+        return np.sqrt(np.sum((s - self.goal) ** 2)) <= self.goal_thres
 
     def is_fail(self, s):
         return False
@@ -96,11 +103,11 @@ class PlanarObstaclesMDP(object):
 
     def sample_random_state(self):
         while True:
-            s = np.random.uniform(self.half_agent_size, self.width - self.half_agent_size, size = 2)
+            s = np.random.uniform(self.half_agent_size, self.width - self.half_agent_size, size=2)
             if self.is_valid_state(s):
                 return s
 
-    def is_low_error(self, u, epsilon = 0.1):
+    def is_low_error(self, u, epsilon=0.1):
         rounded_u = np.round(u)
         diff = np.abs(u - rounded_u)
         return np.all(diff <= epsilon)

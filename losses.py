@@ -1,37 +1,41 @@
 import torch
+from networks import MultivariateNormalDiag
 from torch.distributions.kl import kl_divergence
 
-from networks import MultivariateNormalDiag
 
 torch.set_default_dtype(torch.float64)
 
+
 def bernoulli(x, p):
     p = p.probs
-    log_p_x = torch.sum(x * torch.log(1e-15 + p)
-                                + (1 - x) * torch.log(1e-15 + 1 - p), dim=-1)
+    log_p_x = torch.sum(x * torch.log(1e-15 + p) + (1 - x) * torch.log(1e-15 + 1 - p), dim=-1)
     log_p_x = torch.mean(log_p_x)
     return log_p_x
+
 
 def KL(normal_1, normal_2):
     kl = kl_divergence(normal_1, normal_2)
     kl = torch.mean(kl)
     return kl
 
+
 def entropy(p):
     H = p.entropy()
     H = torch.mean(H)
     return H
+
 
 def gaussian(z, p):
     log_p_z = p.log_prob(z)
     log_p_z = torch.mean(log_p_z)
     return log_p_z
 
+
 def vae_bound(x, p_x, p_z):
     recon_loss = -bernoulli(x, p_x)
-    regularization_loss = KL(p_z, MultivariateNormalDiag(torch.zeros_like(p_z.mean),
-                                                         torch.ones_like(p_z.stddev)))
+    regularization_loss = KL(p_z, MultivariateNormalDiag(torch.zeros_like(p_z.mean), torch.ones_like(p_z.stddev)))
     return recon_loss + regularization_loss
+
 
 def ae_loss(x, p_x):
     recon_loss = -bernoulli(x, p_x)
@@ -59,7 +63,7 @@ def curvature(model, z, u, delta, armotized):
         A = A.view(-1, z_dim, z_dim)
         B = B.view(-1, z_dim, u_dim)
 
-    grad_z, = torch.autograd.grad(f_z, z_alias, grad_outputs=eps_z, retain_graph=True, create_graph=True)
+    (grad_z,) = torch.autograd.grad(f_z, z_alias, grad_outputs=eps_z, retain_graph=True, create_graph=True)
     grad_u = torch.bmm(B, eps_u.view(-1, u_dim, 1)).squeeze()
     taylor_error = f_z_bar - (grad_z + grad_u) - f_z
     cur_loss = torch.mean(torch.sum(taylor_error.pow(2), dim=1))
@@ -72,7 +76,7 @@ def get_jacobian(dynamics, batched_z, batched_u):
     """
     batch_size = batched_z.size(0)
     z_dim = batched_z.size(-1)
-    u_dim = batched_u.size(-1)
+    # u_dim = batched_u.size(-1)
 
     z, u = batched_z.unsqueeze(1), batched_u.unsqueeze(1)  # batch_size, 1, input_dim
     z, u = z.repeat(1, z_dim, 1), u.repeat(1, z_dim, 1)  # batch_size, output_dim, input_dim
